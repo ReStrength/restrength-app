@@ -785,7 +785,8 @@ function render(){
   if(!S.db) html=S.offline?`<div class="banner bad"><b>החיבור לנתוני הסטודיו לא זמין בתצוגה הזו.</b> פתחו את הדף מתוך claude.ai כשאתם מחוברים לחשבון.</div>`:`<div class="empty"><strong>מתחבר לנתוני הסטודיו…</strong></div>`;
   else {
     if(!S.canWrite) html+=`<div class="banner warn"><b>מצב צפייה בלבד.</b> כדי להזין תוצאות צריך הרשאת עריכה מבעל הדף.</div>`;
-    if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
+    if(S.user&&S.user.coachId) S.meId=S.user.coachId;
+    else if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
     else html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): S.view==='manager'?vManager(): vCoaches();
