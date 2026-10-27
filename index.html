@@ -1251,6 +1251,8 @@ function vSettings(){
    </tbody></table></div>
    <div class="row"><input id="newCoach" placeholder="שם מאמן חדש" style="flex:1 1 200px"><button class="btn" data-act="addCoach" data-write>הוספה</button></div></div>
   ${cueCard}
+  ${window.FB&&S.user&&S.user.role==='admin'?`<div class="card"><h2>ייבוא נתונים</h2><span class="muted small">להעברת המתאמנים והאימונים מהמערכת הקודמת: בוחרים את קובץ ה־JSON שקיבלתם, והנתונים נוספים למערכת.</span>
+   <div class="row"><input type="file" id="impFile" accept=".json,application/json"><button class="btn primary" data-act="doImport" data-write>ייבוא</button></div><div class="small" id="impMsg"></div></div>`:''}
   <div class="card"><h2>כמה משקל להוסיף בכל העלאה</h2><span class="muted small">המערכת תציע את התוספת הזו כשהמתאמן השלים את כל הסטים בראש הטווח. המאמן תמיד יכול לשנות ידנית.</span>
    <div class="row"><label class="f" for="st_lower">פלג גוף תחתון<select id="st_lower" data-setting="lower">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${num(S.settings.lower)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label>
    <label class="f" for="st_upper">פלג גוף עליון ובטן<select id="st_upper" data-setting="upper">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${num(S.settings.upper)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label></div></div>
@@ -1422,6 +1424,8 @@ async function act(name,el){
   case 'noteSave': {const v=($('#noteTxt')||{}).value||''; const id=S.clientId; const val=v.trim()?{text:v.trim(),by:S.meId||'',at:Date.now()}:null; const cl=clientById(id); if(cl)cl.handoff=val; S.noteEdit=null; render(); await updClient(id,{handoff:val}); toast(val?'ההערה נשמרה':'ההערה הוסרה'); break;}
   case 'noteClear': {const id=S.clientId; const cl=clientById(id); if(cl)cl.handoff=null; render(); await updClient(id,{handoff:null}); toast('ההערה הוסרה'); break;}
   case 'logout': logout(); break;
+  case 'doImport': {const f=$('#impFile').files[0]; const m=$('#impMsg'); if(!f){toast('בחרו קובץ');break}
+    try{const data=JSON.parse(await f.text()); m.textContent='מייבא…'; const n=await window.FB.importAll(data); m.textContent=`✓ יובאו ${n} רשומות`; toast('הייבוא הושלם');}catch(err){m.textContent='הייבוא נכשל: '+(err&&err.message||err)} break;}
   case 'coachEmail': {const k=S.coaches.find(x=>x.id===el.dataset.id); const e=($('#em_'+k.id).value||'').trim().toLowerCase(); if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('כתובת מייל לא תקינה');break}
     try{await window.FB.setStaff(k.id,k.email||'',e); await saveDoc('coaches/'+k.id,{email:e},{merge:true}); toast(e?`${k.name} יוכל להיכנס עם ${e}`:'המייל הוסר');}catch(err){toast('רק מנהל יכול לשנות הרשאות כניסה')} break;}
   case 'openReport': S.report=S.clientId; render(); window.scrollTo(0,0); break;
