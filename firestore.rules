@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function email() { return request.auth.token.email.lower(); }
+    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function owner() { return verified() && email() in ['strengthismedicine@gmail.com']; }
+    function staffDoc() { return /databases/$(database)/documents/staff/$(email()); }
+    function isStaff() { return verified() && (owner() || exists(staffDoc())); }
+    function isAdmin() { return verified() && (owner() || (exists(staffDoc()) && get(staffDoc()).data.role == 'admin')); }
+
+    // who may sign in: one doc per email -> {coachId, role}
+    match /staff/{e} {
+      allow read: if verified() && (email() == e || isAdmin());
+      allow write: if isAdmin();
+    }
+    // studio data: every signed-in staff member (coaches cover for each other)
+    match /{col}/{id} {
+      allow read, write: if isStaff() && col in ['coaches', 'clients', 'sessions', 'assessments', 'settings'];
+    }
+  }
+}
