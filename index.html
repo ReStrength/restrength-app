@@ -290,6 +290,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .hnote textarea{width:100%;min-height:70px;font:inherit;font-size:17px;padding:8px;border-radius:8px;border:1px solid #e5c766}
 .addnote{margin:8px 0}
 .cm .nflag{color:#a07800;font-weight:700}
+.kgchips{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;padding:2px 6px;border:1px dashed var(--line);border-radius:999px}
 .cue{font-size:14px;color:#7a5b00;background:#fff8e1;border-radius:6px;padding:3px 8px;margin:0 8px 5px;text-align:start;white-space:normal}
 .cue a{color:var(--accent-text);font-weight:600;margin-inline-start:6px}
 .swaprow td{background:var(--surface-2);text-align:start!important;padding:6px 10px!important}
@@ -661,7 +662,7 @@ function setSave(st){const el=$('#saveState');clearTimeout(saveT);
 let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3400)}
 
-/* ---------- progression engine (double progression + RIR) ---------- */
+/* ---------- progression engine (double progression) ---------- */
 function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
 function stepFor(group,kg){ const st=S.settings||{}; return group==='lower'?(num(st.lower)??1):(num(st.upper)??0.5); }
 function exStats(ex){
@@ -685,11 +686,7 @@ function suggest(ex,hist){
   const u=unitOf(ex);
   if(u==='kg'){
     const work=Math.min(...st.kgs);
-    const tooHard=rir!=null&&rir<2;
-    if(allTop&&tooHard){s={...base,kg:work,type:'stall',reason:`הגיע ל-${max} חזרות אבל קרוב מדי לכשל (RIR ${rir}, המינימום 2) – נשארים על ${work} ק"ג עד שזה עובר ב-RIR 2–3`};}
-    else if(!allIn&&tooHard){const nk=Math.max(0,r05(work*0.9));s={...base,kg:nk,type:'down',reason:`מתחת לטווח וקרוב לכשל (RIR ${rir}) ← הורדה של כ-10% ל-${nk} ק"ג`};}
-    else if(tooHard){s={...base,kg:work,type:'stall',reason:`בתוך הטווח אבל RIR ${rir} – קרוב מדי לכשל. אותו משקל, לשמור על רזרבה של 2–3 חזרות`};}
-    else if(allTop){const inc=stepFor(ex.group,work)*(rir!=null&&rir>=Math.max(5,rirT+2)?2:1);s={...base,kg:r05(work+inc),type:'up',reason:`כל הסטים הגיעו ל-${max} חזרות${rir!=null&&rir>=Math.max(5,rirT+2)?` עם רזרבה גבוהה (RIR ${rir})`:''} ← +${inc} ק"ג`};}
+    if(allTop){const inc=stepFor(ex.group,work);s={...base,kg:r05(work+inc),type:'up',reason:`כל הסטים הגיעו ל-${max} חזרות ← +${inc} ק"ג (אפשר לבחור עד 2.5 ק"ג)`};}
     else if(badMiss){const nk=Math.max(0,r05(work*0.9));s={...base,kg:nk,type:'down',reason:`סט אחד או יותר רחוק מתחתית הטווח (${min}) ← הורדה של כ-10% ל-${nk} ק"ג`};}
     else if(allIn){s={...base,kg:work,type:'reps',reason:`בתוך הטווח – אותו משקל (${work} ק"ג), לשאוף לחזרה נוספת בכל סט`};}
     else {s={...base,kg:work,type:'same',reason:'חלק מהסטים מתחת לטווח – חוזרים על אותו משקל'};}
@@ -734,11 +731,15 @@ function buildNext(ctx,d,docId){
 }
 const PROGS=[['kg','משקל עבודה'],['reps','חזרות'],['sets','סטים'],['tempo','טמפו'],['rom','טווח תנועה'],['harder','מנח קשה יותר']];
 const PNOTE={tempo:'טמפו: 2 שנ׳ בלימה, שנייה עצירה בחלק הקשה',rom:'טווח תנועה גדול יותר',harder:'מנח קשה יותר (למשל: לעמוד קדימה יותר ב־TRX, להוריד את המדרגה)'};
+const KG_STEPS=[0.5,1,1.5,2,2.5];
+function kgDefault(ex){const b=ex.base||{};return stepFor(ex.group,num(b.targetKg)||0)}
+function kgChips(ex){const on=(ex.prog||[]).includes('kg'), cur=num(ex.kgStep)??kgDefault(ex), def=kgDefault(ex);
+  return `<span class="kgchips"><span class="muted small">משקל:</span>${KG_STEPS.map(v=>`<button class="pchip${ex.rec==='kg'&&v===def?' rec':''}" aria-pressed="${on&&cur===v}" data-act="prog" data-k="kg" data-v="${v}" data-write dir="ltr">+${v}${ex.rec==='kg'&&v===def?' ★':''}</button>`).join('')}<span class="muted small">ק״ג</span></span>`}
 function applyNotes(ex){let lines=String(ex.tempo||'').split('\n').filter(l=>!Object.values(PNOTE).includes(l.trim()));
   ['tempo','rom','harder'].forEach(k=>{if((ex.prog||[]).includes(k))lines.push(PNOTE[k])}); ex.tempo=lines.filter((l,i)=>l.trim()||i<lines.length-1).join('\n').replace(/^\n+/,'')}
 function progLabel(ex,k){const b=ex.base||{};if(k==='kg')return `משקל +${stepFor(ex.group,num(b.targetKg)||0)} ק"ג`;if(k==='reps')return 'חזרות +1';if(k==='sets')return 'סט נוסף';if(k==='tempo')return 'טמפו';if(k==='harder')return 'מנח קשה יותר';return 'טווח תנועה'}
 function applyProg(ex){const b=ex.base;if(!b)return;const has=k=>(ex.prog||[]).includes(k);
-  ex.targetKg=has('kg')?r05((num(b.targetKg)||0)+stepFor(ex.group,num(b.targetKg)||0)):b.targetKg;
+  ex.targetKg=has('kg')?r05((num(b.targetKg)||0)+(num(ex.kgStep)??stepFor(ex.group,num(b.targetKg)||0))):b.targetKg;
   ex.repMin=b.repMin+(has('reps')?1:0); ex.repMax=b.repMax+(has('reps')?1:0);
   ex.targetSets=b.targetSets+(has('sets')?1:0);
   applyNotes(ex);
@@ -1022,7 +1023,7 @@ function prevLine(ctx,ex,curId){
   if(!h.length) return '';
   const last=h[h.length-1]; const e=last.ex;
   const sets=(e.sets||[]).filter(s=>num(s.reps)!=null).map(s=>e.unit==='kg'?`${num(s.kg)??num(e.targetKg)??0}×${s.reps}`:`${s.reps}${e.unit==='sec'?'″':''}`).join(' · ');
-  return `<div class="prev">פעם קודמת (${fmt(last.date)}): <b dir="ltr">${esc(sets)}</b>${num(e.rir)!=null?` · RIR ${e.rir}`:''}${num(e.pain)?` · כאב ${e.pain}`:''}${e.note?` · ${esc(e.note)}`:''}</div>`;
+  return `<div class="prev">פעם קודמת (${fmt(last.date)}): <b dir="ltr">${esc(sets)}</b>${num(e.pain)?` · כאב ${e.pain}`:''}${e.note?` · ${esc(e.note)}`:''}</div>`;
 }
 function setState(ex,s){const r=num(s.reps);if(r==null)return '';const min=num(ex.repMin)??0,max=num(ex.repMax)??999;return r>=max?'top':r>=min?'in':'low'}
 function groupTags(exs){const tags=[];let n=0,i=0;while(i<exs.length){const e=exs[i];if(e.ss){let j=i;while(j<exs.length&&String(exs[j].ss)===String(e.ss))j++;n++;for(let k=i;k<j;k++)tags[k]={t:k===i?String(n):'',ss:true,first:k===i,n};i=j}else{n++;tags[i]={t:String(n),ss:false,first:true,n};i++}}return tags}
@@ -1035,7 +1036,7 @@ function progTable(ctx,doc){
   const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th><th colspan="${nSets+1}" class="grp-res">תוצאות</th><th></th></tr>
    <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>משקל עבודה</th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>כאב</th><th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
-    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+7}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
+    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+7}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>k==='kg'?kgChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+7}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
@@ -1172,8 +1173,8 @@ function tHistory(c){
   const done=doneSessions(S.P);
   if(!done.length) return `<div class="card empty"><strong>עדיין אין אימונים שבוצעו</strong><span>אחרי שמסיימים אימון בלשונית "תוכנית אימונים", הוא נשמר כאן עם כל התוצאות.</span></div>`;
   return `<div class="hist">${done.map(d=>`<div class="card"><div class="spread"><div><h3>${fmt(d.date)} · ${labelName(c,d.label)}שבוע ${d.seq}</h3><span class="muted small">${d.coach?esc(d.coach):''}${d.notes?` · ${esc(d.notes)}`:''}</span></div><button class="btn sm" data-act="openSess" data-id="${d.id}">פתיחה לעריכה</button></div>
-   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>יעד</th><th>בפועל</th><th>RIR</th><th>כאב</th></tr></thead><tbody>
-   ${(d.exercises||[]).map(e=>{const st=exStats(e);return `<tr><td>${e.ss?`<span class="muted small">ס״ס ${esc(e.ss)} · </span>`:''}${esc(e.name)}</td><td class="muted" dir="ltr" style="text-align:right">${e.targetSets}×${e.repMin}–${e.repMax}${e.unit==='kg'&&e.targetKg!==''?` @ ${e.targetKg}kg`:''}</td><td dir="ltr" style="text-align:right">${st.done.map((s,i)=>e.unit==='kg'?`${st.kgs[i]}×${st.reps[i]}`:`${st.reps[i]}`).join(' · ')||'—'}</td><td>${e.rir!==''&&e.rir!=null?e.rir:'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
+   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>יעד</th><th>בפועל</th><th>כאב</th></tr></thead><tbody>
+   ${(d.exercises||[]).map(e=>{const st=exStats(e);return `<tr><td>${e.ss?`<span class="muted small">ס״ס ${esc(e.ss)} · </span>`:''}${esc(e.name)}</td><td class="muted" dir="ltr" style="text-align:right">${e.targetSets}×${e.repMin}–${e.repMax}${e.unit==='kg'&&e.targetKg!==''?` @ ${e.targetKg}kg`:''}</td><td dir="ltr" style="text-align:right">${st.done.map((s,i)=>e.unit==='kg'?`${st.kgs[i]}×${st.reps[i]}`:`${st.reps[i]}`).join(' · ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
    </tbody></table></div></div>`).join('')}</div>`;
 }
 
@@ -1283,13 +1284,12 @@ function vSettings(){
    <div class="row"><label class="f" for="st_lower">פלג גוף תחתון<select id="st_lower" data-setting="lower">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${num(S.settings.lower)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label>
    <label class="f" for="st_upper">פלג גוף עליון ובטן<select id="st_upper" data-setting="upper">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${num(S.settings.upper)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label></div></div>
   <div class="card"><h2>שיטת ההתקדמות</h2><div class="small" style="max-width:72ch">
-   <p>אחרי כל אימון המערכת מציעה את האימון הבא לפי התקדמות כפולה (double progression) ורזרבה (RIR):</p>
-   <p><b>כל הסטים הגיעו לראש טווח החזרות</b> → המשקל עולה לפי ההגדרה למעלה (כרגע ${S.settings.lower} ק"ג בפלג גוף תחתון, ${S.settings.upper} ק"ג בעליון) וחוזרים לתחתית הטווח. אם ה-RIR בפועל 5 ומעלה (קל מדי), הקפיצה כפולה.<br>
-   <b>RIR מתחת ל-2 (קרוב מדי לכשל)</b> → אין העלאת משקל. אם גם לא הגיע לטווח, המשקל יורד בכ-10%. היעד הוא 3 חזרות ברזרבה בכל סט, ולא פחות מ-2.<br>
-   <b>בתוך הטווח</b> → אותו משקל, לשאוף לחזרה נוספת.<br>
-   <b>סט רחוק מתחתית הטווח</b> → הורדה של כ-10%.<br>
-   <b>כאב 4 ומעלה</b> → אין התקדמות, התרגיל מסומן לבדיקה.<br>
-   <b>שלושה אימונים בלי שינוי</b> → סימון קיפאון והמלצה לשנות גירוי.<br>
+   <p>אחרי כל אימון המערכת נותנת רעיון לאימון הבא לפי התקדמות כפולה (double progression). ההחלטה תמיד של המאמן:</p>
+   <p><b>כל הסטים הגיעו לראש טווח החזרות</b> ← המשקל עולה לפי ההגדרה למעלה (כרגע ${S.settings.lower} ק"ג בפלג גוף תחתון, ${S.settings.upper} ק"ג בעליון) – והמאמן יכול לבחור כל תוספת בין 0.5 ל־2.5 ק"ג.<br>
+   <b>בתוך הטווח</b> ← אותו משקל, לשאוף לחזרה נוספת.<br>
+   <b>סט רחוק מתחתית הטווח</b> ← הורדה של כ-10%.<br>
+   <b>כאב 4 ומעלה</b> ← אין התקדמות, התרגיל מסומן לבדיקה.<br>
+   <b>שלושה אימונים בלי שינוי</b> ← סימון קיפאון והמלצה לשנות גירוי.<br>
    תרגילי משקל גוף מתקדמים בסט נוסף ואז בחזרות; תרגילי זמן מתקדמים ב-5 שניות. סופר סטים והערות טמפו ומנוחה עוברים אוטומטית לשבוע הבא.</p>
    <p class="muted">ההצעה תמיד ממתינה לאישור המאמן, שיכול לשנות כל ערך.</p></div></div>
   <div class="card"><h2>גיבוי</h2><span class="muted small">הורדת קובץ JSON עם כל המתאמנים, האימונים והמבדקים.</span><div class="row"><button class="btn" data-act="export">הורדת גיבוי מלא</button></div></div>`;
@@ -1368,7 +1368,10 @@ async function act(name,el){
     saveEdit(ctx,0); render(); break;}
   case 'joinEx': {const a=ctx.edit.doc.exercises; const i=Number(el.dataset.i); const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a[i].ss=k; a.splice(i+1,0,{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
   case 'prog': {const ex=ctx.edit.doc.exercises[Number(el.closest('[data-ex]').dataset.ex)]; const k=el.dataset.k;
-    if(k==='none') ex.prog=[]; else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set];}
+    if(k==='none') ex.prog=[];
+    else if(k==='kg'&&el.dataset.v){const v=Number(el.dataset.v); const set=new Set(ex.prog||[]); const cur=num(ex.kgStep)??kgDefault(ex);
+      if(set.has('kg')&&cur===v){set.delete('kg');} else {set.add('kg'); ex.kgStep=v;} ex.prog=[...set];}
+    else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set];}
     applyProg(ex); saveEdit(ctx,0); render(); break;}
   case 'addSS': {const a=ctx.edit.doc.exercises; const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a.push({...newExercise(),ss:k},{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
   case 'exUp': case 'exDown': case 'exDel': {
