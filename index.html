@@ -42,6 +42,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .brand{display:flex;flex-direction:column;align-items:center;gap:6px;white-space:nowrap;text-align:center}
 .brand .wm{align-items:center}
 .navcol{display:flex;flex-direction:column;align-items:center;gap:10px;margin-inline:auto}
+@media (min-width:901px){.top-in{position:relative}.navcol{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}}
 .subrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .subrow:empty{display:none}
 .brand img{height:72px;width:auto;display:block}
@@ -372,7 +373,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
         <button data-nav="settings">הגדרות</button>
       </nav>
       <div class="subrow">
-        <span class="gsearch" id="gsearch" hidden><input id="gq" type="search" placeholder="🔍 חיפוש מתאמן" autocomplete="off" aria-label="חיפוש מתאמן לפי שם"><div class="gres" id="gres" hidden></div></span>
+        <span class="gsearch" id="gsearch" hidden><input id="gq" name="rs-client-search" type="search" placeholder="🔍 חיפוש מתאמן" autocomplete="off" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" aria-label="חיפוש מתאמן לפי שם"><div class="gres" id="gres" hidden></div></span>
       </div>
       </div>
       <div class="top-side">
@@ -901,7 +902,7 @@ function gRender(){const box=$('#gres'),q=$('#gq').value; if(!q.trim()){box.hidd
     const n=document.createElement('span');n.textContent=c.name+((c.status||'active')!=='active'?(c.status==='paused'?' (בהקפאה)':' (בארכיון)'):'');
     const k=document.createElement('span');k.className='gc';k.textContent=coachName(c.coachId);b.append(n,k);box.append(b)})}
 function gOpen(id){const q=$('#gq');q.value='';$('#gres').hidden=true;q.blur();S.showNew=false;openClient(id);window.scrollTo(0,0)}
-function bindSearch(){const q=$('#gq'),box=$('#gres');
+function bindSearch(){const q=$('#gq'),box=$('#gres'); q.value=''; setTimeout(()=>{if(document.activeElement!==q)q.value=''},800);
   q.addEventListener('input',()=>{S.gSel=0;gRender()});
   q.addEventListener('focus',()=>gRender());
   q.addEventListener('keydown',e=>{const m=gMatches(q.value);
