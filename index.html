@@ -266,6 +266,10 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .hnote textarea{width:100%;min-height:70px;font:inherit;font-size:17px;padding:8px;border-radius:8px;border:1px solid #e5c766}
 .addnote{margin:8px 0}
 .cm .nflag{color:#a07800;font-weight:700}
+.stp{display:none}
+.personal{margin-top:6px;background:#eef6ff;color:#1d3f6e;border-radius:8px;padding:6px 10px;font-size:15px;max-width:70ch}
+.tpls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-top:14px}
+.tpls .chip{cursor:pointer;font-size:15px;padding:6px 12px}
 .kgchips{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;padding:2px 6px;border:1px dashed var(--line);border-radius:999px}
 .cue{font-size:14px;color:#7a5b00;background:#fff8e1;border-radius:6px;padding:3px 8px;margin:0 8px 5px;text-align:start;white-space:normal}
 .cue a{color:var(--accent-text);font-weight:600;margin-inline-start:6px}
@@ -384,6 +388,8 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
  .tabs .tab{white-space:nowrap}
  .tabs-side{flex-direction:row;flex-wrap:wrap}
+ .stp{display:flex!important;justify-content:space-between;gap:4px;padding:4px}
+ .stp button{flex:1;min-height:40px;font-size:22px;font-weight:700;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 }
 </style>
 
@@ -724,7 +730,7 @@ function buildNext(ctx,d,docId){
     if(s.type==='up'){ const u=unitOf(ex); rec=u==='kg'?'kg':(s.sets>base.targetSets?'sets':'reps'); }
     let text=s.reason; const st=exStats(ex); const topRep=st.reps.length?Math.max(...st.reps):0;
     if(unitOf(ex)!=='sec'&&s.type!=='flag'&&(topRep>12||base.repMax>12)){rec='kg';text=`עבר 12 חזרות – לשאוף להוסיף משקל עבודה ולחזור לטווח חזרות נמוך יותר`;}
-    if(isUnilateral(ex.name)&&s.type!=='flag'){ if(topRep>=8||base.repMax>8){rec='kg';} text=`תרגיל חד־צדדי: להגביל את הטווח עד 8 חזרות ולהתקדם במשקל עבודה – בתרגילים כאלה הדופק מעייף לפני השריר`+(s.type==='down'?` · ${s.reason}`:''); }
+    if(unitOf(ex)!=='sec'&&isUnilateral(ex.name)&&s.type!=='flag'){ if(topRep>=8||base.repMax>8){rec='kg';} text=`תרגיל חד־צדדי: להגביל את הטווח עד 8 חזרות ולהתקדם במשקל עבודה – בתרגילים כאלה הדופק מעייף לפני השריר`+(s.type==='down'?` · ${s.reason}`:''); }
     return {id:uid(),...carry(ex),...base,base,prog:[],rec,
       sets:Array.from({length:base.targetSets},()=>({kg:'',reps:''})),rir:'',pain:'',note:'',sugg:{type:s.type,text}};
   });
@@ -746,6 +752,29 @@ function applyProg(ex){const b=ex.base;if(!b)return;const has=k=>(ex.prog||[]).i
   applyNotes(ex);
   while(ex.sets.length<ex.targetSets)ex.sets.push({kg:'',reps:''});while(ex.sets.length>ex.targetSets&&num(ex.sets[ex.sets.length-1].reps)==null)ex.sets.pop();}
 function templateExercises(mode){return mode==='single'?[1,2,3,4,5,6].map(()=>({...newExercise(),ss:''})):[1,1,2,2,3,3].map(k=>({...newExercise(),ss:String(k)}))}
+const T_TEMPO='2 שנ׳ ירידה, נשיפה במאמץ';
+const TEMPLATES=[
+ {id:'intro',name:'מפגש היכרות',desc:'שיווי משקל דינמי וסטטי, ואז תנועות בסיס בסופר סטים 2×8',ex:[
+  ['הליכת טנדם','',2,6,10,'שיווי משקל דינמי'],['הליכה לאחור','',2,6,10,'שיווי משקל דינמי'],['עמידת טנדם','',2,20,30,'שיווי משקל סטטי'],['עמידה על רגל אחת','',2,10,20,'שיווי משקל סטטי'],
+  ['גובלט סקוואט','1',2,8,8,T_TEMPO],['חתירה בפולי תחתון בישיבה','1',2,8,8,T_TEMPO],
+  ['דדליפט רומני עם משקולות יד','2',2,8,8,T_TEMPO],['לחיצת חזה עם משקולות יד','2',2,8,8,T_TEMPO],
+  ['סטפ אפ','3',2,8,8,T_TEMPO],['משיכה מפולי עליון','3',2,8,8,T_TEMPO]]},
+ {id:'falls',name:'מניעת נפילות – שלב א׳',desc:'קימה, מדרגה, שוקיים, הליכה ושיווי משקל',ex:[
+  ['קום-שב מכיסא','1',2,6,10,''],['עמידה על רגל אחת','1',2,10,20,''],
+  ['סטפ אפ','2',2,6,8,''],['קאף רייז עם משקולות יד','2',2,6,10,''],
+  ['מונסטר ווק לצדדים עם גומייה','3',2,6,10,''],['פארמר ווק עם משקולות יד','3',2,6,10,'מספר צעדים']]},
+ {id:'chair',name:'קימה מכיסא ועצמאות',desc:'קימה, ישבן, דחיפה, מדרגה ויציבות',ex:[
+  ['קום-שב מכיסא עם משקולת יד','1',2,6,10,''],['חתירה בפולי תחתון בישיבה','1',2,6,10,''],
+  ["גלוט ברידג'",'2',2,6,10,''],['שכיבות סמיכה על קיר','2',2,6,10,''],
+  ['סטפ אפ','3',2,6,8,''],['פאלוף פרס בכבל','3',2,6,10,'']]},
+ {id:'strength',name:'כוח כללי – בסיס',desc:'דדליפט, סקוואט, דחיפה ומשיכה',ex:[
+  ['טראפ בר דדליפט','1',2,6,10,''],['לחיצת חזה בסמית משין','1',2,6,10,''],
+  ['סקוואט עם סייפטי בר','2',2,6,10,''],['משיכה מפולי עליון','2',2,6,10,''],
+  ['היפ תראסט עם משקולת יד','3',2,6,10,''],['פייס פול בכבל','3',2,6,10,'']]}];
+function allTemplates(){const c=Object.entries(S.tpls||{}).map(([id,t])=>({id:'c_'+id,custom:id,name:t.name,desc:'תבנית שנשמרה',ex:t.ex}));return TEMPLATES.concat(c)}
+function tplExercises(id){const t=allTemplates().find(x=>x.id===id); if(!t) return templateExercises('ss');
+  return t.ex.map(([n,ss,sets,mn,mx,tempo])=>{const l=libFind(n);const u=l?l[1]:'kg';return {...newExercise(),name:n,ss:String(ss||''),unit:u,group:l?l[2]:'other',targetSets:sets,repMin:mn,repMax:mx,tempo:tempo||'',sets:Array.from({length:sets},()=>({kg:'',reps:''}))}})}
+function tplButtons(act,extraAttr){return `<div class="tpls"><span class="muted small">או להתחיל מתבנית:</span>${allTemplates().map(t=>`<button class="chip" data-act="${act}" data-tpl="${t.id}" ${extraAttr||''} data-write title="${esc(t.desc||'')}">${t.id==='intro'?'⭐ ':''}${esc(t.name)}</button>`).join('')}</div>`}
 function blankPlan(clientId,label,mode){return {clientId,label:label||'1',seq:1,status:'planned',approved:true,date:'',coach:'',notes:'',warmup:'',exercises:templateExercises(mode),createdAt:Date.now()}}
 function newExercise(){return {id:uid(),name:'',unit:'kg',group:'other',ss:'',rirTarget:3,tempo:'',targetSets:2,targetKg:'',repMin:6,repMax:10,sets:[{kg:'',reps:''},{kg:'',reps:''}],rir:'',pain:'',note:'',sugg:null}}
 function subSessions(ctx){
@@ -764,6 +793,7 @@ function syncPlanFlags(ctx){
 }
 
 /* ---------- derived ---------- */
+function periodicDue(c){const base=c.lastAssessmentDate||c.startDate; return !!base&&daysSince(base)>=90}
 function assessDue(c){ if(c.lastAssessmentDate) return daysSince(c.lastAssessmentDate)>90; return daysSince(c.startDate||isoOf(c.createdAt))>14; }
 function clientFlags(c){
   const f=[];
@@ -816,7 +846,8 @@ function render(){
     else if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
-    else html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): vCoaches();
+    else { if(window.FB&&S.user&&S.user.role==='admin'&&S.meta!==undefined&&S.view==='coaches'&&daysSince(S.meta.lastBackup)>=7) html+=`<div class="banner info"><span><b>גיבוי שבועי:</b> ${S.meta.lastBackup?`הגיבוי האחרון ב־${fmt(S.meta.lastBackup)}.`:'עוד לא נעשה גיבוי.'} לחיצה מורידה עותק של כל הנתונים – כדאי לשמור אותו בדרייב של העסק.</span><button class="btn primary sm" data-act="export">הורדת גיבוי</button></div>`;
+    html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): vCoaches(); }
   }
   main.innerHTML=html;
   if(!S.canWrite) main.querySelectorAll('input,select,textarea,[data-write]').forEach(el=>el.disabled=true);
@@ -976,7 +1007,7 @@ function vCoaches(){
     if(!k){S.coachView=null;return vCoaches();}
     const mine=S.clients.filter(c=>k.id==='none'?!S.coaches.some(x=>x.id===c.coachId):c.coachId===k.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
     const act=mine.filter(c=>(c.status||'active')==='active'), rest=mine.filter(c=>(c.status||'active')!=='active');
-    const card=c=>{const p=partnerOf(c);return `<button class="ccard" data-open="${c.id}"><span class="cn">${esc(c.name)}</span><span class="cm">${TTYPES[ttype(c)]}${p?` עם ${esc(p.name)}`:''}${ttype(c)==='group'&&c.groupName?` · ${esc(c.groupName)}`:''} · ${c.freq||1}× בשבוע</span><span class="cm">${c.lastSessionDate?`אימון אחרון ${fmt(c.lastSessionDate)}`:'עדיין אין אימונים'}${c.pendingApproval?' · <b class="pend">ממתין לאישור</b>':''}${c.handoff&&c.handoff.text?' · <span class="nflag">📝 הערה</span>':''}${(c.status||'active')!=='active'?` · ${c.status==='paused'?'בהקפאה':'בארכיון'}`:''}</span></button>`};
+    const card=c=>{const p=partnerOf(c);return `<button class="ccard" data-open="${c.id}"><span class="cn">${esc(c.name)}</span><span class="cm">${TTYPES[ttype(c)]}${p?` עם ${esc(p.name)}`:''}${ttype(c)==='group'&&c.groupName?` · ${esc(c.groupName)}`:''} · ${c.freq||1}× בשבוע</span><span class="cm">${c.lastSessionDate?`אימון אחרון ${fmt(c.lastSessionDate)}`:'עדיין אין אימונים'}${c.pendingApproval?' · <b class="pend">ממתין לאישור</b>':''}${c.handoff&&c.handoff.text?' · <span class="nflag">📝 הערה</span>':''}${(c.status||'active')==='active'&&c.lastSessionDate&&!c.hasPlan?' · <b class="pend">⏳ ממתין לתכנון</b>':''}${(c.status||'active')==='active'&&periodicDue(c)?' · <span class="nflag">📋 מבדק תקופתי</span>':''}${(c.status||'active')!=='active'?` · ${c.status==='paused'?'בהקפאה':'בארכיון'}`:''}</span></button>`};
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
@@ -996,6 +1027,7 @@ function vClient(){
   const head=`<div class="chead"><div style="min-width:0"><button class="btn ghost sm" data-act="backCoach">→ המתאמנים של ${esc(coachName(c.coachId)!=='—'?coachName(c.coachId):'ללא מאמן')}</button><h1>${esc(c.name)}</h1>
     <div class="row" style="margin:6px 0"><button class="btn ghost sm" data-act="openReport">📄 דוח התקדמות</button></div>
     <div class="meta"><span>תאריך התחלה: <b>${c.startDate?fmt(c.startDate):'יירשם אוטומטית באימון הראשון'}</b></span></div>
+    ${c.personal?`<div class="personal">💬 ${esc(c.personal)}</div>`:''}${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span><button class="btn ghost sm" data-act="goAssess">למבדקים</button></div>`:''}
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
   const safety=c.limits?`<div class="safety"><b>⚠ מגבלות והתוויות נגד:</b><span>${esc(c.limits)}</span></div>`:'';
@@ -1005,7 +1037,7 @@ function vClient(){
   let addDayHtml='';
   if(S.P&&S.P.edit&&S.tab==='session'){const ls={};S.P.sessions.forEach(x=>{const l=String(x.label);if(!ls[l]||x.status==='planned'||(ls[l].status!=='planned'&&(x.date||'')>(ls[l].date||'')))ls[l]=x});const lb=Object.keys(ls).sort();
     if(lb.length<2) addDayHtml=S.P.addOpen?`<span class="row small np-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lb.map(l=>`<button class="btn sm" data-act="addDay" data-src="${ls[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;}
-  const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button><button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>`):'';
+  const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>`):'';
   const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}</button>${open?`<span class="morebox">${more.map(tb).join('')}</span>`:''}<span class="tabs-side">${addDayHtml}${np}</span></div>`;
   const body=S.tab==='session'?tSession(c):S.tab==='prev'?tPrev(c):S.tab==='history'?tHistory(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
   return head+safety+noteHtml(c)+tabHtml+body;
@@ -1042,12 +1074,12 @@ function progTable(ctx,doc){
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+7}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
-     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${cueHtml(ex.name)}${ex.name?`<button class="linkbtn tiny" data-act="swapOpen" data-i="${i}">⇄ חלופות</button>`:''}</td>
+     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${cueHtml(ex.name)}${ex.name?`<button class="linkbtn tiny" data-act="swapOpen" data-i="${i}">⇄ חלופות</button>`:''}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
      <td class="rngc" data-l="חזרות"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${esc(ex.repMax)}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</td>
      <td class="kg" data-l="משקל עבודה"><input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג"></td>
      <td class="notes"><textarea data-f="tempo" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="טמפו, מנח, ציוד">${esc(ex.tempo)}</textarea></td>
-     ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"></td>`:'<td class="res off"></td>'}).join('')}
+     ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><span class="stp"><button type="button" data-step="1" tabindex="-1" aria-label="חזרה נוספת">+</button><button type="button" data-step="-1" tabindex="-1" aria-label="חזרה פחות">−</button></span><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"></td>`:'<td class="res off"></td>'}).join('')}
      <td class="res" data-l="כאב"><input type="number" min="0" max="10" data-f="pain" value="${esc(ex.pain)}" data-st="${num(ex.pain)>=4?'low':''}" aria-label="כאב 0–10"></td>
      <td class="acts"><button class="btn ghost sm" data-act="exUp" title="הזזת התרגיל למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" title="הזזת התרגיל למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="exDel" title="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx===ex.id?swapRow(ex,i,nSets):''}${sg}`}).join('');
   return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
@@ -1071,7 +1103,7 @@ function paneHtml(ctx,c,pane,pair){
   if(ctx.edit&&ctx.edit.fresh&&ctx.sessions.some(s=>s.id===ctx.edit.id)) ctx.edit.fresh=false;
   if(!ctx.edit&&planned.length) ctx.edit={id:planned[0].id,doc:clone(planned[0])};
   if(!ctx.edit&&done.length) ctx.edit={id:done[0].id,doc:clone(done[0])};
-  if(!ctx.edit&&ctx.loaded&&!ctx.sessions.length&&S.db) return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}${modeChooser('startPlan','איך לבנות את התוכנית של '+c.name+'?')}</section>`;
+  if(!ctx.edit&&ctx.loaded&&!ctx.sessions.length&&S.db) return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}${modeChooser('startPlan','איך לבנות את התוכנית של '+c.name+'?',tplButtons('startPlan'))}</section>`;
   const ph=pair?`<div class="pane-head"><h2>${esc(c.name)}</h2>${pane===1&&c.limits?`<div class="safety small"><b>⚠ מגבלות:</b><span>${esc(c.limits)}</span></div>`:''}</div>`:'';
   if(!ctx.loaded) return `<section data-pane="${pane}">${ph}<div class="empty">טוען…</div></section>`;
   const lastByLbl={}; ctx.sessions.forEach(s=>{const l=String(s.label);const cur=lastByLbl[l];if(s.status==='planned'||!cur||(cur.status!=='planned'&&(s.date||'')>(cur.date||'')))lastByLbl[l]=s});
@@ -1102,15 +1134,15 @@ function paneHtml(ctx,c,pane,pair){
   const approveBanner=false?`<div class="banner warn"><span>המערכת בנתה את האימון לפי התוצאות של שבוע ${d.seq-1}. עברו על ההצעה בכל תרגיל, שנו מה שצריך ואשרו.</span><button class="btn primary sm" data-act="approve" data-write>אישור התוכנית</button></div>`:'';
   const list=(d.exercises||[]).length?progTable(ctx,d):`<div class="card empty"><strong>אין תרגילים באימון</strong><span>הוסיפו את התרגיל הראשון. שמות מהמאגר ממלאים אוטומטית את סוג העומס.</span></div>`;
   const delBtn=ctx.confirmDel===d.id?`<span class="row small"><span class="muted">למחוק את ${isDone?'האימון':'הטיוטה'}?</span><button class="btn danger sm" data-act="delSess" data-write>כן, מחיקה</button><button class="btn ghost sm" data-act="cancelDel">ביטול</button></span>`:`<button class="btn ghost sm" data-act="askDel" data-write>מחיקת ${isDone?'האימון':'הטיוטה'}</button>`;
-  const npBtn=isDone?'':ctx.newProg?`<span class="row small"><span class="muted">תוכנית חדשה במקום שבוע ${d.seq}:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button><button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm" data-act="askNewProg" data-write>+ פתיחת תוכנית אימונים חדשה</button>`;
+  const npBtn=isDone?'':ctx.newProg?`<span class="row small"><span class="muted">תוכנית חדשה במקום שבוע ${d.seq}:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm" data-act="askNewProg" data-write>+ פתיחת תוכנית אימונים חדשה</button>`;
   const foot=`<div class="sess-foot"><div class="row">${delBtn}${isDone&&planned.length?`<button class="btn ghost sm" data-act="backPlanned">חזרה לאימון המתוכנן</button>`:''}</div>
-    <div class="row">${isDone?'':`<button class="btn" data-act="complete" data-write>סיום אימון ושמירה</button>`}<button class="btn primary" data-act="planNext" data-write>${nextPlanned?`מעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'תכנון אימון הבא'}</button></div></div>`;
+    <div class="row"><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button>${isDone?'':`<button class="btn" data-act="complete" data-write>סיום אימון ושמירה</button>`}<button class="btn primary" data-act="planNext" data-write>${nextPlanned?`מעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'תכנון אימון הבא'}</button></div></div>`;
   let painHtml='';
   if(!isDone){const last=done.find(x=>String(x.label)===String(d.label)&&x.id!==d.id)||done.find(x=>x.id!==d.id);
     const pe=last?(last.exercises||[]).filter(e=>num(e.pain)>=4):[];
     if(pe.length) painHtml=`<div class="banner bad painbanner"><span><b>⚠ דווח כאב באימון הקודם (${fmt(last.date)}):</b> ${pe.map(e=>`${esc(e.name)} – ${e.pain}/10`).join(' · ')}. לשקול התאמה, טווח תנועה קטן יותר או החלפת תרגיל (⇄ חלופות).</span></div>`;}
   const weekChip=`<div class="weekchip">${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}שבוע ${d.seq}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>`;
-  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}<label class="f warmup">חימום <span class="muted small">(נשמר קבוע)</span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button></div>
+  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}<label class="f warmup">חימום <span class="muted small">(נשמר קבוע)</span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button></div>
    <label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label><div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
 function tSession(c){
@@ -1245,6 +1277,7 @@ function tProfile(c){
   <div class="card"><h2>מטרות</h2><div class="grid2">
    <label class="f" for="p_gshort">מטרות קרובות<textarea id="p_gshort" placeholder="למשל: לקום מהכיסא בלי עזרת ידיים">${esc(c.goalsShort??c.goalText??'')}</textarea></label>
    <label class="f" for="p_glong">מטרת על (לטווח הארוך)<textarea id="p_glong" placeholder="למשל: לטייל עם הנכדים בחו״ל בקיץ">${v('goalsLong')}</textarea></label></div>
+   <label class="f" for="p_personal">חשוב לדעת עליו/ה <span class="muted small">(אישי – מופיע בראש התיק)</span><textarea id="p_personal" placeholder="למשל: אוהב לדבר על הנכדים, לחוץ ממשקולות כבדות, מעדיף שיסבירו לו למה">${v('personal')}</textarea></label>
    <span class="muted small">תחומי מיקוד (קובעים אילו מבדקים מומלצים):</span>
    <div class="row" id="p_goals">${Object.entries(GOALS).map(([k,n])=>`<button class="chip" type="button" aria-pressed="${(c.goals||[]).includes(k)}" data-goal="${k}">${n}</button>`).join('')}</div></div>
   <div class="card"><h2>היסטוריה רפואית</h2><div class="grid2">
@@ -1329,7 +1362,7 @@ async function act(name,el){
     const goals=[...document.querySelectorAll('#p_goals [data-goal]')].filter(b=>b.getAttribute('aria-pressed')==='true').map(b=>b.dataset.goal);
     const by=num($('#p_by').value); const ttyp=$('#p_type').value; const newP=ttyp==='pair'?$('#p_partner').value:'', oldP=c.partnerId||'';
     const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,groupName:ttyp==='group'?$('#p_group').value.trim():'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
-      goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),
+      goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),personal:($('#p_personal')||{value:''}).value.trim(),
       limits:$('#p_limits').value.trim(),conditions:$('#p_cond').value.trim(),surgeries:$('#p_surg').value.trim(),meds:$('#p_meds').value.trim(),history:$('#p_hist').value.trim(),
       emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},updatedAt:Date.now()});
     if(ok&&newP!==oldP){
@@ -1355,7 +1388,7 @@ async function act(name,el){
   case 'toggleMore': S.moreOpen=!(S.moreOpen||['history','progress','assess'].includes(S.tab)); if(!S.moreOpen&&['history','progress','assess'].includes(S.tab)) S.tab='session'; render(); break;
   case 'pairOn': S.pairMode=true; render(); break;
   case 'pairOff': S.pairMode=false; render(); break;
-  case 'startPlan': {const ref=S.db.collection('sessions').doc(); const doc=blankPlan(ctx.clientId,'1',el.dataset.mode); ctx.edit={id:ref.id,doc,local:true}; render(); await saveDoc('sessions/'+ref.id,doc); updClient(ctx.clientId,{hasPlan:true}); break;}
+  case 'startPlan': {const ref=S.db.collection('sessions').doc(); const doc=blankPlan(ctx.clientId,'1',el.dataset.mode); if(el.dataset.tpl) doc.exercises=tplExercises(el.dataset.tpl); ctx.edit={id:ref.id,doc,local:true}; render(); await saveDoc('sessions/'+ref.id,doc); updClient(ctx.clientId,{hasPlan:true}); break;}
   case 'firstPlan': case 'copyFrom': {
     const label=el.dataset.label||'1';
     let exercises=templateExercises();
@@ -1424,7 +1457,7 @@ async function act(name,el){
     if(!ctx.edit){toast('אין תוכנית פתוחה');return}
     const cur=ctx.edit.doc, curId=ctx.edit.id, wasFresh=ctx.edit.fresh; ctx.newProg=false;
     const maxP=Math.max(1,...ctx.sessions.filter(x=>String(x.label)===String(cur.label)).map(x=>Number(x.programNo)||1));
-    const doc=blankPlan(ctx.clientId,cur.label,el.dataset.mode==='single'?'single':'ss'); doc.programNo=maxP+1; doc.warmup=cur.warmup||'';
+    const doc=blankPlan(ctx.clientId,cur.label,el.dataset.mode==='single'?'single':'ss'); doc.programNo=maxP+1; doc.warmup=cur.warmup||''; if(el.dataset.tpl) doc.exercises=tplExercises(el.dataset.tpl);
     if(el.dataset.mode==='copy') doc.exercises=(cur.exercises||[]).filter(e=>e.name).map(e=>({id:uid(),...carry(e),targetSets:e.targetSets,targetKg:e.targetKg,repMin:e.repMin,repMax:e.repMax,sets:Array.from({length:Number(e.targetSets)||2},()=>({kg:'',reps:''})),rir:'',pain:'',note:'',sugg:null}));
     const hasResults=(cur.exercises||[]).some(e=>exStats(e).done.length);
     if(!wasFresh&&!hasResults){ try{await S.db.doc('sessions/'+curId).delete();}catch(e){onWriteError(e);return} ctx.sessions=ctx.sessions.filter(x=>x.id!==curId); }
@@ -1453,6 +1486,10 @@ async function act(name,el){
   case 'noteSave': {const v=($('#noteTxt')||{}).value||''; const id=S.clientId; const val=v.trim()?{text:v.trim(),by:S.meId||'',at:Date.now()}:null; const cl=clientById(id); if(cl)cl.handoff=val; S.noteEdit=null; render(); await updClient(id,{handoff:val}); toast(val?'ההערה נשמרה':'ההערה הוסרה'); break;}
   case 'noteClear': {const id=S.clientId; const cl=clientById(id); if(cl)cl.handoff=null; render(); await updClient(id,{handoff:null}); toast('ההערה הוסרה'); break;}
   case 'logout': logout(); break;
+  case 'goAssess': S.tab='assess'; S.moreOpen=true; render(); break;
+  case 'saveTpl': {const d=ctx&&ctx.edit&&ctx.edit.doc; const ex=(d&&d.exercises||[]).filter(e=>e.name); if(!ex.length){toast('אין תרגילים לשמור');break}
+    const nm=(prompt('שם לתבנית (למשל: מניעת נפילות – שלב ב׳)')||'').trim(); if(!nm) break;
+    const m={...(S.tpls||{})}; m[uid()]={name:nm,ex:ex.map(e=>[e.name,e.ss||'',num(e.targetSets)||2,num(e.repMin)??6,num(e.repMax)??10,e.tempo||''])}; S.tpls=m; await saveDoc('settings/templates',m); toast('התבנית נשמרה: '+nm); break;}
   case 'doImport': {const f=$('#impFile').files[0]; const m=$('#impMsg'); if(!f){toast('בחרו קובץ');break}
     try{const data=JSON.parse(await f.text()); m.textContent='מייבא…'; const n=await window.FB.importAll(data); m.textContent=`✓ יובאו ${n} רשומות`; toast('הייבוא הושלם');}catch(err){m.textContent='הייבוא נכשל: '+(err&&err.message||err)} break;}
   case 'coachEmail': {const k=S.coaches.find(x=>x.id===el.dataset.id); const e=($('#em_'+k.id).value||'').trim().toLowerCase(); if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('כתובת מייל לא תקינה');break}
@@ -1481,7 +1518,7 @@ async function act(name,el){
       const [ss,as]=await Promise.all([S.db.collection('sessions').get(),S.db.collection('assessments').get()]);
       const data={exportedAt:new Date().toISOString(),coaches:S.coaches,clients:S.clients,sessions:ss.docs.map(d=>({id:d.id,...d.data()})),assessments:as.docs.map(d=>({id:d.id,...d.data()}))};
       const r=await dl.save({filename:`restrength-backup-${today()}.json`,data:JSON.stringify(data,null,1)});
-      if(r&&r.status==='saved') toast('הגיבוי נשמר');
+      if(!r||r.status==='saved'){ toast('הגיבוי הורד'); saveDoc('settings/meta',{...(S.meta||{}),lastBackup:today()}); }
     }catch(e){ if(e&&e.code!=='cancelled') toast('הגיבוי לא הושלם'); }
     break;}
   }
@@ -1501,6 +1538,8 @@ function bind(){
     const navg=t.closest('[data-nav-go]'); if(navg){ closeClient(); S.view=navg.dataset.navGo; render(); return;}
     const a=t.closest('[data-act]'); if(a&&!a.disabled){act(a.dataset.act,a);return}
     const o=t.closest('[data-open]'); if(o){S.showNew=false;openClient(o.dataset.open);return}
+    const st=t.closest('[data-step]'); if(st){const td=st.closest('td'); const inp=td&&td.querySelector('input.si'); if(inp&&!inp.disabled){const ctx=ctxOf(inp); const card=inp.closest('[data-ex]'); const ex=ctx&&ctx.edit&&card?ctx.edit.doc.exercises[Number(card.dataset.ex)]:null;
+      let v=inp.value===''?(Number(st.dataset.step)>0?(num(ex&&ex.repMin)??8):0):Math.max(0,Number(inp.value)+Number(st.dataset.step)); inp.value=String(v); inp.dispatchEvent(new Event('input',{bubbles:true}));} return}
     const mc=t.closest('[data-mgrcoach]'); if(mc){S.view='coaches';S.coachView=mc.dataset.mgrcoach;render();window.scrollTo(0,0);return}
     const kc=t.closest('[data-coach]'); if(kc){S.coachView=kc.dataset.coach;S.showNew=false;render();window.scrollTo(0,0);return}
     const cf=t.closest('[data-coachfilter]'); if(cf){S.view='clients';S.filterCoach=cf.dataset.coachfilter;render();return}
@@ -1560,6 +1599,8 @@ async function boot(){
   S.db=db; S.user=user; if(user&&user.coachId){S.meId=user.coachId;}
   if(user){const cw=await user.can('data.write'); if(cw===false) S.canWrite=false;}
   db.collection('coaches').onSnapshot(snap=>{S.coaches=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));const firstC=!S.loaded.c;S.loaded.c=true;if(firstC&&S.meId&&S.view==='coaches'&&!S.coachView)S.coachView=S.meId;scheduleRender()},dbErr);
+  db.doc('settings/meta').onSnapshot(sn=>{S.meta=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
+  db.doc('settings/templates').onSnapshot(sn=>{S.tpls=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
   db.doc('settings/cues').onSnapshot(sn=>{S.cues=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
   db.doc('settings/progression').onSnapshot(sn=>{if(sn.exists)S.settings={step:1,...sn.data()};scheduleRender()},()=>{});
   let linked=false;
