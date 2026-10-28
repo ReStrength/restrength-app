@@ -42,6 +42,30 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .brand{display:flex;flex-direction:column;align-items:center;gap:6px;white-space:nowrap;text-align:center}
 .brand .wm{align-items:center}
 .navcol{display:flex;flex-direction:column;align-items:center;gap:10px;margin-inline:auto}
+@media (max-width:700px){
+ .top{position:static}
+ .top-in{gap:8px;padding-block:8px}
+ .brand{flex-direction:row;gap:8px;text-align:start}
+ .brand img{height:46px}
+ .brand .wm{align-items:flex-start}
+ .brand .name{font-size:22px}
+ .brand .slogan{display:none}
+ .top-side{display:flex!important;order:2;margin-inline-start:auto;gap:8px}
+ .top-side .zoom{display:none}
+ .top-side .who{margin-top:0!important;font-size:15px}
+ .navcol{order:3;width:100%;gap:8px}
+ .nav{flex-wrap:nowrap!important;justify-content:center;gap:0;width:100%}
+ .nav button{padding:6px 7px;font-size:14px;white-space:nowrap}
+ .kgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .kcard{padding:14px 12px!important}
+ .kcard .kn{font-size:22px!important}
+ .subrow,.gsearch{width:100%}
+ .gsearch input{width:100%!important;box-sizing:border-box}
+ .gres{min-width:0;width:100%}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ .tabs .tab{white-space:nowrap}
+ .tabs-side{flex-direction:row;flex-wrap:wrap}
+}
 @media (min-width:901px){.top-in{position:relative}.navcol{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0}}
 .subrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .subrow:empty{display:none}
