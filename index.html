@@ -815,7 +815,7 @@ function render(){
     else if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
-    else html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): S.view==='manager'?vManager(): vCoaches();
+    else html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): vCoaches();
   }
   main.innerHTML=html;
   if(!S.canWrite) main.querySelectorAll('input,select,textarea,[data-write]').forEach(el=>el.disabled=true);
@@ -913,7 +913,7 @@ function vManager(){
 async function pinHash(id,pin){const txt='rs-pin:'+id+':'+pin;
   try{if(crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}
   let h=5381;for(const ch of txt)h=((h*33)^ch.charCodeAt(0))>>>0;return 'd'+h.toString(16)}
-const MGR=['yarin','shaked'];
+const MGR=['yarin'];
 function renderWho(){const w=$('#who'),m=$('#navMine');if(!w)return;const k=S.meId&&S.coaches.find(x=>x.id===S.meId);
   if(m)m.hidden=!k; const mg=$('#navMgr'); if(mg)mg.hidden=!(k&&MGR.includes(k.id)); const gs=$('#gsearch'); if(gs)gs.hidden=!k; const nv=$('#nav'); if(nv)nv.style.visibility=(S.db&&!k)?'hidden':''; if(!k){w.hidden=true;w.textContent='';return}
   w.hidden=false;w.innerHTML='';const sp=document.createElement('span');sp.textContent='שלום, '+k.name;w.append(sp)}
