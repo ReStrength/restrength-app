@@ -270,6 +270,34 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .addnote{margin:8px 0}
 .cm .nflag{color:#a07800;font-weight:700}
 .stp{display:none}
+.gcard{border-color:var(--accent);background:var(--accent-soft)}
+.gmembers{margin:6px 0 10px}
+.gex{padding:12px;margin:8px 0}
+.gex.ssr{border-inline-start:4px solid var(--accent)}
+.gsep{font-weight:700;color:var(--accent-text);margin:14px 4px 0}
+.gplan{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:8px}
+.gplan input{font:inherit;font-size:17px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.gplan .gn{flex:1 1 240px;font-weight:700}
+.gplan .gt{flex:1 1 220px}
+.gplan label{display:flex;flex-direction:column;font-size:13px;color:var(--muted)}
+.gplan label input{width:64px;text-align:center}
+.gplan .rng{display:flex;align-items:center;gap:4px;direction:ltr}
+.gplan .rng input{width:52px}
+.gacts{margin-inline-start:auto;white-space:nowrap}
+.gtable{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.gtable th{background:var(--band);color:#fff;font-weight:600;font-size:14px;padding:7px;text-align:center}
+.gtable td{border:1px solid var(--line);padding:0;text-align:center}
+.gtable td.gname{text-align:start;padding:6px 8px;min-width:150px}
+.gtable input{border:0;width:100%;min-height:48px;text-align:center;font-size:19px;background:transparent;color:var(--ink)}
+.gtable td.res{background:var(--surface-2);width:68px}
+.gtable td.res input{font-weight:700;font-size:21px}
+.gtable td.gkg{width:80px}
+.gtable td.gadapt input{text-align:start;font-size:15px;padding:0 8px;min-width:150px}
+.gtable input[data-st="top"]{background:var(--up-soft);color:var(--up)}
+.gtable input[data-st="low"]{background:var(--warn-soft);color:var(--warn)}
+.gtable .prevline{font-size:13px;color:var(--muted)}
+.gtable .sghint{font-size:13px;color:#1e7d32}
+.safety.small{font-size:15px;padding:8px 12px;margin-top:6px}
 .personal{margin-top:6px;background:#eef6ff;color:#1d3f6e;border-radius:8px;padding:6px 10px;font-size:15px;max-width:70ch}
 .tpls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-top:14px}
 .tpls .chip{cursor:pointer;font-size:15px;padding:6px 12px}
@@ -391,6 +419,9 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
  .tabs .tab{white-space:nowrap}
  .tabs-side{flex-direction:row;flex-wrap:wrap}
+ .gtable td.gname{min-width:110px}
+ .gtable td.gadapt input{min-width:110px}
+ .gplan .gacts{margin-inline-start:0}
  .stp{display:flex!important;justify-content:space-between;gap:4px;padding:4px}
  .stp button{flex:1;min-height:40px;font-size:22px;font-weight:700;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 }
@@ -838,8 +869,8 @@ function lineChart(pts,{color='var(--accent)',unit=''}={}){
 /* ---------- views ---------- */
 function render(){
   const main=$('#main');
-  const cv=S.view==='client'?(client()||{}).coachId:(S.view==='coaches'?S.coachView:undefined);const inMine=!!S.meId&&(S.view==='coaches'||S.view==='client')&&cv===S.meId;
-  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.nav==='mine'?inMine:(b.dataset.nav==='coaches'?((S.view==='coaches'||S.view==='client')&&!inMine):b.dataset.nav===S.view))));
+  const cv=S.view==='client'?(client()||{}).coachId:(S.view==='coaches'?S.coachView:S.view==='group'?(groupMembers(S.G?S.G.name:'')[0]||{}).coachId:undefined);const inMine=!!S.meId&&(S.view==='coaches'||S.view==='client'||S.view==='group')&&cv===S.meId;
+  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.nav==='mine'?inMine:(b.dataset.nav==='coaches'?((S.view==='coaches'||S.view==='client'||S.view==='group')&&!inMine):b.dataset.nav===S.view))));
   renderWho();
   let html='';
   if(!S.db) html=S.offline?`<div class="banner bad"><b>החיבור לנתוני הסטודיו לא זמין בתצוגה הזו.</b> פתחו את הדף מתוך claude.ai כשאתם מחוברים לחשבון.</div>`:`<div class="empty"><strong>מתחבר לנתוני הסטודיו…</strong></div>`;
@@ -850,7 +881,7 @@ function render(){
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
     else { if(window.FB&&S.user&&S.user.role==='admin'&&S.meta!==undefined&&S.view==='coaches'&&daysSince(S.meta.lastBackup)>=7) html+=`<div class="banner info"><span><b>גיבוי שבועי:</b> ${S.meta.lastBackup?`הגיבוי האחרון ב־${fmt(S.meta.lastBackup)}.`:'עוד לא נעשה גיבוי.'} לחיצה מורידה עותק של כל הנתונים – כדאי לשמור אותו בדרייב של העסק.</span><button class="btn primary sm" data-act="export">הורדת גיבוי</button></div>`;
-    html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): vCoaches(); }
+    html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): S.view==='group'?vGroup(): vCoaches(); }
   }
   main.innerHTML=html;
   if(!S.canWrite) main.querySelectorAll('input,select,textarea,[data-write]').forEach(el=>el.disabled=true);
@@ -944,6 +975,129 @@ function vManager(){
    <div class="card"><h2>לפי מאמן</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>מאמן</th><th>מתאמנים פעילים</th><th>תועדו ב־7 ימים</th><th>לא התאמנו 14+</th><th>הערות פתוחות</th></tr></thead><tbody>${coaches}</tbody></table></div></div></div>`;
 }
 
+/* ---------- group training (one shared plan, per-member results) ---------- */
+function gid(name){let h=0;for(const ch of String(name))h=(h*31+ch.charCodeAt(0))>>>0;return 'g_'+h.toString(36)}
+function groupMembers(name){return S.clients.filter(c=>ttype(c)==='group'&&(c.groupName||'קבוצה')===name&&(c.status||'active')==='active').sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'))}
+function groupsOfCoach(coachId){const m={};S.clients.filter(c=>ttype(c)==='group'&&c.coachId===coachId&&(c.status||'active')==='active').forEach(c=>{const n=c.groupName||'קבוצה';m[n]=(m[n]||0)+1});return Object.entries(m)}
+function openGroup(name){
+  closeClient(); closeGroup();
+  const G={name,id:gid(name),sessions:[],loaded:false,msess:[],edit:null};
+  S.G=G; S.view='group';
+  G.unsub=S.db.collection('sessions').where('clientId','==',G.id).onSnapshot(snap=>{G.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));G.loaded=true;scheduleRender()},dbErr);
+  const ids=groupMembers(name).map(c=>c.id).slice(0,10);
+  if(ids.length) G.unsub2=S.db.collection('sessions').where('clientId','in',ids).onSnapshot(snap=>{G.msess=snap.docs.map(d=>({id:d.id,...d.data()}));scheduleRender()},()=>{});
+  render(); window.scrollTo(0,0);
+}
+function closeGroup(){const G=S.G; if(G){if(G.unsub)G.unsub(); if(G.unsub2)G.unsub2();} S.G=null;}
+function gMemCtx(cid){return {sessions:(S.G?S.G.msess:[]).filter(s=>s.clientId===cid)}}
+function gNewEx(base){const e={...newExercise(),...(base||{})}; e.m={}; return e}
+function gEnsureMembers(doc){const ms=groupMembers(S.G.name); (doc.exercises||[]).forEach(ex=>{ex.m=ex.m||{}; ms.forEach(c=>{if(!ex.m[c.id]) ex.m[c.id]={kg:ex.targetKg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:''}; const mm=ex.m[c.id]; while(mm.sets.length<(Number(ex.targetSets)||2))mm.sets.push(''); while(mm.sets.length>(Number(ex.targetSets)||2)&&mm.sets[mm.sets.length-1]==='')mm.sets.pop();})}); doc.members=ms.map(c=>c.id); return doc}
+function gSave(delay){const G=S.G; if(!G||!G.edit) return; return saveDoc('sessions/'+G.edit.id,G.edit.doc,{delay:delay??700})}
+function vGroup(){
+  const G=S.G; if(!G) return vCoaches();
+  const ms=groupMembers(G.name);
+  const coachId=ms[0]?ms[0].coachId:S.meId;
+  const back=`<div><button class="btn ghost sm" data-act="gBack" data-coach-id="${esc(coachId||'')}">→ המתאמנים של ${esc(coachName(coachId))}</button></div>`;
+  const head=`${back}<div class="spread"><h1>👥 ${esc(G.name)}</h1></div>
+   <div class="row gmembers">${ms.map(c=>`<button class="chip" data-open="${c.id}">${esc(c.name)}</button>`).join('')||'<span class="muted">אין משתתפים פעילים בקבוצה</span>'}</div>
+   ${ms.map(c=>(c.limits?`<div class="safety small"><b>⚠ ${esc(c.name)}:</b><span>${esc(c.limits)}</span></div>`:'')+(c.conditions?`<div class="safety med small"><b>🩺 ${esc(c.name)}:</b><span>${esc(c.conditions)}</span></div>`:'')).join('')}`;
+  if(!G.loaded) return head+`<div class="empty">טוען…</div>`;
+  const planned=G.sessions.filter(s=>s.status==='planned').sort((a,b)=>(a.seq||0)-(b.seq||0));
+  const done=G.sessions.filter(s=>s.status==='done').sort((a,b)=>(b.seq||0)-(a.seq||0));
+  if(G.edit&&!G.sessions.some(s=>s.id===G.edit.id)&&!G.edit.local) G.edit=null;
+  if(G.edit&&G.edit.local&&G.sessions.some(s=>s.id===G.edit.id)) G.edit.local=false;
+  if(!G.edit&&(planned[0]||done[0])){const s=planned[0]||done[0]; G.edit={id:s.id,doc:gEnsureMembers(clone(s))};}
+  if(!G.edit) return head+modeChooser('gStart','איך לבנות את תוכנית הקבוצה?',tplButtons('gStart'));
+  const d=G.edit.doc, isDone=d.status==='done';
+  gEnsureMembers(d);
+  const exs=d.exercises||[]; const tags=groupTags(exs);
+  const nSets=Math.max(2,...exs.map(e=>Number(e.targetSets)||0));
+  const blocks=exs.map((ex,i)=>{const tg=tags[i];
+    const sep=tg.first&&(tg.ss||exs.some(e=>e.ss))?`<div class="gsep">${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</div>`:'';
+    const sec=unitOf(ex)==='sec';
+    const rows=ms.map(c=>{const mm=ex.m[c.id]; const prev=prevShort(gMemCtx(c.id),ex,null);
+      return `<tr><td class="gname"><b>${esc(c.name)}</b>${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
+       <td class="gkg" data-l="משקל"><input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
+       ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
+       <td class="res" data-l="כאב"><input type="number" min="0" max="10" data-gm="pain" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.pain)}" data-st="${num(mm.pain)>=4?'low':''}"></td>
+       <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="למשל: מדרגה נמוכה"></td></tr>`}).join('');
+    return `${sep}<div class="gex card ${tg.ss?'ssr':''}" data-gex="${i}">
+     <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">
+      <label>סטים<input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></label>
+      <label>${sec?'שניות':'חזרות'}<span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${esc(ex.repMax)}"></span></label>
+      <input class="gt" data-gf="tempo" data-ei="${i}" value="${esc(ex.tempo)}" placeholder="טמפו, מנח, דגשים">
+      <span class="gacts"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
+     ${cueHtml(ex.name)}
+     <div class="tbl-wrap"><table class="gtable"><thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>התאמה אישית</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}).join('');
+  const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq||1)>(d.seq||1));
+  const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">שבוע ${s.seq}${s.status==='done'?' ✓':''}</button>`).join('');
+  return head+`<div class="labels">${weeks}</div>
+   <div class="weekchip">שבוע ${d.seq||1}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
+   ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
+   <label class="f warmup">חימום<textarea data-gf="warmup" rows="2" placeholder="חימום משותף לקבוצה">${esc(d.warmup||'')}</textarea></label>
+   ${blocks||'<div class="card empty"><strong>אין תרגילים</strong></div>'}
+   <div class="row"><button class="btn" data-act="gAddSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="gAddEx" data-write>+ תרגיל בודד</button></div>
+   <label class="f">הערות לאימון<textarea data-gf="notes" placeholder="איך היה, מה לבדוק בפעם הבאה">${esc(d.notes||'')}</textarea></label>
+   <div class="plan-next row" style="justify-content:center;gap:12px">${isDone?'':`<button class="btn big" data-act="gComplete" data-write>סיום אימון ושמירה</button>`}<button class="btn primary big" data-act="gNext" data-write>${nextPlanned?`למעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'לתכנון האימון הבא'}</button></div>`;
+}
+function gInput(t){
+  const G=S.G; if(!G||!G.edit) return false; const d=G.edit.doc;
+  if(t.dataset.gf==='warmup'||t.dataset.gf==='notes'){d[t.dataset.gf]=t.value;gSave(900);return true}
+  const ex=d.exercises[Number(t.dataset.ei)]; if(!ex) return true;
+  if(t.dataset.gf){const f=t.dataset.gf; if(f==='name'||f==='targetSets') return true; ex[f]=['repMin','repMax'].includes(f)?(t.value===''?'':Number(t.value)):t.value; gSave(900); return true}
+  const mm=ex.m[t.dataset.cid]; if(!mm) return true; const f=t.dataset.gm;
+  if(f==='rep'){mm.sets[Number(t.dataset.si)]=t.value===''?'':Number(t.value); if(!d.date&&t.value!=='') d.date=today(); t.dataset.st=setState(ex,{reps:t.value});
+    if(t.value!==''&&Number(t.value)*10>Math.max(num(ex.repMax)||10,10)+5){const all=[...document.querySelectorAll('#main input[data-gm="rep"]')];const k=all.indexOf(t);setTimeout(()=>{if(all[k+1])all[k+1].focus();else t.blur()},0)}}
+  else if(f==='kg'||f==='pain') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
+  gSave(700); return true;
+}
+function gChange(t){
+  const G=S.G; if(!G||!G.edit||!t.dataset.gf) return false; const d=G.edit.doc; const ex=d.exercises[Number(t.dataset.ei)]; if(!ex) return true;
+  if(t.dataset.gf==='name'){ex.name=t.value.trim(); const l=libFind(ex.name); if(l){ex.unit=l[1];ex.group=l[2]; if(l[1]==='sec'&&ex.repMin===6){ex.repMin=20;ex.repMax=30}} gSave(0); render(); return true}
+  if(t.dataset.gf==='targetSets'){ex.targetSets=Math.max(1,Math.min(6,Number(t.value)||1)); gEnsureMembers(d); gSave(0); render(); return true}
+  return false;
+}
+async function gAct(name,el){
+  const G=S.G; if(!G) return;
+  const d=G.edit&&G.edit.doc; const i=Number(el.dataset.ei);
+  switch(name){
+  case 'gBack': {const k=el.dataset.coachId; closeGroup(); S.view='coaches'; S.coachView=k||S.meId; render(); window.scrollTo(0,0); break;}
+  case 'gStart': {const ref=S.db.collection('sessions').doc(); const exs=el.dataset.tpl?tplExercises(el.dataset.tpl):templateExercises(el.dataset.mode==='single'?'single':'ss');
+    const doc=gEnsureMembers({clientId:G.id,group:true,groupName:G.name,label:'1',seq:1,status:'planned',date:'',notes:'',warmup:'',createdAt:Date.now(),exercises:exs.map(e=>gNewEx(e))});
+    G.edit={id:ref.id,doc,local:true}; render(); await saveDoc('sessions/'+ref.id,doc); break;}
+  case 'gPick': {const s=G.sessions.find(x=>x.id===el.dataset.id); if(s){G.edit={id:s.id,doc:gEnsureMembers(clone(s))}; render();} break;}
+  case 'gAddEx': d.exercises.push(gNewEx({ss:''})); gEnsureMembers(d); gSave(0); render(); break;
+  case 'gAddSS': {const k=String(Math.max(0,...d.exercises.map(e=>Number(e.ss)||0))+1); d.exercises.push(gNewEx({ss:k}),gNewEx({ss:k})); gEnsureMembers(d); gSave(0); render(); break;}
+  case 'gUp': case 'gDown': {const j=name==='gUp'?i-1:i+1; if(j<0||j>=d.exercises.length) break; [d.exercises[i],d.exercises[j]]=[d.exercises[j],d.exercises[i]]; gSave(0); render(); break;}
+  case 'gDel': {if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='למחוק?';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='✕'}},3000);break} d.exercises.splice(i,1); gSave(0); render(); break;}
+  case 'gApply': {const mm=d.exercises[i].m[el.dataset.cid]; mm.kg=mm.skg; gSave(0); render(); break;}
+  case 'gComplete': {
+    const ms=groupMembers(G.name); if(!d.date) d.date=today(); let n=0;
+    for(const c of ms){
+      const exsM=d.exercises.filter(ex=>ex.name).map(ex=>{const mm=ex.m[c.id]||{sets:[]};return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
+      if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
+      const seq=gMemCtx(c.id).sessions.filter(s=>s.status==='done').length+1;
+      const ref=S.db.collection('sessions').doc();
+      await saveDoc('sessions/'+ref.id,{clientId:c.id,label:'1',seq,status:'done',approved:true,date:d.date,coach:coachName(S.meId),notes:d.notes||'',warmup:d.warmup||'',exercises:exsM,groupSession:G.edit.id,groupName:G.name,createdAt:Date.now(),completedAt:Date.now()});
+      await updClient(c.id,{lastSessionDate:d.date,lastCoach:coachName(S.meId),...(c.startDate?{}:{startDate:d.date})}); n++;
+    }
+    d.status='done'; d.completedAt=Date.now(); await saveDoc('sessions/'+G.edit.id,d); toast(`האימון נשמר בתיק של ${n} משתתפים`); render(); window.scrollTo(0,0); break;}
+  case 'gNext': {
+    if(d.status!=='done'&&(d.exercises||[]).some(ex=>Object.values(ex.m||{}).some(mm=>(mm.sets||[]).some(r=>r!==''&&r!=null)))) await gAct('gComplete',el);
+    const nextP=G.sessions.find(x=>x.status==='planned'&&x.id!==G.edit.id&&(x.seq||1)>(d.seq||1)); if(nextP){G.edit={id:nextP.id,doc:gEnsureMembers(clone(nextP))}; render(); window.scrollTo(0,0); break;}
+    const ms=groupMembers(G.name);
+    const exs=d.exercises.filter(ex=>ex.name).map(ex=>{const ne=gNewEx({...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:ex.targetKg});
+      ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const mex={...ex,targetKg:mm.kg??ex.targetKg,sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),pain:mm.pain};
+        const s=suggest(mex,exHistory(gMemCtx(c.id),ex.name)); let txt=s.reason;
+        if(unitOf(mex)!=='sec'&&isUnilateral(ex.name)&&s.type==='up') txt='חד־צדדי: להתקדם במשקל עבודה, עד 8 חזרות';
+        ne.m[c.id]={kg:mm.kg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',sugg:(s.type==='up'?'★ ':'')+txt,skg:(unitOf(mex)==='kg'&&s.kg!=null)?s.kg:null};});
+      return ne;});
+    const ref=S.db.collection('sessions').doc();
+    const doc={clientId:G.id,group:true,groupName:G.name,label:'1',seq:(d.seq||1)+1,status:'planned',date:'',notes:'',warmup:d.warmup||'',createdAt:Date.now(),basedOn:G.edit.id,exercises:exs};
+    G.edit={id:ref.id,doc:gEnsureMembers(doc),local:true}; await saveDoc('sessions/'+ref.id,doc); render(); window.scrollTo(0,0); break;}
+  }
+}
+
 /* ---------- login ---------- */
 async function pinHash(id,pin){const txt='rs-pin:'+id+':'+pin;
   try{if(crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}
@@ -961,7 +1115,7 @@ function gRender(){const box=$('#gres'),q=$('#gq').value; if(!q.trim()){box.hidd
   m.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.dataset.gid=c.id;if(i===S.gSel)b.className='on';
     const n=document.createElement('span');n.textContent=c.name+((c.status||'active')!=='active'?(c.status==='paused'?' (בהקפאה)':' (בארכיון)'):'');
     const k=document.createElement('span');k.className='gc';k.textContent=coachName(c.coachId);b.append(n,k);box.append(b)})}
-function gOpen(id){const q=$('#gq');q.value='';$('#gres').hidden=true;q.blur();S.showNew=false;openClient(id);window.scrollTo(0,0)}
+function gOpen(id){closeGroup();const q=$('#gq');q.value='';$('#gres').hidden=true;q.blur();S.showNew=false;openClient(id);window.scrollTo(0,0)}
 function bindSearch(){const q=$('#gq'),box=$('#gres'); q.value=''; setTimeout(()=>{if(document.activeElement!==q)q.value=''},800);
   q.addEventListener('input',()=>{S.gSel=0;gRender()});
   q.addEventListener('focus',()=>gRender());
@@ -1014,6 +1168,7 @@ function vCoaches(){
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
+     ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span></button>`).join('')}</div>`:''}
      ${act.length?`<div class="cgrid">${act.map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
      ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`;
   }
@@ -1043,7 +1198,8 @@ function vClient(){
   const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>`):'';
   const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}</button>${open?`<span class="morebox">${more.map(tb).join('')}</span>`:''}<span class="tabs-side">${addDayHtml}${np}</span></div>`;
   const body=S.tab==='session'?tSession(c):S.tab==='prev'?tPrev(c):S.tab==='history'?tHistory(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
-  return head+safety+noteHtml(c)+tabHtml+body;
+  const gBanner=ttype(c)==='group'?`<div class="banner info"><span><b>👥 ${esc(c.groupName||'קבוצה')}:</b> התוכנית והתוצאות של האימון הקבוצתי מנוהלות במסך הקבוצה, ונשמרות גם כאן בהיסטוריה.</span><button class="btn primary sm" data-group="${esc(c.groupName||'קבוצה')}">לאימון הקבוצה</button></div>`:'';
+  return head+safety+gBanner+noteHtml(c)+tabHtml+body;
 }
 function noteHtml(c){
   const h=c.handoff&&c.handoff.text?c.handoff:null;
@@ -1337,6 +1493,7 @@ function closeClient(){
   S.P=null;S.Q=null;S.assUnsub=null;S.clientId=null;
 }
 function openClient(id,tab){
+  if(S.G) closeGroup();
   closeClient();
   S.view='client'; S.clientId=id; S.tab=tab||'session'; S.assess=[]; S.progEx=null; S.assTest=null; S.newAssess=false; S.pairMode=false;
   S.P=mkCtx(id); subSessions(S.P);
@@ -1348,6 +1505,7 @@ function dbErr(e){ if(e&&e.code==='revoked'){S.db=null;S.offline=true;render()} 
 
 /* ---------- actions ---------- */
 async function act(name,el){
+  if(/^g[A-Z]/.test(name)) return gAct(name,el);
   const c=client(); const ctx=ctxOf(el); const cc=ctx?clientById(ctx.clientId):null;
   switch(name){
   case 'backCoaches': closeClient(); S.view='coaches'; S.coachView=null; S.showNew=false; render(); window.scrollTo(0,0); break;
@@ -1534,7 +1692,7 @@ function bind(){
   $('#zIn').addEventListener('click',()=>{ZOOM+=0.1;applyZoom()}); $('#zOut').addEventListener('click',()=>{ZOOM-=0.1;applyZoom()}); applyZoom();
   bindSearch();
   $('#who').addEventListener('click',e=>{if(e.target.closest('button'))logout()});
-  $('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(!b)return; if(!S.meId&&S.db)return; closeClient(); if(b.dataset.nav==='mine'){S.view='coaches';S.coachView=S.meId}else{S.view=b.dataset.nav; S.coachView=null;} S.showNew=false; render(); window.scrollTo(0,0);});
+  $('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(!b)return; if(!S.meId&&S.db)return; closeClient(); closeGroup(); if(b.dataset.nav==='mine'){S.view='coaches';S.coachView=S.meId}else{S.view=b.dataset.nav; S.coachView=null;} S.showNew=false; render(); window.scrollTo(0,0);});
   const main=$('#main');
   main.addEventListener('click',e=>{
     const t=e.target;
@@ -1543,6 +1701,7 @@ function bind(){
     const o=t.closest('[data-open]'); if(o){S.showNew=false;openClient(o.dataset.open);return}
     const st=t.closest('[data-step]'); if(st){const td=st.closest('td'); const inp=td&&td.querySelector('input.si'); if(inp&&!inp.disabled){const ctx=ctxOf(inp); const card=inp.closest('[data-ex]'); const ex=ctx&&ctx.edit&&card?ctx.edit.doc.exercises[Number(card.dataset.ex)]:null;
       let v=inp.value===''?(Number(st.dataset.step)>0?(num(ex&&ex.repMin)??8):0):Math.max(0,Number(inp.value)+Number(st.dataset.step)); inp.value=String(v); inp.dispatchEvent(new Event('input',{bubbles:true}));} return}
+    const gc=t.closest('[data-group]'); if(gc){openGroup(gc.dataset.group);return}
     const mc=t.closest('[data-mgrcoach]'); if(mc){S.view='coaches';S.coachView=mc.dataset.mgrcoach;render();window.scrollTo(0,0);return}
     const kc=t.closest('[data-coach]'); if(kc){S.coachView=kc.dataset.coach;S.showNew=false;render();window.scrollTo(0,0);return}
     const cf=t.closest('[data-coachfilter]'); if(cf){S.view='clients';S.filterCoach=cf.dataset.coachfilter;render();return}
@@ -1560,6 +1719,7 @@ function bind(){
   });
   main.addEventListener('input',e=>{
     const t=e.target;
+    if(S.view==='group'&&(t.dataset.gf||t.dataset.gm)){gInput(t);return}
     if(t.type==='number'&&t.value!==''&&Number(t.value)<0){t.value='';}
     if(t.id==='q'){S.q=t.value;clearTimeout(S.qT);S.qT=setTimeout(()=>{const p=t.selectionStart;render();const q=$('#q');if(q){q.focus();q.setSelectionRange(p,p)}},250);return}
     const f=t.dataset.f; const ctx=ctxOf(t); if(!f||!ctx||!ctx.edit) return;
@@ -1576,6 +1736,7 @@ function bind(){
   });
   main.addEventListener('change',e=>{
     const t=e.target;
+    if(S.view==='group'&&t.dataset.gf&&gChange(t)) return;
     if(t.id==='fCoach'){S.filterCoach=t.value;render();return}
     if(t.id==='fStatus'){S.filterStatus=t.value;render();return}
     if(t.dataset.setting){S.settings={...S.settings,[t.dataset.setting]:Number(t.value)};saveDoc('settings/progression',{step:num(S.settings.step)??1});toast('נשמר');return}
