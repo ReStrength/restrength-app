@@ -623,7 +623,7 @@ function mkCtx(id){return {clientId:id,sessions:[],edit:null,confirmDel:null,uns
 const S = {meId:(lsGet('rs_me')||null),loginPick:null,loginErr:'',db:null,user:null,canWrite:true,offline:false,coaches:[],clients:[],loaded:{c:false,k:false},
   view:'coaches',coachView:null,clientId:null,tab:'session',P:null,Q:null,pairMode:false,assess:[],assUnsub:null,
   progEx:null,assTest:null,newAssess:false,filterCoach:'',filterStatus:'active',q:'',showNew:false,
-  me:lsGet('rs_me')||'',deferred:false,settings:{lower:1,upper:0.5}};
+  me:lsGet('rs_me')||'',deferred:false,settings:{step:1}};
 function ctxOf(el){const p=el&&el.closest&&el.closest('[data-pane]');return p&&p.dataset.pane==='1'?S.Q:S.P}
 
 /* ---------- writes: one at a time per document ---------- */
@@ -665,7 +665,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTi
 
 /* ---------- progression engine (double progression) ---------- */
 function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
-function stepFor(group,kg){ const st=S.settings||{}; return group==='lower'?(num(st.lower)??1):(num(st.upper)??0.5); }
+function stepFor(group,kg){ const st=S.settings||{}; return num(st.step)??1; }
 function exStats(ex){
   const done=(ex.sets||[]).filter(s=>num(s.reps)!=null);
   const reps=done.map(s=>num(s.reps));
@@ -1282,11 +1282,10 @@ function vSettings(){
   ${window.FB&&S.user&&S.user.role==='admin'?`<div class="card"><h2>ייבוא נתונים</h2><span class="muted small">להעברת המתאמנים והאימונים מהמערכת הקודמת: בוחרים את קובץ ה־JSON שקיבלתם, והנתונים נוספים למערכת.</span>
    <div class="row"><input type="file" id="impFile" accept=".json,application/json"><button class="btn primary" data-act="doImport" data-write>ייבוא</button></div><div class="small" id="impMsg"></div></div>`:''}
   <div class="card"><h2>כמה משקל להוסיף בכל העלאה</h2><span class="muted small">המערכת תציע את התוספת הזו כשהמתאמן השלים את כל הסטים בראש הטווח. המאמן תמיד יכול לשנות ידנית.</span>
-   <div class="row"><label class="f" for="st_lower">פלג גוף תחתון<select id="st_lower" data-setting="lower">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${num(S.settings.lower)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label>
-   <label class="f" for="st_upper">פלג גוף עליון ובטן<select id="st_upper" data-setting="upper">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${num(S.settings.upper)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label></div></div>
+   <div class="row"><label class="f" for="st_step">תוספת מומלצת (לכל התרגילים)<select id="st_step" data-setting="step">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${(num(S.settings.step)??1)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label></div></div>
   <div class="card"><h2>שיטת ההתקדמות</h2><div class="small" style="max-width:72ch">
    <p>אחרי כל אימון המערכת נותנת רעיון לאימון הבא לפי התקדמות כפולה (double progression). ההחלטה תמיד של המאמן:</p>
-   <p><b>כל הסטים הגיעו לראש טווח החזרות</b> ← המשקל עולה לפי ההגדרה למעלה (כרגע ${S.settings.lower} ק"ג בפלג גוף תחתון, ${S.settings.upper} ק"ג בעליון) – והמאמן יכול לבחור כל תוספת בין 0.5 ל־2.5 ק"ג.<br>
+   <p><b>כל הסטים הגיעו לראש טווח החזרות</b> ← המשקל עולה לפי ההגדרה למעלה (כרגע ${num(S.settings.step)??1} ק"ג לכל התרגילים) – והמאמן יכול לבחור כל תוספת בין 0.5 ל־2.5 ק"ג.<br>
    <b>בתוך הטווח</b> ← אותו משקל, לשאוף לחזרה נוספת.<br>
    <b>סט רחוק מתחתית הטווח</b> ← הורדה של כ-10%.<br>
    <b>כאב 4 ומעלה</b> ← אין התקדמות, התרגיל מסומן לבדיקה.<br>
@@ -1537,7 +1536,7 @@ function bind(){
     const t=e.target;
     if(t.id==='fCoach'){S.filterCoach=t.value;render();return}
     if(t.id==='fStatus'){S.filterStatus=t.value;render();return}
-    if(t.dataset.setting){S.settings={...S.settings,[t.dataset.setting]:Number(t.value)};saveDoc('settings/progression',{lower:S.settings.lower,upper:S.settings.upper});toast('נשמר');return}
+    if(t.dataset.setting){S.settings={...S.settings,[t.dataset.setting]:Number(t.value)};saveDoc('settings/progression',{step:num(S.settings.step)??1});toast('נשמר');return}
     if(t.dataset.typesel){const k=t.dataset.typesel;$('#'+k+'_pairwrap').hidden=t.value!=='pair';$('#'+k+'_groupwrap').hidden=t.value!=='group';return}
     if(t.id==='a_more'&&t.value){const k=t.value;const grid=t.closest('.form-grid');const lab=document.createElement('label');lab.className='f';lab.htmlFor='t_'+k;lab.innerHTML=`${esc(TESTS[k].n)} <span class="muted">(${esc(TESTS[k].u)})</span><input id="t_${k}" type="number" step="any" inputmode="decimal" data-test="${k}">`;grid.insertBefore(lab,t.closest('label'));t.querySelector(`option[value="${k}"]`).remove();t.value='';lab.querySelector('input').focus();return}
     const f=t.dataset.f; const ctx=ctxOf(t); if(!f||!ctx||!ctx.edit) return;
@@ -1562,7 +1561,7 @@ async function boot(){
   if(user){const cw=await user.can('data.write'); if(cw===false) S.canWrite=false;}
   db.collection('coaches').onSnapshot(snap=>{S.coaches=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));const firstC=!S.loaded.c;S.loaded.c=true;if(firstC&&S.meId&&S.view==='coaches'&&!S.coachView)S.coachView=S.meId;scheduleRender()},dbErr);
   db.doc('settings/cues').onSnapshot(sn=>{S.cues=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
-  db.doc('settings/progression').onSnapshot(sn=>{if(sn.exists)S.settings={lower:1,upper:0.5,...sn.data()};scheduleRender()},()=>{});
+  db.doc('settings/progression').onSnapshot(sn=>{if(sn.exists)S.settings={step:1,...sn.data()};scheduleRender()},()=>{});
   let linked=false;
   db.collection('clients').onSnapshot(snap=>{S.clients=snap.docs.map(d=>({id:d.id,...d.data()}));S.loaded.k=true;
     const h=(location.hash||'').slice(1); if(!linked&&h&&S.clients.some(c=>c.id===h)){linked=true;openClient(h,'session');return}
