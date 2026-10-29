@@ -1174,8 +1174,8 @@ function vCoaches(){
   }
   const list=S.coaches.filter(k=>k.active!==false);
   const orphans=S.clients.filter(c=>!S.coaches.some(x=>x.id===c.coachId)).length;
-  return `<h1>מאמנים</h1><div class="kgrid">${list.map(k=>{const n=activeClients().filter(c=>c.coachId===k.id).length;return `<button class="kcard" data-coach="${k.id}"><span class="kn">${esc(k.name)}</span><span class="kc">${n?`${n} מתאמנים`:'אין מתאמנים עדיין'}</span></button>`}).join('')}
-   ${orphans?`<button class="kcard ghost" data-coach="none"><span class="kn">ללא מאמן</span><span class="kc">${orphans} מתאמנים</span></button>`:''}</div>`;
+  return `<h1>מאמנים</h1><div class="kgrid">${list.map(k=>{const n=activeClients().filter(c=>c.coachId===k.id).length;return `<button class="kcard" data-coach="${k.id}"><span class="kn">${esc(k.name)}</span></button>`}).join('')}
+   ${orphans?`<button class="kcard ghost" data-coach="none"><span class="kn">ללא מאמן</span></button>`:''}</div>`;
 }
 function vClient(){
   const c=client();
