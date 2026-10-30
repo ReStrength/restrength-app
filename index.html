@@ -270,6 +270,10 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .addnote{margin:8px 0}
 .cm .nflag{color:#a07800;font-weight:700}
 .stp{display:none}
+.arch{margin-top:10px}
+.arch summary{cursor:pointer;font-size:17px;padding:6px 0}
+.archw{margin:10px 0 16px}
+.archw h4{margin:6px 0}
 .gcard{border-color:var(--accent);background:var(--accent-soft)}
 .gmembers{margin:6px 0 10px}
 .gex{padding:12px;margin:8px 0}
@@ -813,7 +817,7 @@ function blankPlan(clientId,label,mode){return {clientId,label:label||'1',seq:1,
 function newExercise(){return {id:uid(),name:'',unit:'kg',group:'other',ss:'',rirTarget:3,tempo:'',targetSets:2,targetKg:'',repMin:6,repMax:10,sets:[{kg:'',reps:''},{kg:'',reps:''}],rir:'',pain:'',note:'',sugg:null}}
 function subSessions(ctx){
   ctx.unsub=S.db.collection('sessions').where('clientId','==',ctx.clientId).onSnapshot(snap=>{
-    ctx.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const all=snap.docs.map(d=>({id:d.id,...d.data()})); ctx.archive=all.filter(x=>x.status==='archive').sort((a,b)=>(a.order||0)-(b.order||0)); ctx.sessions=all.filter(x=>x.status!=='archive');
     if(ctx.edit){const f=ctx.sessions.find(s=>s.id===ctx.edit.id);
       if(f&&!hasPending('sessions/'+ctx.edit.id)&&!editorFocused()) ctx.edit.doc=clone(f);}
     ctx.loaded=true; scheduleRender();
@@ -1262,6 +1266,7 @@ function paneHtml(ctx,c,pane,pair){
   if(ctx.edit&&ctx.edit.fresh&&ctx.sessions.some(s=>s.id===ctx.edit.id)) ctx.edit.fresh=false;
   if(!ctx.edit&&planned.length) ctx.edit={id:planned[0].id,doc:clone(planned[0])};
   if(!ctx.edit&&done.length) ctx.edit={id:done[0].id,doc:clone(done[0])};
+  if(!ctx.edit&&ctx.loaded&&!ctx.sessions.length&&S.db&&c.createdAt&&c.createdAt<1792900000000&&!ctx.forceNew) return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}<div class="card empty"><strong>התוכנית של ${esc(c.name)} תועבר בקרוב מהגוגל שיטס</strong><span>אין צורך לבנות אותה מחדש.</span><button class="linkbtn" data-act="forceNew">בכל זאת לבנות תוכנית חדשה</button></div></section>`;
   if(!ctx.edit&&ctx.loaded&&!ctx.sessions.length&&S.db) return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}${modeChooser('startPlan','איך לבנות את התוכנית של '+c.name+'?',tplButtons('startPlan'))}</section>`;
   const ph=pair?`<div class="pane-head"><h2>${esc(c.name)}</h2>${pane===1&&c.limits?`<div class="safety small"><b>⚠ מגבלות:</b><span>${esc(c.limits)}</span></div>`:''}</div>`:'';
   if(!ctx.loaded) return `<section data-pane="${pane}">${ph}<div class="empty">טוען…</div></section>`;
@@ -1361,13 +1366,20 @@ function tPrev(c){
 }
 
 /* ----- history ----- */
+function archiveHtml(ctx){const a=(ctx&&ctx.archive)||[]; if(!a.length) return '';
+  const byCycle={}; a.forEach(w=>{(byCycle[w.cycle||'']=byCycle[w.cycle||'']||[]).push(w)});
+  return `<div class="card"><h2>היסטוריה מהגוגל שיטס</h2><span class="muted small">אימונים מלפני המעבר למערכת, כפי שנרשמו בקובץ. לקריאה בלבד – לא משפיעים על ההמלצות.</span>
+   ${Object.entries(byCycle).map(([cy,ws])=>`<details class="arch"><summary><b>${esc(cy)}</b> · ${ws.length} אימונים</summary>
+   ${ws.slice().reverse().map(w=>`<div class="archw"><h4>${esc(w.title||'')}</h4><div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>סטים×חזרות</th><th>משקל</th><th>תוצאות</th><th>הערות</th></tr></thead><tbody>
+   ${(w.rows||[]).map(r=>`<tr><td>${r.n?`<span class="muted small">${esc(r.n)}) </span>`:''}${esc(r.name)}</td><td dir="ltr" style="text-align:right">${esc(r.sets||'')}</td><td>${esc(r.kg||'')}</td><td><b>${esc(r.result||'')}</b></td><td class="small">${esc(r.note||'')}</td></tr>`).join('')}
+   </tbody></table></div>${w.note?`<div class="small muted">${esc(w.note)}</div>`:''}</div>`).join('')}</details>`).join('')}</div>`}
 function tHistory(c){
   const done=doneSessions(S.P);
-  if(!done.length) return `<div class="card empty"><strong>עדיין אין אימונים שבוצעו</strong><span>אחרי שמסיימים אימון בלשונית "תוכנית אימונים", הוא נשמר כאן עם כל התוצאות.</span></div>`;
+  if(!done.length&&!(S.P&&S.P.archive&&S.P.archive.length)) return `<div class="card empty"><strong>עדיין אין אימונים שבוצעו</strong><span>אחרי שמסיימים אימון בלשונית "תוכנית אימונים", הוא נשמר כאן עם כל התוצאות.</span></div>`;
   return `<div class="hist">${done.map(d=>`<div class="card"><div class="spread"><div><h3>${fmt(d.date)} · ${labelName(c,d.label)}שבוע ${d.seq}</h3><span class="muted small">${d.coach?esc(d.coach):''}${d.notes?` · ${esc(d.notes)}`:''}</span></div><button class="btn sm" data-act="openSess" data-id="${d.id}">פתיחה לעריכה</button></div>
    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>יעד</th><th>בפועל</th><th>כאב</th></tr></thead><tbody>
    ${(d.exercises||[]).map(e=>{const st=exStats(e);return `<tr><td>${e.ss?`<span class="muted small">ס״ס ${esc(e.ss)} · </span>`:''}${esc(e.name)}</td><td class="muted" dir="ltr" style="text-align:right">${e.targetSets}×${e.repMin}–${e.repMax}${e.unit==='kg'&&e.targetKg!==''?` @ ${e.targetKg}kg`:''}</td><td dir="ltr" style="text-align:right">${st.done.map((s,i)=>e.unit==='kg'?`${st.kgs[i]}×${st.reps[i]}`:`${st.reps[i]}`).join(' · ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
-   </tbody></table></div></div>`).join('')}</div>`;
+   </tbody></table></div></div>`).join('')}</div>`+archiveHtml(S.P);
 }
 
 /* ----- progress ----- */
@@ -1647,6 +1659,7 @@ async function act(name,el){
   case 'noteSave': {const v=($('#noteTxt')||{}).value||''; const id=S.clientId; const val=v.trim()?{text:v.trim(),by:S.meId||'',at:Date.now()}:null; const cl=clientById(id); if(cl)cl.handoff=val; S.noteEdit=null; render(); await updClient(id,{handoff:val}); toast(val?'ההערה נשמרה':'ההערה הוסרה'); break;}
   case 'noteClear': {const id=S.clientId; const cl=clientById(id); if(cl)cl.handoff=null; render(); await updClient(id,{handoff:null}); toast('ההערה הוסרה'); break;}
   case 'logout': logout(); break;
+  case 'forceNew': {if(ctx){ctx.forceNew=true; render();} break;}
   case 'goAssess': S.tab='assess'; S.moreOpen=true; render(); break;
   case 'saveTpl': {const d=ctx&&ctx.edit&&ctx.edit.doc; const ex=(d&&d.exercises||[]).filter(e=>e.name); if(!ex.length){toast('אין תרגילים לשמור');break}
     const nm=(prompt('שם לתבנית (למשל: מניעת נפילות – שלב ב׳)')||'').trim(); if(!nm) break;
