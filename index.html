@@ -885,7 +885,7 @@ function render(){
     else if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
-    else { if(window.FB&&S.user&&S.user.role==='admin'&&S.meta!==undefined&&S.view==='coaches'&&daysSince(S.meta.lastBackup)>=7) html+=`<div class="banner info"><span><b>גיבוי שבועי:</b> ${S.meta.lastBackup?`הגיבוי האחרון ב־${fmt(S.meta.lastBackup)}.`:'עוד לא נעשה גיבוי.'} לחיצה מורידה עותק של כל הנתונים – כדאי לשמור אותו בדרייב של העסק.</span><button class="btn primary sm" data-act="export">הורדת גיבוי</button></div>`;
+    else {
     html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): S.view==='group'?vGroup(): vCoaches(); }
   }
   main.innerHTML=html;
@@ -1496,8 +1496,7 @@ function vSettings(){
    <b>כאב 4 ומעלה</b> ← אין התקדמות, התרגיל מסומן לבדיקה.<br>
    <b>שלושה אימונים בלי שינוי</b> ← סימון קיפאון והמלצה לשנות גירוי.<br>
    תרגילי משקל גוף מתקדמים בסט נוסף ואז בחזרות; תרגילי זמן מתקדמים ב-5 שניות. סופר סטים והערות טמפו ומנוחה עוברים אוטומטית לשבוע הבא.</p>
-   <p class="muted">ההצעה תמיד ממתינה לאישור המאמן, שיכול לשנות כל ערך.</p></div></div>
-  <div class="card"><h2>גיבוי</h2><span class="muted small">הורדת קובץ JSON עם כל המתאמנים, האימונים והמבדקים.</span><div class="row"><button class="btn" data-act="export">הורדת גיבוי מלא</button></div></div>`;
+   <p class="muted">ההצעה תמיד ממתינה לאישור המאמן, שיכול לשנות כל ערך.</p></div></div>`;
 }
 
 /* ---------- navigation ---------- */
