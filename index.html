@@ -440,6 +440,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
         <button data-nav="mine" id="navMine" hidden>התיקייה שלי</button>
         <button data-nav="coaches">מאמנים</button>
         <button data-nav="manager" id="navMgr" hidden>ניהול</button>
+        <button data-nav="clinic" id="navClinic" hidden title="מעבר לאפליקציית הקליניקה">קליניקה ↗</button>
         <button data-nav="settings">הגדרות</button>
       </nav>
       <div class="subrow">
@@ -1108,7 +1109,7 @@ async function pinHash(id,pin){const txt='rs-pin:'+id+':'+pin;
   let h=5381;for(const ch of txt)h=((h*33)^ch.charCodeAt(0))>>>0;return 'd'+h.toString(16)}
 const MGR=['yarin'];
 function renderWho(){const w=$('#who'),m=$('#navMine');if(!w)return;const k=S.meId&&S.coaches.find(x=>x.id===S.meId);
-  if(m)m.hidden=!k; const mg=$('#navMgr'); if(mg)mg.hidden=!(k&&MGR.includes(k.id)); const gs=$('#gsearch'); if(gs)gs.hidden=!k; const nv=$('#nav'); if(nv)nv.style.visibility=(S.db&&!k)?'hidden':''; if(!k){w.hidden=true;w.textContent='';return}
+  if(m)m.hidden=!k; const mg=$('#navMgr'); if(mg)mg.hidden=!(k&&MGR.includes(k.id)); const cl=$('#navClinic'); if(cl)cl.hidden=!(k&&MGR.includes(k.id)); const gs=$('#gsearch'); if(gs)gs.hidden=!k; const nv=$('#nav'); if(nv)nv.style.visibility=(S.db&&!k)?'hidden':''; if(!k){w.hidden=true;w.textContent='';return}
   w.hidden=false;w.innerHTML='';const sp=document.createElement('span');sp.textContent='שלום, '+k.name;w.append(sp)}
 function gMatches(q){q=q.trim(); if(!q) return [];
   const mine=S.meId;
@@ -1705,7 +1706,7 @@ function bind(){
   $('#zIn').addEventListener('click',()=>{ZOOM+=0.1;applyZoom()}); $('#zOut').addEventListener('click',()=>{ZOOM-=0.1;applyZoom()}); applyZoom();
   bindSearch();
   $('#who').addEventListener('click',e=>{if(e.target.closest('button'))logout()});
-  $('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(!b)return; if(!S.meId&&S.db)return; closeClient(); closeGroup(); if(b.dataset.nav==='mine'){S.view='coaches';S.coachView=S.meId}else{S.view=b.dataset.nav; S.coachView=null;} S.showNew=false; render(); window.scrollTo(0,0);});
+  $('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(!b)return; if(b.dataset.nav==='clinic'){location.href='https://yaringohar.com/clinic/';return} if(!S.meId&&S.db)return; closeClient(); closeGroup(); if(b.dataset.nav==='mine'){S.view='coaches';S.coachView=S.meId}else{S.view=b.dataset.nav; S.coachView=null;} S.showNew=false; render(); window.scrollTo(0,0);});
   const main=$('#main');
   main.addEventListener('click',e=>{
     const t=e.target;
