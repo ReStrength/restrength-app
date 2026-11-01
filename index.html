@@ -448,6 +448,13 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .sheet td.res.pain input,.gtable td.res.pain input{font-size:30px;font-weight:800;min-height:58px;text-align:center;border:2px solid #ffa8a8;border-radius:10px;background:#fff;color:#2b2b2b}
 .sheet td.res.pain input::placeholder,.gtable td.res.pain input::placeholder{font-size:15px;font-weight:600;color:#c9a3a3}
 .sheet td.res.pain input[data-st=low],.gtable td.res.pain input[data-st=low]{color:#c92a2a;border-color:#e03131;background:#fff0f0}
+
+/* לו"ז מארבוקס */
+.abbox{background:var(--surface);border:2px solid #1c7ed6;border-radius:16px;padding:14px 18px 16px;margin:12px 0 10px}
+.abh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}.abh h2{margin:0;font-size:20px}
+.abtabs{display:inline-flex;gap:4px}.abtabs button{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}.abtabs button.on{background:#1c7ed6;color:#fff;border-color:#1c7ed6}
+.abl{display:flex;flex-direction:column;gap:6px}.abr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 14px;width:100%;text-align:start;font:inherit;color:var(--ink);background:var(--bg,#fff);border:1px solid var(--line);border-inline-start:6px solid #1c7ed6;border-radius:12px;padding:10px 14px}
+button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt small{font-size:13px;font-weight:600;color:var(--muted)}.abn{font-weight:700;font-size:18px}.abm{grid-column:2/3;color:var(--muted);font-size:14px;margin-top:-4px}.abgo{grid-row:1/3;grid-column:3;color:#1c7ed6;font-weight:700;font-size:14px}
 </style>
 
 <div class="app" dir="rtl">
@@ -1194,6 +1201,47 @@ function todayHtml(act){
   return `<div class="todaybox">${head}<div class="tgrid">${list.map(c=>{const done=c.lastSessionDate===td;const p=partnerOf(c);
     return `<button class="tcard${done?' done':''}" data-open="${c.id}"><span class="tn">${esc(c.name)}</span><span class="tm">${p?`בזוג עם ${esc(p.name)}`:TTYPES[ttype(c)]}</span><span class="ts">${done?'✓ התאמן היום':(c.lastSessionDate&&!c.hasPlan)?'⏳ צריך לתכנן אימון':'פתיחת התוכנית ←'}</span></button>`}).join('')}</div></div>
   <h3 class="muted" style="margin-top:18px">כל המתאמנים</h3>`}
+/* ----- לו"ז מארבוקס: מי מגיע מתי (מוצפן, נפתח רק לצוות) ----- */
+const AB={key:null,list:[],sched:[],t:0,busy:false,err:'',ok:false};
+const ABURL='https://yaringohar.com/clinic/';
+function abB64e(buf){const a=new Uint8Array(buf);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)}
+function abB64d(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+async function abKey(){
+  if(AB.key)return AB.key;
+  const ref=S.db.doc('settings/arbox'),snap=await ref.get();let d=snap.exists?snap.data():null;const admin=S.user&&S.user.role==='admin';
+  if(!d||!d.priv){if(!admin)throw new Error('nokey');
+    const kp=await crypto.subtle.generateKey({name:'RSA-OAEP',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-1'},true,['encrypt','decrypt']);
+    const spki=await crypto.subtle.exportKey('spki',kp.publicKey),pk=await crypto.subtle.exportKey('pkcs8',kp.privateKey);
+    d={pub:'-----BEGIN PUBLIC KEY-----\n'+abB64e(spki).match(/.{1,64}/g).join('\n')+'\n-----END PUBLIC KEY-----\n',priv:abB64e(pk),at:Date.now()};await ref.set(d)}
+  if(admin&&!d.sent){const r=await fetch(ABURL+'studio/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pub:d.pub})});if(r.ok){d.sent=1;await ref.update({sent:1})}else if(r.status===409)AB.err='keyclash'}
+  AB.key=await crypto.subtle.importKey('pkcs8',abB64d(d.priv),{name:'RSA-OAEP',hash:'SHA-1'},false,['decrypt']);return AB.key}
+async function abOpen(k,e){const raw=await crypto.subtle.decrypt({name:'RSA-OAEP'},k,abB64d(e.k));const ak=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:abB64d(e.iv)},ak,abB64d(e.ct));return JSON.parse(new TextDecoder().decode(pt))}
+async function abLoad(force){
+  if(!window.FB||!S.db||AB.busy)return;if(!force&&Date.now()-AB.t<120000)return;AB.busy=true;AB.t=Date.now();
+  try{const k=await abKey();const r=await fetch(ABURL+'studio/feed',{cache:'no-store'});const j=await r.json();
+    const L=await Promise.all(Object.values(j.appts||{}).map(e=>abOpen(k,e).catch(()=>null)));AB.list=L.filter(Boolean);
+    AB.sched=[];if(j.sched){try{const x=await abOpen(k,j.sched);AB.sched=Array.isArray(x)?x:[]}catch(e){}}
+    AB.ok=true;if(AB.err!=='keyclash')AB.err=''}catch(e){AB.err=String(e&&e.message||e)}
+  AB.busy=false;scheduleRender()}
+setInterval(()=>{if(document.visibilityState==='visible')abLoad()},180000);
+function abDate(off){const d=new Date();d.setDate(d.getDate()+off);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function abNorm(s){return String(s||'').replace(/\s+/g,' ').trim()}
+function abClient(n){n=abNorm(n);if(!n)return null;return S.clients.find(c=>abNorm(c.name)===n)||S.clients.find(c=>{const a=abNorm(c.name);return a&&(n.startsWith(a)||a.startsWith(n))})||null}
+function abCoachMatch(k,name){if(!k)return true;const f=abNorm(k.name).split(' ')[0];return !!f&&abNorm(name).includes(f)}
+function abHtml(k){
+  setTimeout(()=>abLoad(),0);
+  if(!AB.ok&&!AB.err)return `<div class="abbox"><div class="abh"><h2>🗓️ הלו״ז מארבוקס</h2></div><div class="muted">טוען…</div></div>`;
+  if(!AB.ok)return AB.err==='nokey'?`<div class="abbox"><div class="abh"><h2>🗓️ הלו״ז מארבוקס</h2></div><div class="muted">יופעל אחרי שירין ייכנס לאפליקציה פעם אחת.</div></div>`:'';
+  const off=S.abDay||0,D=abDate(off);
+  const rows=AB.list.filter(o=>String(o.date).slice(0,10)===D&&abCoachMatch(k,o.coach)).map(o=>({t:String(o.time).slice(0,5),e:String(o.end||'').slice(0,5),n:o.name,c:o.coach,w:o.what}));
+  AB.sched.filter(x=>String(x.d).slice(0,10)===D&&abCoachMatch(k,x.st)).forEach(x=>rows.push({t:String(x.s).slice(0,5),e:String(x.e||'').slice(0,5),n:'',c:x.st,w:x.sn,g:x.cnt}));
+  rows.sort((a,b)=>a.t.localeCompare(b.t));
+  const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
+  const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
+      return c?`<button class="abr" data-open="${c.id}">${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:`<div class="abr">${inner}</div>`}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
+  return `<div class="abbox"><div class="abh"><h2>🗓️ מי מגיע ${off?'מחר':'היום'} (מארבוקס)</h2>${tabs}</div>${body}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-abday]');if(!b)return;S.abDay=+b.dataset.abday;render()});
 function vCoaches(){
   if(!S.loaded.k||!S.loaded.c) return `<div class="empty"><strong>טוען…</strong></div>`;
   if(S.coachView){
@@ -1205,6 +1253,7 @@ function vCoaches(){
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
+     ${k.id!=='none'?abHtml(k):''}
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span></button>`).join('')}</div>`:''}
      ${act.length?`<div class="cgrid">${act.map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
@@ -1212,7 +1261,7 @@ function vCoaches(){
   }
   const list=S.coaches.filter(k=>k.active!==false);
   const orphans=S.clients.filter(c=>!S.coaches.some(x=>x.id===c.coachId)).length;
-  return `<h1>מאמנים</h1><div class="kgrid">${list.map(k=>{const n=activeClients().filter(c=>c.coachId===k.id).length;return `<button class="kcard" data-coach="${k.id}"><span class="kn">${esc(k.name)}</span></button>`}).join('')}
+  return `<h1>מאמנים</h1>${window.FB?abHtml(null):''}<div class="kgrid">${list.map(k=>{const n=activeClients().filter(c=>c.coachId===k.id).length;return `<button class="kcard" data-coach="${k.id}"><span class="kn">${esc(k.name)}</span></button>`}).join('')}
    ${orphans?`<button class="kcard ghost" data-coach="none"><span class="kn">ללא מאמן</span></button>`:''}</div>`;
 }
 function vClient(){
