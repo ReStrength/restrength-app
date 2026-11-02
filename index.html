@@ -461,6 +461,10 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .nbig{flex:1 1 160px;min-height:64px;font:inherit;font-size:20px;font-weight:800;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);cursor:pointer}
 .nbig[aria-pressed=true]{border-color:var(--accent);background:var(--accent);color:#fff}
 .ncf #n_pairwrap select{width:100%;min-height:52px;font:inherit;font-size:18px;margin-bottom:8px}
+
+/* אימון זוגי: סדר החלפה */
+.rotc h3{margin:0 0 4px}.rott{width:100%;border-collapse:collapse;margin-top:8px}.rott th{background:var(--band);color:#fff;padding:7px;font-size:15px}.rott td{border:1px solid var(--line);padding:8px 10px;vertical-align:top}.rott td:first-child{text-align:center;font-weight:800;width:56px}.rott small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.pcard{border-inline-start-color:#1c7ed6}
 </style>
 
 <div class="app" dir="rtl">
@@ -1013,7 +1017,11 @@ function vManager(){
 
 /* ---------- group training (one shared plan, per-member results) ---------- */
 function gid(name){let h=0;for(const ch of String(name))h=(h*31+ch.charCodeAt(0))>>>0;return 'g_'+h.toString(36)}
-function groupMembers(name){return S.clients.filter(c=>ttype(c)==='group'&&(c.groupName||'קבוצה')===name&&(c.status||'active')==='active').sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'))}
+function isPairKey(n){return String(n||'').startsWith('pair:')}
+function pairKey(c){return c&&c.partnerId?'pair:'+[c.id,c.partnerId].sort().join(':'):''}
+function gTitle(n){if(!isPairKey(n))return n;return String(n).split(':').slice(1).map(id=>(clientById(id)||{}).name||'').filter(Boolean).join(' ו')}
+function pairsOfCoach(coachId){const seen={},o=[];S.clients.filter(c=>ttype(c)==='pair'&&c.partnerId&&(c.status||'active')==='active'&&c.coachId===coachId).forEach(c=>{const k=pairKey(c);if(!seen[k]&&clientById(c.partnerId)){seen[k]=1;o.push(k)}});return o}
+function groupMembers(name){if(isPairKey(name))return String(name).split(':').slice(1).map(id=>clientById(id)).filter(Boolean);return S.clients.filter(c=>ttype(c)==='group'&&(c.groupName||'קבוצה')===name&&(c.status||'active')==='active').sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'))}
 function groupsOfCoach(coachId){const m={};S.clients.filter(c=>ttype(c)==='group'&&c.coachId===coachId&&(c.status||'active')==='active').forEach(c=>{const n=c.groupName||'קבוצה';m[n]=(m[n]||0)+1});return Object.entries(m)}
 function openGroup(name){
   closeClient(); closeGroup();
@@ -1034,7 +1042,8 @@ function vGroup(){
   const ms=groupMembers(G.name);
   const coachId=ms[0]?ms[0].coachId:S.meId;
   const back=`<div><button class="btn ghost sm" data-act="gBack" data-coach-id="${esc(coachId||'')}">→ המתאמנים של ${esc(coachName(coachId))}</button></div>`;
-  const head=`${back}<div class="spread"><h1>👥 ${esc(G.name)}</h1></div>
+  const PR=isPairKey(G.name);
+  const head=`${back}<div class="spread"><h1>👥 ${esc(gTitle(G.name))}${PR?' <small class="muted">אימון זוגי · תוכנית משותפת</small>':''}</h1></div>
    <div class="row gmembers">${ms.map(c=>`<button class="chip" data-open="${c.id}">${esc(c.name)}</button>`).join('')||'<span class="muted">אין משתתפים פעילים בקבוצה</span>'}</div>
    ${ms.map(c=>(c.limits?`<div class="safety small"><b>⚠ ${esc(c.name)}:</b><span>${esc(c.limits)}</span></div>`:'')+(c.conditions?`<div class="safety med small"><b>🩺 ${esc(c.name)}:</b><span>${esc(c.conditions)}</span></div>`:'')).join('')}`;
   if(!G.loaded) return head+`<div class="empty">טוען…</div>`;
@@ -1043,7 +1052,8 @@ function vGroup(){
   if(G.edit&&!G.sessions.some(s=>s.id===G.edit.id)&&!G.edit.local) G.edit=null;
   if(G.edit&&G.edit.local&&G.sessions.some(s=>s.id===G.edit.id)) G.edit.local=false;
   if(!G.edit&&(planned[0]||done[0])){const s=planned[0]||done[0]; G.edit={id:s.id,doc:gEnsureMembers(clone(s))};}
-  if(!G.edit) return head+modeChooser('gStart','איך לבנות את תוכנית הקבוצה?',tplButtons('gStart'));
+  if(!G.edit){const cp=PR?ms.filter(c=>G.msess.some(x=>x.clientId===c.id&&(x.exercises||[]).some(e=>e.name))).map(c=>`<button class="btn" data-act="gCopy" data-cid="${c.id}">להעתיק מהתוכנית של ${esc(c.name)}</button>`).join(''):'';
+    return head+(cp?`<div class="card"><h2>יש כבר תוכנית אישית</h2><div class="row">${cp}</div><p class="muted small">התרגילים עוברים לתוכנית המשותפת, ולכל אחד נשמרים המשקלים שלו.</p></div>`:'')+modeChooser('gStart',PR?'איך לבנות את התוכנית של הזוג?':'איך לבנות את תוכנית הקבוצה?',tplButtons('gStart'))}
   const d=G.edit.doc, isDone=d.status==='done';
   gEnsureMembers(d);
   const exs=d.exercises||[]; const tags=groupTags(exs);
@@ -1067,10 +1077,14 @@ function vGroup(){
      <div class="tbl-wrap"><table class="gtable"><thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>התאמה אישית</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}).join('');
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq||1)>(d.seq||1));
   const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">שבוע ${s.seq}${s.status==='done'?' ✓':''}</button>`).join('');
-  return head+`<div class="labels">${weeks}</div>
+  let rot='';
+  if(PR&&ms.length===2){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,names:exs.filter((e,j)=>tags[j].n===tg.n).map(e=>e.name).filter(Boolean)})});
+    if(bl.length>=2){const A=ms[0],B=ms[1],L=bl.length;const lab=b=>(b.ss?'סופר סט ':'תרגיל ')+b.n;
+      rot=`<div class="card rotc"><h3>🔄 סדר העבודה בזוג</h3><p class="muted small">כל אחד עושה בלוק אחר, ומתחלפים כששניהם סיימו.</p><table class="rott"><thead><tr><th>סבב</th><th>${esc(A.name)}</th><th>${esc(B.name)}</th></tr></thead><tbody>${bl.map((b,k)=>{const bb=bl[(k+1)%L];return `<tr><td>${k+1}</td><td><b>${lab(b)}</b><small>${esc(b.names.join(' + '))}</small></td><td><b>${lab(bb)}</b><small>${esc(bb.names.join(' + '))}</small></td></tr>`}).join('')}</tbody></table></div>`}}
+  return head+`<div class="labels">${weeks}</div>${rot}
    <div class="weekchip">שבוע ${d.seq||1}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
    ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
-   <label class="f warmup">חימום<textarea data-gf="warmup" rows="2" placeholder="חימום משותף לקבוצה">${esc(d.warmup||'')}</textarea></label>
+   <label class="f warmup">חימום<textarea data-gf="warmup" rows="2" placeholder="${isPairKey(S.G&&S.G.name)?'חימום משותף לזוג':'חימום משותף לקבוצה'}">${esc(d.warmup||'')}</textarea></label>
    ${blocks||'<div class="card empty"><strong>אין תרגילים</strong></div>'}
    <div class="row"><button class="btn" data-act="gAddSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="gAddEx" data-write>+ תרגיל בודד</button></div>
    <label class="f">הערות לאימון<textarea data-gf="notes" placeholder="איך היה, מה לבדוק בפעם הבאה">${esc(d.notes||'')}</textarea></label>
@@ -1100,6 +1114,10 @@ async function gAct(name,el){
   case 'gBack': {const k=el.dataset.coachId; closeGroup(); S.view='coaches'; S.coachView=k||S.meId; render(); window.scrollTo(0,0); break;}
   case 'gStart': {const ref=S.db.collection('sessions').doc(); const exs=el.dataset.tpl?tplExercises(el.dataset.tpl):templateExercises(el.dataset.mode==='single'?'single':'ss');
     const doc=gEnsureMembers({clientId:G.id,group:true,groupName:G.name,label:'1',seq:1,status:'planned',date:'',notes:'',warmup:'',createdAt:Date.now(),exercises:exs.map(e=>gNewEx(e))});
+    G.edit={id:ref.id,doc,local:true}; render(); await saveDoc('sessions/'+ref.id,doc); break;}
+  case 'gCopy': {const src=G.msess.filter(x=>x.clientId===el.dataset.cid&&(x.exercises||[]).some(e=>e.name)).sort((a,b)=>((b.status==='planned')-(a.status==='planned'))||((b.seq||0)-(a.seq||0)))[0]; if(!src) break;
+    const ref=S.db.collection('sessions').doc(); const exs=src.exercises.filter(e=>e.name).map(e=>gNewEx({...carry(e),targetSets:e.targetSets,repMin:e.repMin,repMax:e.repMax,targetKg:e.targetKg}));
+    const doc=gEnsureMembers({clientId:G.id,group:true,groupName:G.name,label:'1',seq:1,status:'planned',date:'',notes:'',warmup:src.warmup||'',createdAt:Date.now(),exercises:exs});
     G.edit={id:ref.id,doc,local:true}; render(); await saveDoc('sessions/'+ref.id,doc); break;}
   case 'gPick': {const s=G.sessions.find(x=>x.id===el.dataset.id); if(s){G.edit={id:s.id,doc:gEnsureMembers(clone(s))}; render();} break;}
   case 'gAddEx': d.exercises.push(gNewEx({ss:''})); gEnsureMembers(d); gSave(0); render(); break;
@@ -1250,7 +1268,7 @@ function abHtml(k){
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
   const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
-      return c?`<button class="abr" data-open="${c.id}">${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:`<div class="abr">${inner}</div>`}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
+      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}"`:`data-open="${c.id}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:`<div class="abr">${inner}</div>`}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
   return `<div class="abbox"><div class="abh"><h2>🗓️ מי מגיע ${off?'מחר':'היום'} (מארבוקס)</h2>${tabs}</div>${body}</div>`}
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-openc]');if(a){e.preventDefault();e.stopPropagation();openClient(a.dataset.openc);return}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-abday]');if(!b)return;S.abDay=+b.dataset.abday;render()});
@@ -1267,6 +1285,7 @@ function vCoaches(){
      ${S.showNew?newClientForm(k.id):''}
      ${k.id!=='none'?abHtml(k):''}
      ${k.id!=='none'?todayHtml(act):''}
+     ${k.id!=='none'&&pairsOfCoach(k.id).length?`<div class="cgrid">${pairsOfCoach(k.id).map(pk=>`<button class="ccard gcard pcard" data-group="${esc(pk)}"><span class="cn">👥 ${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · תוכנית אחת לשניהם, ומתחלפים בסופר סטים</span></button>`).join('')}</div>`:''}
      ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span></button>`).join('')}</div>`:''}
      ${act.length?`<div class="cgrid">${act.map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
      ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`;
@@ -1298,7 +1317,8 @@ function vClient(){
   const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>`):'';
   const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}</button>${open?`<span class="morebox">${more.map(tb).join('')}</span>`:''}<span class="tabs-side">${addDayHtml}${np}</span></div>`;
   const body=S.tab==='session'?tSession(c):S.tab==='prev'?tPrev(c):S.tab==='history'?tHistory(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
-  const gBanner=ttype(c)==='group'?`<div class="banner info"><span><b>👥 ${esc(c.groupName||'קבוצה')}:</b> התוכנית והתוצאות של האימון הקבוצתי מנוהלות במסך הקבוצה, ונשמרות גם כאן בהיסטוריה.</span><button class="btn primary sm" data-group="${esc(c.groupName||'קבוצה')}">לאימון הקבוצה</button></div>`:'';
+  const pk=ttype(c)==='pair'?pairKey(c):'';
+  const gBanner=pk&&partnerOf(c)?`<div class="banner info"><span><b>👥 אימון זוגי עם ${esc(partnerOf(c).name)}:</b> התוכנית המשותפת והסדר שבו מתחלפים נמצאים במסך הזוג. התוצאות נשמרות גם כאן.</span><button class="btn primary sm" data-group="${esc(pk)}">לאימון הזוגי</button></div>`:ttype(c)==='group'?`<div class="banner info"><span><b>👥 ${esc(c.groupName||'קבוצה')}:</b> התוכנית והתוצאות של האימון הקבוצתי מנוהלות במסך הקבוצה, ונשמרות גם כאן בהיסטוריה.</span><button class="btn primary sm" data-group="${esc(c.groupName||'קבוצה')}">לאימון הקבוצה</button></div>`:'';
   return head+safety+gBanner+noteHtml(c)+tabHtml+body;
 }
 function noteHtml(c){
