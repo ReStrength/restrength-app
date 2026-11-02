@@ -454,7 +454,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .abh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}.abh h2{margin:0;font-size:20px}
 .abtabs{display:inline-flex;gap:4px}.abtabs button{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}.abtabs button.on{background:#1c7ed6;color:#fff;border-color:#1c7ed6}
 .abl{display:flex;flex-direction:column;gap:6px}.abr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 14px;width:100%;text-align:start;font:inherit;color:var(--ink);background:var(--bg,#fff);border:1px solid var(--line);border-inline-start:6px solid #1c7ed6;border-radius:12px;padding:10px 14px}
-button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt small{font-size:13px;font-weight:600;color:var(--muted)}.abn{font-weight:700;font-size:18px}.abm{grid-column:2/3;color:var(--muted);font-size:14px;margin-top:-4px}.abgo{grid-row:1/3;grid-column:3;color:#1c7ed6;font-weight:700;font-size:14px}
+button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt small{font-size:13px;font-weight:600;color:var(--muted)}.abn{font-weight:700;font-size:18px}.abm{grid-column:2/3;color:var(--muted);font-size:14px;margin-top:-4px}.abns{display:block;font-weight:500;font-size:15px;margin-top:2px}.abns a{color:#1c7ed6}.abgo{grid-row:1/3;grid-column:3;color:#1c7ed6;font-weight:700;font-size:14px}
 </style>
 
 <div class="app" dir="rtl">
@@ -1222,6 +1222,7 @@ async function abLoad(force){
   try{const k=await abKey();const r=await fetch(ABURL+'studio/feed',{cache:'no-store'});const j=await r.json();
     const L=await Promise.all(Object.values(j.appts||{}).map(e=>abOpen(k,e).catch(()=>null)));AB.list=L.filter(Boolean);
     AB.sched=[];if(j.sched){try{const x=await abOpen(k,j.sched);AB.sched=Array.isArray(x)?x:[]}catch(e){}}
+    AB.book=null;if(j.book){try{const x=await abOpen(k,j.book);AB.book=Array.isArray(x)?x:null;AB.bookT=j.book.t}catch(e){}}
     AB.ok=true;if(AB.err!=='keyclash')AB.err=''}catch(e){AB.err=String(e&&e.message||e)}
   AB.busy=false;scheduleRender()}
 setInterval(()=>{if(document.visibilityState==='visible')abLoad()},180000);
@@ -1234,13 +1235,17 @@ function abHtml(k){
   if(!AB.ok&&!AB.err)return `<div class="abbox"><div class="abh"><h2>🗓️ הלו״ז מארבוקס</h2></div><div class="muted">טוען…</div></div>`;
   if(!AB.ok)return AB.err==='nokey'?`<div class="abbox"><div class="abh"><h2>🗓️ הלו״ז מארבוקס</h2></div><div class="muted">יופעל אחרי שירין ייכנס לאפליקציה פעם אחת.</div></div>`:'';
   const off=S.abDay||0,D=abDate(off);
-  const rows=AB.list.filter(o=>String(o.date).slice(0,10)===D&&abCoachMatch(k,o.coach)).map(o=>({t:String(o.time).slice(0,5),e:String(o.end||'').slice(0,5),n:o.name,c:o.coach,w:o.what}));
-  AB.sched.filter(x=>String(x.d).slice(0,10)===D&&abCoachMatch(k,x.st)).forEach(x=>rows.push({t:String(x.s).slice(0,5),e:String(x.e||'').slice(0,5),n:'',c:x.st,w:x.sn,g:x.cnt}));
+  let rows=[];
+  if(AB.book){const by={};AB.book.filter(o=>String(o.d).slice(0,10)===D&&abCoachMatch(k,o.c)).forEach(o=>{const key=o.t+'|'+o.w+'|'+o.c;(by[key]=by[key]||{t:String(o.t).slice(0,5),c:o.c,w:o.w,g:o.g,ns:[]}).ns.push(o.n)});
+    Object.values(by).forEach(x=>{if(x.ns.length>1||/קבוצ/.test(x.g||x.w||''))rows.push({t:x.t,n:'',w:x.w,c:x.c,ns:x.ns});else rows.push({t:x.t,n:x.ns[0],w:x.w,c:x.c})})}
+  else{rows=AB.list.filter(o=>String(o.date).slice(0,10)===D&&abCoachMatch(k,o.coach)).map(o=>({t:String(o.time).slice(0,5),e:String(o.end||'').slice(0,5),n:o.name,c:o.coach,w:o.what}));
+    AB.sched.filter(x=>String(x.d).slice(0,10)===D&&abCoachMatch(k,x.st)).forEach(x=>rows.push({t:String(x.s).slice(0,5),e:String(x.e||'').slice(0,5),n:'',c:x.st,w:x.sn,g:x.cnt}))}
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
-  const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
+  const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
       return c?`<button class="abr" data-open="${c.id}">${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:`<div class="abr">${inner}</div>`}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
   return `<div class="abbox"><div class="abh"><h2>🗓️ מי מגיע ${off?'מחר':'היום'} (מארבוקס)</h2>${tabs}</div>${body}</div>`}
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-openc]');if(a){e.preventDefault();e.stopPropagation();openClient(a.dataset.openc);return}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-abday]');if(!b)return;S.abDay=+b.dataset.abday;render()});
 function vCoaches(){
   if(!S.loaded.k||!S.loaded.c) return `<div class="empty"><strong>טוען…</strong></div>`;
