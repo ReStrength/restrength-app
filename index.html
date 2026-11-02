@@ -455,6 +455,12 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .abtabs{display:inline-flex;gap:4px}.abtabs button{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}.abtabs button.on{background:#1c7ed6;color:#fff;border-color:#1c7ed6}
 .abl{display:flex;flex-direction:column;gap:6px}.abr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 14px;width:100%;text-align:start;font:inherit;color:var(--ink);background:var(--bg,#fff);border:1px solid var(--line);border-inline-start:6px solid #1c7ed6;border-radius:12px;padding:10px 14px}
 button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt small{font-size:13px;font-weight:600;color:var(--muted)}.abn{font-weight:700;font-size:18px}.abm{grid-column:2/3;color:var(--muted);font-size:14px;margin-top:-4px}.abns{display:block;font-weight:500;font-size:15px;margin-top:2px}.abns a{color:#1c7ed6}.abgo{grid-row:1/3;grid-column:3;color:#1c7ed6;font-weight:700;font-size:14px}
+
+/* מתאמן חדש: שאלות בכפתורים */
+.ncf .nq{margin:14px 0}.ncf .nql{font-weight:800;font-size:18px;margin-bottom:8px}.nbtns{display:flex;gap:10px;flex-wrap:wrap}
+.nbig{flex:1 1 160px;min-height:64px;font:inherit;font-size:20px;font-weight:800;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);cursor:pointer}
+.nbig[aria-pressed=true]{border-color:var(--accent);background:var(--accent);color:#fff}
+.ncf #n_pairwrap select{width:100%;min-height:52px;font:inherit;font-size:18px;margin-bottom:8px}
 </style>
 
 <div class="app" dir="rtl">
@@ -961,15 +967,7 @@ function vClients(){
   let list=S.clients.filter(c=>(S.filterStatus==='all'||(c.status||'active')===S.filterStatus)&&(!S.filterCoach||c.coachId===S.filterCoach)&&(!q||String(c.name).includes(q)||String(c.phone||'').includes(q)));
   list.sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
   const coachOpts=S.coaches.map(k=>`<option value="${k.id}"${k.id===S.filterCoach?' selected':''}>${esc(k.name)}</option>`).join('');
-  const newForm=S.showNew?`<div class="card"><h2>מתאמן חדש</h2><div class="form-grid">
-    <label class="f" for="n_name">שם מלא<input id="n_name" autocomplete="off"></label>
-    <label class="f" for="n_coach">מאמן אחראי<select id="n_coach"><option value="">—</option>${S.coaches.filter(k=>k.active!==false).map(k=>`<option value="${k.id}"${k.name===S.me?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
-    <label class="f" for="n_freq">אימונים בשבוע<select id="n_freq"><option>1</option><option>2</option></select></label>
-    <label class="f" for="n_type">סוג אימון<select id="n_type" data-typesel="n">${Object.entries(TTYPES).map(([k,v])=>`<option value="${k}">${v.replace('אימון ','')}</option>`).join('')}</select></label>
-    <label class="f" for="n_partner" id="n_pairwrap" hidden>בזוג עם<select id="n_partner"><option value="">עדיין לא נקבע</option>${activeClients().filter(x=>!x.partnerId).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he')).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label>
-    <label class="f" for="n_group" id="n_groupwrap" hidden>שם הקבוצה / שעה<input id="n_group" placeholder="למשל: קבוצת שלישי 9:00"></label>
-    <label class="f" for="n_start">תאריך התחלה<input id="n_start" type="date" value="${today()}"></label></div>
-    <div class="row"><button class="btn primary" data-act="createClient" data-write>יצירה ומעבר לתיק</button><button class="btn ghost" data-act="cancelNew">ביטול</button></div></div>`:'';
+  const newForm=S.showNew?newClientForm((S.coaches.find(k=>k.name===S.me)||{}).id||S.meId||''):'';
   return `<div class="spread"><h1>מתאמנים</h1><button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button></div>${newForm}
   <div class="row"><input id="q" placeholder="חיפוש לפי שם" value="${esc(S.q)}" style="flex:1 1 220px">
    <select id="fCoach" aria-label="סינון לפי מאמן"><option value="">כל המאמנים</option>${coachOpts}</select>
@@ -980,16 +978,23 @@ function vClients(){
 }
 
 function newClientForm(coachId){
-  return `<div class="card"><h2>מתאמן חדש</h2><div class="form-grid">
+  const pairs=activeClients().filter(x=>!x.partnerId).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
+  return `<div class="card ncf"><h2>מתאמן חדש</h2>
     <label class="f" for="n_name">שם מלא<input id="n_name" autocomplete="off"></label>
+    <div class="nq"><div class="nql">אימון אישי או זוגי?</div><div class="nbtns"><button type="button" class="nbig" data-ntype="personal" aria-pressed="false">👤 אישי</button><button type="button" class="nbig" data-ntype="pair" aria-pressed="false">👥 זוגי</button></div><input type="hidden" id="n_type"></div>
+    <div class="nq" id="n_pairwrap" hidden><div class="nql">עם מי?</div>
+      <select id="n_partner"><option value="__new">בן/בת זוג חדש/ה (עוד לא במערכת)</option>${pairs.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}<option value="">עוד לא ידוע</option></select>
+      <label class="f" for="n_pname" id="n_pnamewrap">שם בן/בת הזוג<input id="n_pname" autocomplete="off"></label></div>
+    <div class="nq"><div class="nql">כמה פעמים בשבוע?</div><div class="nbtns"><button type="button" class="nbig" data-nfreq="1" aria-pressed="false">פעם בשבוע</button><button type="button" class="nbig" data-nfreq="2" aria-pressed="false">פעמיים בשבוע</button></div><input type="hidden" id="n_freq"></div>
+    <div class="form-grid">
     <label class="f" for="n_coach">מאמן אחראי<select id="n_coach"><option value="">—</option>${S.coaches.filter(k=>k.active!==false).map(k=>`<option value="${k.id}"${k.id===coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
-    <label class="f" for="n_freq">אימונים בשבוע<select id="n_freq"><option>1</option><option>2</option></select></label>
-    <label class="f" for="n_type">סוג אימון<select id="n_type" data-typesel="n">${Object.entries(TTYPES).map(([k,v])=>`<option value="${k}">${v.replace('אימון ','')}</option>`).join('')}</select></label>
-    <label class="f" for="n_partner" id="n_pairwrap" hidden>בזוג עם<select id="n_partner"><option value="">עדיין לא נקבע</option>${activeClients().filter(x=>!x.partnerId).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he')).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label>
-    <label class="f" for="n_group" id="n_groupwrap" hidden>שם הקבוצה / שעה<input id="n_group" placeholder="למשל: קבוצת שלישי 9:00"></label>
     <label class="f" for="n_start">תאריך התחלה<input id="n_start" type="date" value="${today()}"></label></div>
-    <div class="row"><button class="btn primary" data-act="createClient" data-write>יצירה ופתיחת התוכנית</button><button class="btn ghost" data-act="cancelNew">ביטול</button></div></div>`;
+    <div class="row"><button class="btn primary" data-act="createClient" data-write>יצירה ובניית התוכנית</button><button class="btn ghost" data-act="cancelNew">ביטול</button></div></div>`;
 }
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ntype],[data-nfreq]');if(!b)return;
+  const k=b.dataset.ntype?'ntype':'nfreq',v=b.dataset[k];b.parentNode.querySelectorAll('.nbig').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+  if(k==='ntype'){$('#n_type').value=v;$('#n_pairwrap').hidden=v!=='pair'}else $('#n_freq').value=v});
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='n_partner'){const w=$('#n_pnamewrap');if(w)w.hidden=e.target.value!=='__new'}});
 /* ---------- manager ---------- */
 function vManager(){
   if(!S.loaded.k) return `<div class="empty"><strong>טוען…</strong></div>`;
@@ -1538,7 +1543,7 @@ function tProfile(c){
    <label class="f" for="p_by">שנת לידה<input id="p_by" type="number" inputmode="numeric" value="${v('birthYear')}"></label>
    <label class="f" for="p_coach">מאמן אחראי<select id="p_coach"><option value="">—</option>${S.coaches.map(k=>`<option value="${k.id}"${k.id===c.coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
    <label class="f" for="p_freq">אימונים בשבוע<select id="p_freq">${[1,2].map(n=>`<option${Math.min(2,Number(c.freq||1))===n?' selected':''}>${n}</option>`).join('')}</select></label>
-   <label class="f" for="p_type">סוג אימון<select id="p_type" data-typesel="p">${Object.entries(TTYPES).map(([k,v])=>`<option value="${k}"${ttype(c)===k?' selected':''}>${v.replace('אימון ','')}</option>`).join('')}</select></label>
+   <label class="f" for="p_type">סוג אימון<select id="p_type" data-typesel="p">${Object.entries(TTYPES).filter(([k])=>k!=='group'||ttype(c)==='group').map(([k,v])=>`<option value="${k}"${ttype(c)===k?' selected':''}>${v.replace('אימון ','')}</option>`).join('')}</select></label>
    <label class="f" for="p_partner" id="p_pairwrap"${ttype(c)==='pair'?'':' hidden'}>בזוג עם<select id="p_partner"><option value="">עדיין לא נקבע</option>${partnerOpts.map(x=>`<option value="${x.id}"${x.id===c.partnerId?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
    <label class="f" for="p_group" id="p_groupwrap"${ttype(c)==='group'?'':' hidden'}>שם הקבוצה / שעה<input id="p_group" value="${esc(c.groupName||'')}" placeholder="למשל: קבוצת שלישי 9:00"></label>
    <label class="f" for="p_start">תאריך התחלה<input id="p_start" type="date" value="${v('startDate')}"></label>
@@ -1625,9 +1630,16 @@ async function act(name,el){
   case 'cancelNew': S.showNew=false; render(); break;
   case 'createClient': {
     const name=$('#n_name').value.trim(); if(!name){toast('צריך להזין שם');return}
-    const ref=S.db.collection('clients').doc(); const ttyp=$('#n_type').value; const partner=ttyp==='pair'?$('#n_partner').value:''; const groupName=ttyp==='group'?$('#n_group').value.trim():'';
-    const ok=await saveDoc('clients/'+ref.id,{name,coachId:$('#n_coach').value,freq:Number($('#n_freq').value),trainingType:ttyp,partnerId:partner,groupName,startDate:$('#n_start').value||today(),status:'active',goals:[],createdAt:Date.now(),hasPlan:false,pendingApproval:false});
-    if(ok){ if(partner) await updClient(partner,{partnerId:ref.id}); S.showNew=false; openClient(ref.id,'session'); toast('המתאמן נוצר – בנו את האימון הראשון, ואת התיק אפשר להשלים בלשונית "תיק מתאמן"'); }
+    const ttyp=$('#n_type').value; if(!ttyp){toast('בחרו: אימון אישי או זוגי');return}
+    const fq=Number($('#n_freq').value); if(!fq){toast('בחרו כמה פעמים בשבוע');return}
+    let partner=ttyp==='pair'?$('#n_partner').value:''; const pname=ttyp==='pair'&&partner==='__new'?$('#n_pname').value.trim():'';
+    if(partner==='__new'&&!pname){toast('צריך להזין את שם בן/בת הזוג');return}
+    const coachId=$('#n_coach').value,startDate=$('#n_start').value||today();
+    const ref=S.db.collection('clients').doc(); const pref=partner==='__new'?S.db.collection('clients').doc():null; if(pref)partner=pref.id;
+    const base={coachId,freq:fq,trainingType:ttyp,groupName:'',startDate,status:'active',goals:[],createdAt:Date.now(),hasPlan:false,pendingApproval:false};
+    const ok=await saveDoc('clients/'+ref.id,{...base,name,partnerId:partner});
+    if(ok){ if(pref) await saveDoc('clients/'+pref.id,{...base,name:pname,partnerId:ref.id}); else if(partner) await updClient(partner,{partnerId:ref.id,trainingType:'pair'});
+      S.showNew=false; openClient(ref.id,'session'); toast(ttyp==='pair'?'הזוג נוצר. בונים את האימון הראשון, ואותה תוכנית תופיע לשניהם':'המתאמן נוצר. בונים את האימון הראשון'); }
     break;}
   case 'saveProfile': {
     const goals=[...document.querySelectorAll('#p_goals [data-goal]')].filter(b=>b.getAttribute('aria-pressed')==='true').map(b=>b.dataset.goal);
@@ -1853,7 +1865,7 @@ function bind(){
     if(t.id==='fCoach'){S.filterCoach=t.value;render();return}
     if(t.id==='fStatus'){S.filterStatus=t.value;render();return}
     if(t.dataset.setting){S.settings={...S.settings,[t.dataset.setting]:Number(t.value)};saveDoc('settings/progression',{step:num(S.settings.step)??1});toast('נשמר');return}
-    if(t.dataset.typesel){const k=t.dataset.typesel;$('#'+k+'_pairwrap').hidden=t.value!=='pair';$('#'+k+'_groupwrap').hidden=t.value!=='group';return}
+    if(t.dataset.typesel){const k=t.dataset.typesel;const pw=$('#'+k+'_pairwrap'),gw=$('#'+k+'_groupwrap');if(pw)pw.hidden=t.value!=='pair';if(gw)gw.hidden=t.value!=='group';return}
     if(t.id==='a_more'&&t.value){const k=t.value;const grid=t.closest('.form-grid');const lab=document.createElement('label');lab.className='f';lab.htmlFor='t_'+k;lab.innerHTML=`${esc(TESTS[k].n)} <span class="muted">(${esc(TESTS[k].u)})</span><input id="t_${k}" type="number" step="any" inputmode="decimal" data-test="${k}">`;grid.insertBefore(lab,t.closest('label'));t.querySelector(`option[value="${k}"]`).remove();t.value='';lab.querySelector('input').focus();return}
     const f=t.dataset.f; const ctx=ctxOf(t); if(!f||!ctx||!ctx.edit) return;
     const card=t.closest('[data-ex]'); if(!card) return; const ex=ctx.edit.doc.exercises[Number(card.dataset.ex)];
