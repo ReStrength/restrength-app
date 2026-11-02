@@ -1215,6 +1215,8 @@ async function abKey(){
     d={pub:'-----BEGIN PUBLIC KEY-----\n'+abB64e(spki).match(/.{1,64}/g).join('\n')+'\n-----END PUBLIC KEY-----\n',priv:abB64e(pk),at:Date.now()};await ref.set(d)}
   if(admin&&!d.sent){const r=await fetch(ABURL+'studio/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pub:d.pub})});if(r.ok){d.sent=1;await ref.update({sent:1})}else if(r.status===409)AB.err='keyclash'}
   AB.key=await crypto.subtle.importKey('pkcs8',abB64d(d.priv),{name:'RSA-OAEP',hash:'SHA-1'},false,['decrypt']);return AB.key}
+async function abOpenT(k,e){const raw=await crypto.subtle.decrypt({name:'RSA-OAEP'},k,abB64d(e.k));const ak=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:abB64d(e.iv)},ak,abB64d(e.ct)))}
 async function abOpen(k,e){const raw=await crypto.subtle.decrypt({name:'RSA-OAEP'},k,abB64d(e.k));const ak=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:abB64d(e.iv)},ak,abB64d(e.ct));return JSON.parse(new TextDecoder().decode(pt))}
 async function abLoad(force){
@@ -1222,7 +1224,7 @@ async function abLoad(force){
   try{const k=await abKey();const r=await fetch(ABURL+'studio/feed',{cache:'no-store'});const j=await r.json();
     const L=await Promise.all(Object.values(j.appts||{}).map(e=>abOpen(k,e).catch(()=>null)));AB.list=L.filter(Boolean);
     AB.sched=[];if(j.sched){try{const x=await abOpen(k,j.sched);AB.sched=Array.isArray(x)?x:[]}catch(e){}}
-    AB.book=null;if(j.book){try{const x=await abOpen(k,j.book);AB.book=Array.isArray(x)?x:null;AB.bookT=j.book.t}catch(e){}}
+    AB.book=null;if(j.book){try{const tx=await abOpenT(k,j.book);AB.book=tx.split('\u00b6').map(r=>r.split('\u00a6')).filter(a=>a.length>=5&&a[0]).map(a=>({d:a[0],t:a[1],n:a[2],c:a[3],w:a[4],g:a[5]||''}));AB.bookT=j.book.t}catch(e){}}
     AB.ok=true;if(AB.err!=='keyclash')AB.err=''}catch(e){AB.err=String(e&&e.message||e)}
   AB.busy=false;scheduleRender()}
 setInterval(()=>{if(document.visibilityState==='visible')abLoad()},180000);
