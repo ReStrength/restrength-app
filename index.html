@@ -1381,7 +1381,7 @@ function vClient(){
   if(S.report===c.id) return vReport(c);
   const em=c.emergency||{}; const p=partnerOf(c);
   const head=`<div class="chead"><div style="min-width:0"><button class="btn ghost sm" data-act="backCoach">→ המתאמנים של ${esc(coachName(c.coachId)!=='—'?coachName(c.coachId):'ללא מאמן')}</button><h1>${esc(c.name)}</h1>
-    <div class="row" style="margin:6px 0"><button class="btn ghost sm" data-act="openReport">📄 דוח התקדמות</button></div>
+    <div class="row" style="margin:6px 0"><button class="btn ghost sm" data-act="openReport">📄 דוח התקדמות</button><button class="btn sm" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button></div>
     <div class="meta"><span>תאריך התחלה: <b>${c.startDate?fmt(c.startDate):'יירשם אוטומטית באימון הראשון'}</b></span></div>
     <div class="wdays"><span class="muted small">ימי אימון קבועים:</span>${['א','ב','ג','ד','ה','ו'].map((n,w)=>`<button class="wd" aria-pressed="${(c.days||[]).includes(w)}" data-wday="${w}" data-write>${n}</button>`).join('')}</div>
     ${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span><button class="btn ghost sm" data-act="goAssess">למבדקים</button></div>`:''}
@@ -1640,6 +1640,7 @@ function tProfile(c){
   const partnerOpts=activeClients().filter(x=>x.id!==c.id&&(!x.partnerId||x.partnerId===c.id)).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
   return `<div class="card"><h2>פרטים אישיים</h2><div class="form-grid">
    <label class="f" for="p_name">שם מלא<input id="p_name" value="${v('name')}"></label>
+   <label class="f" for="p_phone">טלפון (לשליחה בווטסאפ)<input id="p_phone" inputmode="tel" dir="ltr" value="${v('phone')}" placeholder="05X-XXXXXXX"></label>
    <label class="f" for="p_sex">מין<select id="p_sex"><option value="">—</option><option value="F"${c.sex==='F'?' selected':''}>אישה</option><option value="M"${c.sex==='M'?' selected':''}>גבר</option></select></label>
    <label class="f" for="p_by">שנת לידה<input id="p_by" type="number" inputmode="numeric" value="${v('birthYear')}"></label>
    <label class="f" for="p_coach">מאמן אחראי<select id="p_coach"><option value="">—</option>${S.coaches.map(k=>`<option value="${k.id}"${k.id===c.coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
@@ -1750,7 +1751,7 @@ async function act(name,el){
     const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,groupName:ttyp==='group'?$('#p_group').value.trim():'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
       goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),
       limits:$('#p_limits').value.trim(),conditions:$('#p_cond').value.trim(),surgeries:$('#p_surg').value.trim(),meds:$('#p_meds').value.trim(),history:$('#p_hist').value.trim(),
-      emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},effort:Math.min(10,Math.max(1,num($('#p_eff').value)??7)),updatedAt:Date.now()});
+      emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},effort:Math.min(10,Math.max(1,num($('#p_eff').value)??7)),phone:$('#p_phone').value.trim(),updatedAt:Date.now()});
     if(ok&&newP!==oldP){
       if(oldP) await updClient(oldP,{partnerId:''});
       if(newP) await updClient(newP,{partnerId:c.id});
@@ -1992,6 +1993,8 @@ const TPB='https://yaringohar.com/clinic/', TPAGE='https://restrength.github.io/
 S.tpReps={}; S.tpNew={}; S.tpBusy={}; S.tpUrls={};
 const tpCx={};
 async function tpCtx(c){if(!c||!c.portal)return null;const p=c.portal;if(tpCx[p.s])return tpCx[p.s];const raw=PC.unb64u(p.k);const o={s:p.s,k:await PC.key(raw),w:await PC.wOf(raw)};tpCx[p.s]=o;return o}
+function tpWa(c,txt){let p=String(c.phone||'').replace(/[^\d]/g,'');if(p.startsWith('0'))p='972'+p.slice(1);return 'https://wa.me/'+(p.length>=11?p:'')+'?text='+encodeURIComponent(txt)}
+function tpHomeMsg(c){const H=(c.homeEx||[]).filter(x=>x.n);const f=String(c.name).split(' ')[0];return `שלום ${f}, הכנתי לך תרגילים לבית`+(H.some(x=>x.m)?' עם סרטון שלי':'')+':\n'+H.map((x,i)=>`${i+1}. ${x.n}`+(x.sets||x.reps?` – ${x.sets?x.sets+' סטים':''}${x.sets&&x.reps?' × ':''}${x.reps?x.reps+' חזרות':''}`:'')+(x.note?` (${x.note})`:'')).join('\n')+`\n\nהכל נמצא בדף האישי שלך${H.some(x=>x.m)?', כולל הסרטונים':''}:\n${tpLink(c)}`}
 function tpLink(c){return TPAGE+'#'+c.portal.s+'.'+c.portal.k}
 async function tpApi(path,body,bin){const t=await window.FB.idToken();const r=await fetch(TPB+'studio/share/'+path,{method:'POST',cache:'no-store',credentials:'omit',headers:{'Content-Type':bin?'application/octet-stream':'application/json','X-RS-FB':t},body:bin?body:JSON.stringify(body)});if(!r.ok)throw new Error('http '+r.status);return r.json()}
 async function tpPost(path,body){const r=await fetch(TPB+'pa/'+path,{method:'POST',cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);const ct=r.headers.get('Content-Type')||'';return ct.includes('json')?r.json():r.arrayBuffer()}
@@ -2064,7 +2067,7 @@ function tPortal(c){
     <button class="btn primary" data-act="tpCreate" data-write ${S.tpBusy[c.id]?'disabled':''}>${S.tpBusy[c.id]?'יוצר…':'יצירת דף אישי'}</button></div>`;
   if(S.tpReps[c.id]==null) setTimeout(()=>tpLoad(c),0);
   const L=S.tpReps[c.id]||[], seen=c.portalSeen||0, A=c.portalAck||{}, imp=c.portalImported||{};
-  const link=tpLink(c), wa='https://wa.me/?text='+encodeURIComponent(`שלום ${String(c.name).split(' ')[0]}, זה הדף האישי שלך בכוח מחודש. יש בו את התוכנית שלך, ואפשר לתעד בו אימון ולשלוח לנו תמונה או סרטון:\n${link}`);
+  const link=tpLink(c), wa=tpWa(c,`שלום ${String(c.name).split(' ')[0]}, זה הדף האישי שלך בכוח מחודש. יש בו את התוכנית שלך, ואפשר לתעד בו אימון ולשלוח לנו תמונה או סרטון:\n${link}`);
   const {planned}= {planned:(S.P&&S.P.clientId===c.id?plannedSessions(S.P):[])};
   const names=[...new Set(planned.flatMap(s=>(s.exercises||[]).map(e=>e.name).filter(Boolean)))], V=c.exVideos||{};
   const H=c.homeEx||[];
@@ -2088,7 +2091,7 @@ function tPortal(c){
       <label class="f">משקל (ק"ג)<input inputmode="decimal" data-th="${i}.kg" value="${esc(x.kg||'')}" dir="ltr" placeholder="לא חובה"></label>
       <label class="f" style="grid-column:1/-1">דגשים<input data-th="${i}.note" value="${esc(x.note||'')}" placeholder="למשל: לאט, לנשום, עד כאב 3"></label></div>
       <div class="row">${x.m?`<span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpHVid" data-i="${i}" data-write>החלפת סרטון</button>`:`<button class="btn sm" data-act="tpHVid" data-i="${i}" data-write>📷 צילום / סרטון</button>`}<button class="btn ghost sm" data-act="tpHDel" data-i="${i}" data-write>הסרה</button></div></div>`).join('')}
-    <div class="row" style="margin-top:10px"><button class="btn" data-act="tpHAdd" data-write>+ תרגיל</button>${H.length?`<button class="btn primary" data-act="tpHSave" data-write>שמירה ועדכון הדף</button>`:''}</div></div>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="tpHAdd" data-write>+ תרגיל</button>${H.length?`<button class="btn primary" data-act="tpHSave" data-write>שמירה ועדכון הדף</button>`:''}${H.some(x=>x.n)&&c.portalPub?`<a class="btn primary" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,tpHomeMsg(c)))}" target="_blank" rel="noopener">📲 שליחת התרגילים בווטסאפ</a>`:''}</div>${c.phone?'':'<p class="muted small" style="margin:6px 0 0">כדי שהווטסאפ ייפתח ישר אצל המתאמן, הוסיפו את הטלפון שלו בתיק המתאמן.</p>'}</div>
   <div class="spread"><span></span>${S.tpConfirmDel===c.id?`<span class="row small"><span class="muted">לבטל את הקישור? הדף יפסיק לעבוד, וגם מה שהמתאמן שלח יימחק.</span><button class="btn danger sm" data-act="tpDel" data-write>כן, ביטול</button><button class="btn ghost sm" data-act="tpDelNo">לא</button></span>`:`<button class="btn ghost sm" data-act="tpDelAsk" data-write>ביטול הקישור</button>`}</div>`;
 }
 function tpPickFile(cb){const i=document.createElement('input');i.type='file';i.accept='video/*,image/*';i.onchange=()=>{const f=i.files&&i.files[0];if(f)cb(f)};i.click()}
@@ -2097,6 +2100,7 @@ async function tpAct(name,el){
   const c=client(); if(!c) return;
   switch(name){
   case 'tpCreate': await tpPublish(c.id); break;
+  case 'tpGoHome': {S.tab='portal'; if(!c.portal) await tpPublish(c.id,true); render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},300); break;}
   case 'tpPub': await tpPublish(c.id); break;
   case 'tpCopy': try{await navigator.clipboard.writeText(tpLink(c));toast('הקישור הועתק')}catch(e){prompt('העתיקו את הקישור:',tpLink(c))} break;
   case 'tpRefresh': S.tpReps[c.id]=null; await tpLoad(c,true); break;
@@ -2123,7 +2127,7 @@ async function tpAct(name,el){
       await tpPublish(c.id,true); toast('הסרטון עלה לדף של המתאמן ✓'); render();
     }catch(e){toast('ההעלאה נכשלה. בדקו אינטרנט ונסו שוב')}}); break;
   case 'tpVidDel': {const V={...(c.exVideos||{})};delete V[el.dataset.ex];await updClient(c.id,{exVideos:V});c.exVideos=V;tpPublish(c.id,true);render();break;}
-  case 'tpHAdd': {const H=tpHRead(c);H.push({n:'',sets:'2',reps:'8-10',kg:'',note:'',unit:'bw'});await updClient(c.id,{homeEx:H});break;}
+  case 'tpHAdd': {const H=tpHRead(c);H.push({n:'',sets:'2',reps:'8-10',kg:'',note:'',unit:'bw'});await updClient(c.id,{homeEx:H});c.homeEx=H;render();setTimeout(()=>{const i=document.querySelector(`[data-th="${H.length-1}.n"]`);if(i){i.scrollIntoView({block:'center'});i.focus()}},200);break;}
   case 'tpHDel': {const H=tpHRead(c);H.splice(+el.dataset.i,1);await updClient(c.id,{homeEx:H});c.homeEx=H;tpPublish(c.id,true);break;}
   case 'tpHSave': {const H=tpHRead(c);await updClient(c.id,{homeEx:H});c.homeEx=H;await tpPublish(c.id);break;}
   case 'tpDelAsk': S.tpConfirmDel=c.id; render(); break;
