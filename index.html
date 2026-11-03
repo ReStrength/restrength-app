@@ -210,7 +210,8 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .sheet td.notes input{text-align:start;font-size:16px}
 .sheet td.kg{width:100px}
 .sheet td.rngc{width:116px}
-.sheet .rng{display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.res.eff input::placeholder{color:#c4bbb3;font-weight:400}.res.eff input{text-align:center}
+.sheet .rng{display:flex;align-items:center;justify-content:center;color:var(--muted);direction:ltr}
 .sheet .rng input{width:46px;padding:4px 2px}
 .sheet .unitnote{font-size:11px;color:var(--muted);margin-top:-6px;padding-bottom:3px}
 .sheet td.res{background:var(--surface-2);width:72px}
@@ -756,7 +757,11 @@ function exStats(ex){
   const vol = u==='kg' ? done.reduce((a,s,i)=>a+kgs[i]*reps[i],0) : reps.reduce((a,b)=>a+b,0);
   return {done,reps,kgs,best,vol};
 }
-function suggest(ex,hist){
+function isOwner(){return !!(S.user&&String(S.user.email||'').toLowerCase()==='strengthismedicine@gmail.com')}
+function ltr(x){return '\u2066'+x+'\u2069'}
+function effDflt(cid){const c=cid&&clientById(cid);const v=c&&num(c.effort);return v!=null?v:7}
+function effOf(ex,dflt){const e=num(ex.rpe);if(e!=null)return e;const ri=num(ex.rir);if(ri!=null)return 10-ri;return dflt??7}
+function suggest(ex,hist,dflt){
   const min=num(ex.repMin)??6, max=num(ex.repMax)??10, sets=num(ex.targetSets)||2, pain=num(ex.pain), rir=num(ex.rir), rirT=num(ex.rirTarget)??3;
   const st=exStats(ex); const base={sets,repMin:min,repMax:max,kg:num(ex.targetKg)};
   if(!st.done.length) return {...base,type:'same',reason:'לא נרשמו תוצאות – התוכנית נשארת כמו שהייתה'};
@@ -773,13 +778,15 @@ function suggest(ex,hist){
     else if(allIn){s={...base,kg:work,type:'reps',reason:`בתוך הטווח – אותו משקל (${work} ק"ג), לשאוף לחזרה נוספת בכל סט`};}
     else {s={...base,kg:work,type:'same',reason:'חלק מהסטים מתחת לטווח – חוזרים על אותו משקל'};}
   } else if(u==='sec'){
-    if(allTop) s={...base,repMin:min+5,repMax:max+5,type:'up',reason:`הוחזק ${max} שנ׳ בכל הסטים ← יעד חדש ${min+5}–${max+5} שנ׳`};
+    if(allTop) s={...base,repMin:min+5,repMax:max+5,type:'up',reason:`הוחזק ${max} שנ׳ בכל הסטים ← יעד חדש ${ltr((min+5)+'–'+(max+5))} שנ׳`};
     else s={...base,type:allIn?'reps':'same',reason:allIn?'בתוך הטווח – להאריך מעט בכל סט':'לא הגיע לזמן היעד – אותו יעד'};
   } else {
     if(allTop){ if(sets<4) s={...base,sets:sets+1,type:'up',reason:`השלים ${max} חזרות בכל הסטים ← סט נוסף (${sets+1} סטים)`};
-      else s={...base,repMin:min+2,repMax:max+2,type:'up',reason:`השלים את הטווח ← יעד חזרות ${min+2}–${max+2}, או מעבר לגרסה קשה יותר`}; }
+      else s={...base,repMin:min+2,repMax:max+2,type:'up',reason:`השלים את הטווח ← יעד חזרות ${ltr((min+2)+'–'+(max+2))}, או מעבר לגרסה קשה יותר`}; }
     else s={...base,type:allIn?'reps':'same',reason:allIn?'בתוך הטווח – לשאוף לחזרה נוספת':'מתחת לטווח – אותו יעד'};
   }
+  const eff=effOf(ex,dflt);
+  if(s.type==='up'&&eff>=9){s={...base,kg:u==='kg'?Math.min(...st.kgs):base.kg,type:'same',reason:`הגיע לראש הטווח, אבל ברמת מאמץ ${eff}/10 (קרוב מדי לכשל) ← נשארים באותו עומס עד שזה מרגיש 7–8`};}
   if(s.type!=='up'&&s.type!=='flag'&&hist&&hist.length>=3){
     const last=hist.slice(-3).map(h=>h.best);
     if(last.every(v=>v===last[0])) {s.type='stall';s.reason+=' · ללא התקדמות 3 אימונים ברצף – לשקול שינוי גירוי (טמפו, וריאציה, נפח)';}
@@ -799,7 +806,7 @@ function isUnilateral(name){return /מכרע|לאנצ|לאנג|בולגרי|בר
 function carry(ex){return {name:ex.name,unit:ex.unit,group:ex.group||'other',ss:ex.ss||'',rirTarget:ex.rirTarget??3,tempo:ex.tempo||''}}
 function buildNext(ctx,d,docId){
   const exercises=(d.exercises||[]).filter(e=>e.name).map(ex=>{
-    const s=suggest(ex,exHistory(ctx,ex.name,d.date));
+    const s=suggest(ex,exHistory(ctx,ex.name,d.date),effDflt(ctx.clientId||d.clientId));
     const base={targetSets:num(ex.targetSets)||2,targetKg:ex.targetKg,repMin:num(ex.repMin)??6,repMax:num(ex.repMax)??10};
     let rec='';
     if(s.type==='up'){ const u=unitOf(ex); rec=u==='kg'?'kg':(s.sets>base.targetSets?'sets':'reps'); }
@@ -1065,7 +1072,8 @@ function vGroup(){
       return `<tr><td class="gname"><b>${esc(c.name)}</b>${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
        <td class="gkg" data-l="משקל"><input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
        ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
-       <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" placeholder="0–10" min="0" max="10" data-gm="pain" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.pain)}" data-st="${num(mm.pain)>=4?'low':''}"></td>
+       <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" dir="ltr" placeholder="0–10" min="0" max="10" data-gm="pain" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.pain)}" data-st="${num(mm.pain)>=4?'low':''}"></td>
+       <td class="res eff" data-l="מאמץ"><input type="number" inputmode="numeric" min="1" max="10" data-gm="rpe" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.rpe??'')}" placeholder="${effDflt(c.id)}"></td>
        <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="למשל: מדרגה נמוכה"></td></tr>`}).join('');
     return `${sep}<div class="gex card ${tg.ss?'ssr':''}" data-gex="${i}">
      <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">
@@ -1074,7 +1082,7 @@ function vGroup(){
       <input class="gt" data-gf="tempo" data-ei="${i}" value="${esc(ex.tempo)}" placeholder="טמפו, מנח, דגשים">
       <span class="gacts"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
      ${cueHtml(ex.name)}
-     <div class="tbl-wrap"><table class="gtable"><thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>התאמה אישית</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}).join('');
+     <div class="tbl-wrap"><table class="gtable"><thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>מאמץ</th><th>התאמה אישית</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}).join('');
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq||1)>(d.seq||1));
   const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">שבוע ${s.seq}${s.status==='done'?' ✓':''}</button>`).join('');
   let rot='';
@@ -1098,7 +1106,7 @@ function gInput(t){
   const mm=ex.m[t.dataset.cid]; if(!mm) return true; const f=t.dataset.gm;
   if(f==='rep'){mm.sets[Number(t.dataset.si)]=t.value===''?'':Number(t.value); if(!d.date&&t.value!=='') d.date=today(); t.dataset.st=setState(ex,{reps:t.value});
     if(t.value!==''&&Number(t.value)*10>Math.max(num(ex.repMax)||10,10)+5){const all=[...document.querySelectorAll('#main input[data-gm="rep"]')];const k=all.indexOf(t);setTimeout(()=>{if(all[k+1])all[k+1].focus();else t.blur()},0)}}
-  else if(f==='kg'||f==='pain') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
+  else if(f==='kg'||f==='pain'||f==='rpe') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
   gSave(700); return true;
 }
 function gChange(t){
@@ -1128,7 +1136,7 @@ async function gAct(name,el){
   case 'gComplete': {
     const ms=groupMembers(G.name); if(!d.date) d.date=today(); let n=0;
     for(const c of ms){
-      const exsM=d.exercises.filter(ex=>ex.name).map(ex=>{const mm=ex.m[c.id]||{sets:[]};return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
+      const exsM=d.exercises.filter(ex=>ex.name).map(ex=>{const mm=ex.m[c.id]||{sets:[]};return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
       if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
       const seq=gMemCtx(c.id).sessions.filter(s=>s.status==='done').length+1;
       const ref=S.db.collection('sessions').doc();
@@ -1141,8 +1149,8 @@ async function gAct(name,el){
     const nextP=G.sessions.find(x=>x.status==='planned'&&x.id!==G.edit.id&&(x.seq||1)>(d.seq||1)); if(nextP){G.edit={id:nextP.id,doc:gEnsureMembers(clone(nextP))}; render(); window.scrollTo(0,0); break;}
     const ms=groupMembers(G.name);
     const exs=d.exercises.filter(ex=>ex.name).map(ex=>{const ne=gNewEx({...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:ex.targetKg});
-      ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const mex={...ex,targetKg:mm.kg??ex.targetKg,sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),pain:mm.pain};
-        const s=suggest(mex,exHistory(gMemCtx(c.id),ex.name)); let txt=s.reason;
+      ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const mex={...ex,targetKg:mm.kg??ex.targetKg,sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),pain:mm.pain,rpe:mm.rpe};
+        const s=suggest(mex,exHistory(gMemCtx(c.id),ex.name),effDflt(c.id)); let txt=s.reason;
         if(unitOf(mex)!=='sec'&&isUnilateral(ex.name)&&s.type==='up') txt='חד־צדדי: להתקדם במשקל עבודה, עד 8 חזרות';
         ne.m[c.id]={kg:mm.kg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',sugg:(s.type==='up'?'★ ':'')+txt,skg:(unitOf(mex)==='kg'&&s.kg!=null)?s.kg:null};});
       return ne;});
@@ -1339,11 +1347,11 @@ function prevLine(ctx,ex,curId){
 }
 function setState(ex,s){const r=num(s.reps);if(r==null)return '';const min=num(ex.repMin)??0,max=num(ex.repMax)??999;return r>=max?'top':r>=min?'in':'low'}
 function groupTags(exs){const tags=[];let n=0,i=0;while(i<exs.length){const e=exs[i];if(e.ss){let j=i;while(j<exs.length&&String(exs[j].ss)===String(e.ss))j++;n++;for(let k=i;k<j;k++)tags[k]={t:k===i?String(n):'',ss:true,first:k===i,n};i=j}else{n++;tags[i]={t:String(n),ss:false,first:true,n};i++}}return tags}
-function prevShort(ctx,ex,curId){const h=exHistory(ctx,ex.name).filter(x=>x.sid!==curId);if(!h.length)return '';const l=h[h.length-1],st=exStats(l.ex);const kg=unitOf(l.ex)==='kg'?`${Math.max(...st.kgs)} ק"ג · `:'';return `אימון קודם: ${kg}${st.reps.join(', ')}${num(l.ex.rir)!=null?` · RIR ${l.ex.rir}`:''}`}
+function prevShort(ctx,ex,curId){const h=exHistory(ctx,ex.name).filter(x=>x.sid!==curId);if(!h.length)return '';const l=h[h.length-1],st=exStats(l.ex);const kg=unitOf(l.ex)==='kg'?`${Math.max(...st.kgs)} ק"ג · `:'';return `אימון קודם: ${kg}${ltr(st.reps.join(', '))}${num(l.ex.rpe)!=null?` · מאמץ ${l.ex.rpe}`:num(l.ex.rir)!=null?` · RIR ${l.ex.rir}`:''}`}
 const ARR={up:'↑',reps:'↗',same:'→',down:'↓',stall:'≈',flag:'!'};
 
 function prevReps(ctx,ex){const h=exHistory(ctx,ex.name).filter(x=>x.sid!==(ctx.edit&&ctx.edit.id));if(!h.length)return null;return (h[h.length-1].ex.sets||[]).map(s=>num(s.reps)).filter(v=>v!=null)}
-function qfillBtn(ctx,ex,i){const pr=prevReps(ctx,ex);if(pr&&pr.length)return `<button type="button" class="qfill" data-qfill="${i}" data-src="prev" data-write>↺ כמו בפעם הקודמת (${pr.join(', ')})</button>`;
+function qfillBtn(ctx,ex,i){const pr=prevReps(ctx,ex);if(pr&&pr.length)return `<button type="button" class="qfill" data-qfill="${i}" data-src="prev" data-write>↺ כמו בפעם הקודמת (${ltr(pr.join(', '))})</button>`;
   const r=num(ex.repMax)??num(ex.repMin);return r!=null?`<button type="button" class="qfill" data-qfill="${i}" data-src="plan" data-write>✓ כל הסטים: ${r}</button>`:''}
 function doQfill(btn){const row=btn.closest('tr[data-ex]');const ctx=ctxOf(btn);if(!row||!ctx||!ctx.edit)return;const ex=ctx.edit.doc.exercises[Number(row.dataset.ex)];if(!ex)return;
   const pr=btn.dataset.src==='prev'?prevReps(ctx,ex):null,fb=num(ex.repMax)??num(ex.repMin);
@@ -1353,13 +1361,13 @@ function progTable(ctx,doc){
   const exs=doc.exercises||[]; const tags=groupTags(exs);
   const nSets=Math.min(6,Math.max(2,...exs.map(e=>Number(e.targetSets)||0)));
   const showSugg=doc.status==='planned';
-  const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th><th colspan="${nSets+1}" class="grp-res">תוצאות</th><th></th></tr>
-   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>משקל עבודה</th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>כאב</th><th>סדר</th></tr></thead>`;
+  const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th><th colspan="${nSets+2}" class="grp-res">תוצאות</th><th></th></tr>
+   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>משקל עבודה</th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>כאב</th><th title="רמת מאמץ 1–10. לא חובה: ריק = הקבוע של המתאמן">מאמץ</th><th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
-    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+7}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>k==='kg'?kgChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
+    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+8}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>k==='kg'?kgChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
-    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+7}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
+    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+8}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
      <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
@@ -1367,7 +1375,8 @@ function progTable(ctx,doc){
      <td class="kg" data-l="משקל עבודה"><input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג"></td>
      <td class="notes"><textarea data-f="tempo" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="טמפו, מנח, ציוד">${esc(ex.tempo)}</textarea></td>
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><span class="stp"><button type="button" data-step="1" tabindex="-1" aria-label="חזרה נוספת">+</button><button type="button" data-step="-1" tabindex="-1" aria-label="חזרה פחות">−</button></span><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"></td>`:'<td class="res off"></td>'}).join('')}
-     <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" placeholder="0–10" min="0" max="10" data-f="pain" value="${esc(ex.pain)}" data-st="${num(ex.pain)>=4?'low':''}" aria-label="כאב 0–10"></td>
+     <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" dir="ltr" placeholder="0–10" min="0" max="10" data-f="pain" value="${esc(ex.pain)}" data-st="${num(ex.pain)>=4?'low':''}" aria-label="כאב 0–10"></td>
+     <td class="res eff" data-l="מאמץ"><input type="number" inputmode="numeric" min="1" max="10" data-f="rpe" value="${esc(ex.rpe??'')}" placeholder="${effDflt(ctx.clientId)}" data-st="${num(ex.rpe)>=9?'low':''}" aria-label="רמת מאמץ 1–10"></td>
      <td class="acts"><button class="btn ghost sm" data-act="exUp" title="הזזת התרגיל למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" title="הזזת התרגיל למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="exDel" title="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx===ex.id?swapRow(ex,i,nSets):''}${sg}`}).join('');
   return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
 }
@@ -1451,7 +1460,7 @@ function patOf(n){n=String(n||'');const p=PATS.find(x=>x[1].test(n));return p?p[
 function subsFor(name){const p=patOf(name); if(!p){const l=libFind(name);return l?LIB.filter(x=>x[2]===l[2]&&x[0]!==name).slice(0,8).map(x=>x[0]):[]}
   return LIB.filter(x=>x[0]!==name&&patOf(x[0])===p).map(x=>x[0]).slice(0,10)}
 function swapRow(ex,i,nSets){const subs=subsFor(ex.name);
-  return `<tr class="swaprow" data-ex="${i}"><td colspan="${nSets+7}"><b>תרגילים חלופיים ל${esc(ex.name)}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></td></tr>`}
+  return `<tr class="swaprow" data-ex="${i}"><td colspan="${nSets+8}"><b>תרגילים חלופיים ל${esc(ex.name)}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></td></tr>`}
 
 /* ----- progress report ----- */
 function vReport(c){
@@ -1562,6 +1571,7 @@ function tProfile(c){
    <label class="f" for="p_sex">מין<select id="p_sex"><option value="">—</option><option value="F"${c.sex==='F'?' selected':''}>אישה</option><option value="M"${c.sex==='M'?' selected':''}>גבר</option></select></label>
    <label class="f" for="p_by">שנת לידה<input id="p_by" type="number" inputmode="numeric" value="${v('birthYear')}"></label>
    <label class="f" for="p_coach">מאמן אחראי<select id="p_coach"><option value="">—</option>${S.coaches.map(k=>`<option value="${k.id}"${k.id===c.coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
+   <label class="f" for="p_eff">רמת מאמץ קבועה (1–10)<input id="p_eff" type="number" inputmode="numeric" min="1" max="10" value="${esc(num(c.effort)??7)}"><span class="muted small">7 = בערך 3 חזרות במאגר. אפשר לשנות לכל תרגיל באימון.</span></label>
    <label class="f" for="p_freq">אימונים בשבוע<select id="p_freq">${[1,2].map(n=>`<option${Math.min(2,Number(c.freq||1))===n?' selected':''}>${n}</option>`).join('')}</select></label>
    <label class="f" for="p_type">סוג אימון<select id="p_type" data-typesel="p">${Object.entries(TTYPES).filter(([k])=>k!=='group'||ttype(c)==='group').map(([k,v])=>`<option value="${k}"${ttype(c)===k?' selected':''}>${v.replace('אימון ','')}</option>`).join('')}</select></label>
    <label class="f" for="p_partner" id="p_pairwrap"${ttype(c)==='pair'?'':' hidden'}>בזוג עם<select id="p_partner"><option value="">עדיין לא נקבע</option>${partnerOpts.map(x=>`<option value="${x.id}"${x.id===c.partnerId?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
@@ -1603,11 +1613,11 @@ function vSettings(){
   return `<div class="spread"><h1>צוות והגדרות</h1><button class="btn ghost sm" data-act="logout">יציאה מהמשתמש במחשב הזה</button></div>
   <div class="card"><h2>מאמנים</h2><span class="muted small">המאמנים כאן מופיעים בשיוך מתאמנים. "איפוס קוד" – למאמן ששכח את הקוד האישי.</span>
    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>שם</th><th>מתאמנים פעילים</th><th>סטטוס</th><th></th></tr></thead><tbody>
-   ${S.coaches.map(k=>`<tr><td><b>${esc(k.name)}</b></td><td>${activeClients().filter(c=>c.coachId===k.id).length}</td><td>${k.active===false?'<span class="chip">לא פעיל</span>':'<span class="chip up">פעיל</span>'}</td><td><div class="row"><button class="btn ghost sm" data-act="toggleCoach" data-id="${k.id}" data-write>${k.active===false?'הפעלה':'השבתה'}</button>${k.pinHash&&!window.FB?`<button class="btn ghost sm" data-act="resetPin" data-id="${k.id}" data-write>איפוס קוד</button>`:''}</div>${window.FB?`<div class="row" style="margin-top:6px"><input id="em_${k.id}" type="email" dir="ltr" placeholder="מייל לכניסה" value="${esc(k.email||'')}" style="min-width:220px"><button class="btn sm" data-act="coachEmail" data-id="${k.id}" data-write>שמירה</button></div>`:''}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">אין מאמנים עדיין</td></tr>'}
+   ${S.coaches.map(k=>`<tr><td><b>${esc(k.name)}</b></td><td>${activeClients().filter(c=>c.coachId===k.id).length}</td><td>${k.active===false?'<span class="chip">לא פעיל</span>':'<span class="chip up">פעיל</span>'}</td><td><div class="row">${isOwner()?`<button class="btn ghost sm" data-act="toggleCoach" data-id="${k.id}" data-write>${k.active===false?'הפעלה':'השבתה'}</button>`:''}${k.pinHash&&!window.FB?`<button class="btn ghost sm" data-act="resetPin" data-id="${k.id}" data-write>איפוס קוד</button>`:''}</div>${window.FB?`<div class="row" style="margin-top:6px"><input id="em_${k.id}" type="email" dir="ltr" placeholder="מייל לכניסה" value="${esc(k.email||'')}" style="min-width:220px"><button class="btn sm" data-act="coachEmail" data-id="${k.id}" data-write>שמירה</button></div>`:''}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">אין מאמנים עדיין</td></tr>'}
    </tbody></table></div>
    <div class="row"><input id="newCoach" placeholder="שם מאמן חדש" style="flex:1 1 200px"><button class="btn" data-act="addCoach" data-write>הוספה</button></div></div>
   ${cueCard}
-  ${window.FB&&S.user&&S.user.role==='admin'?`<div class="card"><h2>ייבוא נתונים</h2><span class="muted small">להעברת המתאמנים והאימונים מהמערכת הקודמת: בוחרים את קובץ ה־JSON שקיבלתם, והנתונים נוספים למערכת.</span>
+  ${window.FB&&isOwner()?`<div class="card"><h2>ייבוא נתונים</h2><span class="muted small">להעברת המתאמנים והאימונים מהמערכת הקודמת: בוחרים את קובץ ה־JSON שקיבלתם, והנתונים נוספים למערכת.</span>
    <div class="row"><input type="file" id="impFile" accept=".json,application/json"><button class="btn primary" data-act="doImport" data-write>ייבוא</button></div><div class="small" id="impMsg"></div></div>`:''}
   <div class="card"><h2>כמה משקל להוסיף בכל העלאה</h2><span class="muted small">המערכת תציע את התוספת הזו כשהמתאמן השלים את כל הסטים בראש הטווח. המאמן תמיד יכול לשנות ידנית.</span>
    <div class="row"><label class="f" for="st_step">תוספת מומלצת (לכל התרגילים)<select id="st_step" data-setting="step">${[0.5,1,1.5,2,2.5].map(v=>`<option value="${v}"${(num(S.settings.step)??1)===v?' selected':''}>${v} ק"ג</option>`).join('')}</select></label></div></div>
@@ -1667,7 +1677,7 @@ async function act(name,el){
     const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,groupName:ttyp==='group'?$('#p_group').value.trim():'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
       goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),
       limits:$('#p_limits').value.trim(),conditions:$('#p_cond').value.trim(),surgeries:$('#p_surg').value.trim(),meds:$('#p_meds').value.trim(),history:$('#p_hist').value.trim(),
-      emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},updatedAt:Date.now()});
+      emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},effort:Math.min(10,Math.max(1,num($('#p_eff').value)??7)),updatedAt:Date.now()});
     if(ok&&newP!==oldP){
       if(oldP) await updClient(oldP,{partnerId:''});
       if(newP) await updClient(newP,{partnerId:c.id});
@@ -1795,7 +1805,10 @@ async function act(name,el){
     const nm=(prompt('שם לתבנית (למשל: מניעת נפילות – שלב ב׳)')||'').trim(); if(!nm) break;
     const m={...(S.tpls||{})}; m[uid()]={name:nm,ex:ex.map(e=>[e.name,e.ss||'',num(e.targetSets)||2,num(e.repMin)??6,num(e.repMax)??10,e.tempo||''])}; S.tpls=m; await saveDoc('settings/templates',m); toast('התבנית נשמרה: '+nm); break;}
   case 'doImport': {const f=$('#impFile').files[0]; const m=$('#impMsg'); if(!f){toast('בחרו קובץ');break}
-    try{const data=JSON.parse(await f.text()); m.textContent='מייבא…'; const n=await window.FB.importAll(data); m.textContent=`✓ יובאו ${n} רשומות`; toast('הייבוא הושלם');}catch(err){m.textContent='הייבוא נכשל: '+(err&&err.message||err)} break;}
+    try{const data=JSON.parse(await f.text());if(!isOwner()){m.textContent='רק ירין יכול לייבא נתונים';return}
+      const cnt=x=>Array.isArray(x)?x.length:(x&&typeof x==='object'?Object.keys(x).length:0),nc=cnt(data.clients),ns=cnt(data.sessions),ex=new Set(S.clients.map(c=>String(c.name||'').trim())),dup=(Array.isArray(data.clients)?data.clients:Object.values(data.clients||{})).filter(c=>ex.has(String((c&&c.name)||'').trim())).length;
+      if(!confirm(`בקובץ: ${nc} מתאמנים ו-${ns} אימונים.\n${dup?dup+' מהמתאמנים כבר קיימים במערכת בשם זהה.\n':''}הנתונים יתווספו למערכת. להמשיך?`)){m.textContent='הייבוא בוטל';return}
+      m.textContent='מייבא…'; const n=await window.FB.importAll(data); m.textContent=`✓ יובאו ${n} רשומות`; toast('הייבוא הושלם');}catch(err){m.textContent='הייבוא נכשל: '+(err&&err.message||err)} break;}
   case 'coachEmail': {const k=S.coaches.find(x=>x.id===el.dataset.id); const e=($('#em_'+k.id).value||'').trim().toLowerCase(); if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('כתובת מייל לא תקינה');break}
     try{await window.FB.setStaff(k.id,k.email||'',e); await saveDoc('coaches/'+k.id,{email:e},{merge:true}); toast(e?`${k.name} יוכל להיכנס עם ${e}`:'המייל הוסר');}catch(err){toast('רק מנהל יכול לשנות הרשאות כניסה')} break;}
   case 'openReport': S.report=S.clientId; render(); window.scrollTo(0,0); break;
@@ -1815,7 +1828,9 @@ async function act(name,el){
   case 'doLogin': await doLogin(); break;
   case 'resetPin': {const k=S.coaches.find(x=>x.id===el.dataset.id); if(!k) break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב לאיפוס';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='איפוס קוד'}},4000);break} await saveDoc('coaches/'+k.id,{pinHash:null},{merge:true}); toast('הקוד של '+k.name+' אופס – בכניסה הבאה יבחר קוד חדש'); break;}
   case 'addCoach': {const n=$('#newCoach').value.trim(); if(!n) return; const ref=S.db.collection('coaches').doc(); await saveDoc('coaches/'+ref.id,{name:n,active:true,createdAt:Date.now()}); toast('המאמן נוסף'); break;}
-  case 'toggleCoach': {const k=S.coaches.find(x=>x.id===el.dataset.id); if(k) saveDoc('coaches/'+k.id,{active:k.active===false},{merge:true}); break;}
+  case 'toggleCoach': {if(!isOwner()){toast('רק ירין יכול להשבית או להפעיל מאמן');break}const k=S.coaches.find(x=>x.id===el.dataset.id); if(!k) break;
+    const off=k.active!==false; if(!confirm(off?`להשבית את ${k.name}?\nהוא לא יוכל להיכנס למערכת, והמתאמנים שלו נשארים בתיקים.`:`להפעיל מחדש את ${k.name}?`)) break;
+    saveDoc('coaches/'+k.id,{active:!off},{merge:true}); toast(off?`${k.name} הושבת`:`${k.name} הופעל`); break;}
   case 'export': {
     const dl=(window.claude&&window.claude.use)?await window.claude.use('downloads'):null; if(!dl){toast('הורדת קבצים לא זמינה בתצוגה הזו');return}
     try{
@@ -1877,7 +1892,7 @@ function bind(){
       if(Number(t.value)*10>mx+5){setTimeout(()=>{const scope=t.closest('[data-pane]')||main;const all=[...scope.querySelectorAll('.si')];const k=all.indexOf(t);if(all[k+1])all[k+1].focus();else t.blur();},0);}}
     if(t.dataset.set!=null){if(!d.date&&t.value!==''){d.date=today();const di=t.closest('[data-pane]')?.querySelector('[data-f="sess.date"]');if(di)di.value=d.date;} const s=ex.sets[Number(t.dataset.set)]; s[f]=t.value===''?'':Number(t.value); if(f==='reps') t.dataset.st=setState(ex,s); saveEdit(ctx,700); return}
     if(['name','note','tempo'].includes(f)){ex[f]=t.value;saveEdit(ctx,900);return}
-    if(['targetKg','repMin','repMax','rir','rirTarget','pain'].includes(f)){ex[f]=t.value===''?'':Number(t.value);if(f==='rir')t.dataset.st=num(ex.rir)!=null&&ex.rir<2?'low':'';if(f==='pain')t.dataset.st=num(ex.pain)>=4?'low':'';saveEdit(ctx,700);return}
+    if(['targetKg','repMin','repMax','rir','rirTarget','pain','rpe'].includes(f)){ex[f]=t.value===''?'':Number(t.value);if(f==='rpe')t.dataset.st=num(ex.rpe)>=9?'low':'';if(f==='rir')t.dataset.st=num(ex.rir)!=null&&ex.rir<2?'low':'';if(f==='pain')t.dataset.st=num(ex.pain)>=4?'low':'';saveEdit(ctx,700);return}
   });
   main.addEventListener('change',e=>{
     const t=e.target;
