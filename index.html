@@ -97,6 +97,9 @@ label.f > input,label.f > select,label.f > textarea{font-weight:400;color:var(--
 .tprep table td{padding:2px 8px 2px 0}
 .tpgrid{display:grid;gap:8px}.tpex{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--line,#e5e5e5);border-radius:12px;padding:8px 12px}
 .tphome{border:1px solid var(--line,#e5e5e5);border-radius:12px;padding:10px;margin-top:10px}
+.gfeel{white-space:nowrap}.gfeel .fb{font:inherit;font-size:15px;font-weight:700;border:2px solid var(--line,#ddd);background:#fff;border-radius:10px;padding:8px 10px;margin-inline-end:4px;cursor:pointer;min-width:58px}
+.gfeel .fb.up[aria-pressed=true]{background:#2b8a3e;border-color:#2b8a3e;color:#fff}.gfeel .fb.ok[aria-pressed=true]{background:#1c7ed6;border-color:#1c7ed6;color:#fff}.gfeel .fb.warn[aria-pressed=true]{background:#e67700;border-color:#e67700;color:#fff}.gfeel .fb.bad[aria-pressed=true]{background:#c92a2a;border-color:#c92a2a;color:#fff}
+.gqr .gkg input{max-width:74px}.qmode{margin:6px 0}
 .chip.acc{background:var(--accent-soft);color:var(--accent-text);border-color:transparent}
 button.chip{cursor:pointer;font-family:inherit}
 button.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -1083,6 +1086,22 @@ function gMemCtx(cid){return {sessions:(S.G?S.G.msess:[]).filter(s=>s.clientId==
 function gNewEx(base){const e={...newExercise(),...(base||{})}; e.m={}; return e}
 function gEnsureMembers(doc){const ms=groupMembers(S.G.name); (doc.exercises||[]).forEach(ex=>{ex.m=ex.m||{}; ms.forEach(c=>{if(!ex.m[c.id]) ex.m[c.id]={kg:ex.targetKg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:''}; const mm=ex.m[c.id]; while(mm.sets.length<(Number(ex.targetSets)||2))mm.sets.push(''); while(mm.sets.length>(Number(ex.targetSets)||2)&&mm.sets[mm.sets.length-1]==='')mm.sets.pop();})}); doc.members=ms.map(c=>c.id); return doc}
 function gSave(delay){const G=S.G; if(!G||!G.edit) return; return saveDoc('sessions/'+G.edit.id,G.edit.doc,{delay:delay??700})}
+const FEEL=[['easy','קל','up'],['ok','בינוני','ok'],['hard','קשה','warn'],['pain','כאב','bad']];
+const FEEL_RPE={easy:5,ok:7,hard:9,pain:8};
+function gQuick(d){return !isPairKey(S.G&&S.G.name)&&d.quick!==false}
+function gTop(ex){return isUnilateral(ex.name)?8:Math.min(12,num(ex.repMax)||12)}
+function gR(ex,mm){return num(mm.r)??num(ex.repMin)??8}
+/* התקדמות לפי תחושה: קל = מוסיפים משקל; בינוני = עוד חזרה, ובתקרה משקל וחוזרים לתחתית; קשה פעמיים = יורדים; כאב = לא מתקדמים ובודקים */
+function gProg(ex,mm){
+  const u=unitOf({...ex,targetKg:mm.kg}), kg=num(mm.kg), r=gR(ex,mm), lo=Math.max(num(ex.repMin)??6,isUnilateral(ex.name)?6:8), top=gTop(ex), st=stepFor(ex.group,kg||0), f=mm.feel||'';
+  let nk=kg, nr=r, t='', ok=0, hd=0;
+  if(f==='easy'){ if(u==='kg'&&kg!=null){nk=r05(kg+st);t=`★ היה קל: +${st} ק״ג`} else if(r+2<=top){nr=r+2;t='★ היה קל: +2 חזרות'} else {nr=lo;t='★ היה קל: להקשות את המנח ולחזור ל־'+lo} }
+  else if(f==='ok'){ ok=(mm.okRun||0)+1; if(r<top){nr=r+1;t='בינוני: עוד חזרה'} else if(u==='kg'&&kg!=null){nk=r05(kg+st);nr=lo;t=`★ הגיע ל־${top}: +${st} ק״ג וחוזרים ל־${lo}`} else {nr=lo;t=`★ הגיע ל־${top}: להקשות את המנח ולחזור ל־${lo}`} }
+  else if(f==='hard'){ hd=(mm.hardRun||0)+1; if(hd>=2){ if(u==='kg'&&kg){nk=Math.max(0,r05(kg-st));t=`קשה פעמיים: −${st} ק״ג`} else {nr=Math.max(lo,r-2);t='קשה פעמיים: פחות חזרות'} hd=0 } else t='היה קשה: נשארים באותו עומס' }
+  else if(f==='pain') t='⚠ דווח כאב: לא מתקדמים, לבדוק ולהתאים';
+  else t=mm.sugg&&!/^⚠|^★|^בינוני|^היה|^קשה/.test(mm.sugg)?mm.sugg:'לא סומן: אותו עומס';
+  return {kg:nk==null?'':nk,r:nr,sugg:t,okRun:ok,hardRun:hd};
+}
 function vGroup(){
   const G=S.G; if(!G) return vCoaches();
   const ms=groupMembers(G.name);
@@ -1107,7 +1126,13 @@ function vGroup(){
   const blocks=exs.map((ex,i)=>{const tg=tags[i];
     const sep=tg.first&&(tg.ss||exs.some(e=>e.ss))?`<div class="gsep">${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</div>`:'';
     const sec=unitOf(ex)==='sec';
+    const Q=gQuick(d);
     const rows=ms.map(c=>{const mm=ex.m[c.id]; const prev=prevShort(gMemCtx(c.id),ex,null);
+      if(Q) return `<tr class="gqr"><td class="gname"><b>${esc(c.name)}</b>${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}</div>`:''}</td>
+       <td class="gkg" data-l="משקל"><input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
+       <td class="gkg" data-l="${sec?'שניות':'חזרות'}"><input type="number" min="1" inputmode="numeric" data-gm="r" data-ei="${i}" data-cid="${c.id}" value="${esc(gR(ex,mm))}"></td>
+       <td class="gfeel" data-l="איך היה">${FEEL.map(f=>`<button class="fb ${f[2]}" aria-pressed="${mm.feel===f[0]}" data-act="gFeel" data-v="${f[0]}" data-ei="${i}" data-cid="${c.id}" data-write>${f[1]}</button>`).join('')}</td>
+       <td class="gadapt" data-l="הערה"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="הערה קצרה"></td></tr>`;
       return `<tr><td class="gname"><b>${esc(c.name)}</b>${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
        <td class="gkg" data-l="משקל"><input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
        ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
@@ -1121,7 +1146,7 @@ function vGroup(){
       <input class="gt" data-gf="tempo" data-ei="${i}" value="${esc(ex.tempo)}" placeholder="טמפו, מנח, דגשים">
       <span class="gacts"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
      ${cueHtml(ex.name)}
-     <div class="tbl-wrap"><table class="gtable"><thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>מאמץ</th><th>התאמה אישית</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}).join('');
+     <div class="tbl-wrap"><table class="gtable">${Q?`<thead><tr><th>משתתף</th><th>משקל</th><th>${sec?'שניות':'חזרות'}</th><th>איך היה?</th><th>הערה</th></tr></thead>`:`<thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>מאמץ</th><th>התאמה אישית</th></tr></thead>`}<tbody>${rows}</tbody></table></div></div>`}).join('');
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq||1)>(d.seq||1));
   const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">שבוע ${s.seq}${s.status==='done'?' ✓':''}</button>`).join('');
   let rot='';
@@ -1130,6 +1155,8 @@ function vGroup(){
       rot=`<div class="card rotc"><h3>🔄 סדר העבודה בזוג</h3><p class="muted small">כל אחד עושה בלוק אחר, ומתחלפים כששניהם סיימו.</p><table class="rott"><thead><tr><th>סבב</th><th>${esc(A.name)}</th><th>${esc(B.name)}</th></tr></thead><tbody>${bl.map((b,k)=>{const bb=bl[(k+1)%L];return `<tr><td>${k+1}</td><td><b>${lab(b)}</b><small>${esc(b.names.join(' + '))}</small></td><td><b>${lab(bb)}</b><small>${esc(bb.names.join(' + '))}</small></td></tr>`}).join('')}</tbody></table></div>`}}
   return head+`<div class="labels">${weeks}</div>${rot}
    <div class="weekchip">שבוע ${d.seq||1}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
+   ${PR?'':`<div class="row qmode"><span class="muted small">רישום:</span><button class="chip" data-tone="neutral" aria-pressed="${gQuick(d)}" data-act="gQuick" data-v="1" data-write>⚡ מהיר: קל / בינוני / קשה</button><button class="chip" data-tone="neutral" aria-pressed="${!gQuick(d)}" data-act="gQuick" data-v="0" data-write>מפורט: חזרות בכל סט</button></div>
+   ${gQuick(d)?`<div class="banner info small"><span>אחרי כל תרגיל לוחצים לכל משתתף <b>קל / בינוני / קשה</b> (או כאב). את המשקל והחזרות לשבוע הבא המערכת מחשבת לבד: <b>קל</b> מוסיף משקל, <b>בינוני</b> מוסיף חזרה ובתקרה (${'12'}, בחד־צדדי 8) מוסיף משקל, <b>קשה פעמיים</b> מוריד. מי שלא סומן לא הגיע.</span></div>`:''}`}
    ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
    <label class="f warmup">חימום<textarea data-gf="warmup" rows="2" placeholder="${isPairKey(S.G&&S.G.name)?'חימום משותף לזוג':'חימום משותף לקבוצה'}">${esc(d.warmup||'')}</textarea></label>
    ${blocks||'<div class="card empty"><strong>אין תרגילים</strong></div>'}
@@ -1145,7 +1172,7 @@ function gInput(t){
   const mm=ex.m[t.dataset.cid]; if(!mm) return true; const f=t.dataset.gm;
   if(f==='rep'){mm.sets[Number(t.dataset.si)]=t.value===''?'':Number(t.value); if(!d.date&&t.value!=='') d.date=today(); t.dataset.st=setState(ex,{reps:t.value});
     if(t.value!==''&&Number(t.value)*10>Math.max(num(ex.repMax)||10,10)+5){const all=[...document.querySelectorAll('#main input[data-gm="rep"]')];const k=all.indexOf(t);setTimeout(()=>{if(all[k+1])all[k+1].focus();else t.blur()},0)}}
-  else if(f==='kg'||f==='pain'||f==='rpe') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
+  else if(f==='kg'||f==='pain'||f==='rpe'||f==='r') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
   gSave(700); return true;
 }
 function gChange(t){
@@ -1171,11 +1198,16 @@ async function gAct(name,el){
   case 'gAddSS': {const k=String(Math.max(0,...d.exercises.map(e=>Number(e.ss)||0))+1); d.exercises.push(gNewEx({ss:k}),gNewEx({ss:k})); gEnsureMembers(d); gSave(0); render(); break;}
   case 'gUp': case 'gDown': {const j=name==='gUp'?i-1:i+1; if(j<0||j>=d.exercises.length) break; [d.exercises[i],d.exercises[j]]=[d.exercises[j],d.exercises[i]]; gSave(0); render(); break;}
   case 'gDel': {if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='למחוק?';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='✕'}},3000);break} d.exercises.splice(i,1); gSave(0); render(); break;}
+  case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
+  case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
   case 'gApply': {const mm=d.exercises[i].m[el.dataset.cid]; mm.kg=mm.skg; gSave(0); render(); break;}
   case 'gComplete': {
     const ms=groupMembers(G.name); if(!d.date) d.date=today(); let n=0;
     for(const c of ms){
-      const exsM=d.exercises.filter(ex=>ex.name).map(ex=>{const mm=ex.m[c.id]||{sets:[]};return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
+      const QQ=gQuick(d);
+      const exsM=d.exercises.filter(ex=>ex.name).map(ex=>{const mm=ex.m[c.id]||{sets:[]};
+        if(QQ){const fl=FEEL.find(f=>f[0]===mm.feel);return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??'',sets:mm.feel?Array.from({length:Number(ex.targetSets)||2},()=>({kg:'',reps:gR(ex,mm)})):[],rir:'',rpe:mm.feel?FEEL_RPE[mm.feel]:'',pain:mm.feel==='pain'?4:'',feel:mm.feel||'',note:[fl?fl[1]:'',mm.adapt||''].filter(Boolean).join(' · '),sugg:null}}
+        return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
       if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
       const seq=gMemCtx(c.id).sessions.filter(s=>s.status==='done').length+1;
       const ref=S.db.collection('sessions').doc();
@@ -1184,17 +1216,18 @@ async function gAct(name,el){
     }
     d.status='done'; d.completedAt=Date.now(); await saveDoc('sessions/'+G.edit.id,d); toast(`האימון נשמר בתיק של ${n} משתתפים`); render(); window.scrollTo(0,0); break;}
   case 'gNext': {
-    if(d.status!=='done'&&(d.exercises||[]).some(ex=>Object.values(ex.m||{}).some(mm=>(mm.sets||[]).some(r=>r!==''&&r!=null)))) await gAct('gComplete',el);
+    if(d.status!=='done'&&(d.exercises||[]).some(ex=>Object.values(ex.m||{}).some(mm=>mm.feel||(mm.sets||[]).some(r=>r!==''&&r!=null)))) await gAct('gComplete',el);
     const nextP=G.sessions.find(x=>x.status==='planned'&&x.id!==G.edit.id&&(x.seq||1)>(d.seq||1)); if(nextP){G.edit={id:nextP.id,doc:gEnsureMembers(clone(nextP))}; render(); window.scrollTo(0,0); break;}
     const ms=groupMembers(G.name);
     const exs=d.exercises.filter(ex=>ex.name).map(ex=>{const ne=gNewEx({...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:ex.targetKg});
+      if(gQuick(d)){ne.quickNote=1; ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const p=gProg(ex,mm); ne.m[c.id]={kg:p.kg,r:p.r,sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',feel:'',sugg:p.sugg,okRun:p.okRun,hardRun:p.hardRun}}); return ne;}
       ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const mex={...ex,targetKg:mm.kg??ex.targetKg,sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),pain:mm.pain,rpe:mm.rpe};
         const s=suggest(mex,exHistory(gMemCtx(c.id),ex.name),effDflt(c.id)); let txt=s.reason;
         if(unitOf(mex)!=='sec'&&isUnilateral(ex.name)&&s.type==='up') txt='חד־צדדי: להתקדם במשקל עבודה, עד 8 חזרות';
         ne.m[c.id]={kg:mm.kg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',sugg:(s.type==='up'?'★ ':'')+txt,skg:(unitOf(mex)==='kg'&&s.kg!=null)?s.kg:null};});
       return ne;});
     const ref=S.db.collection('sessions').doc();
-    const doc={clientId:G.id,group:true,groupName:G.name,label:'1',seq:(d.seq||1)+1,status:'planned',date:'',notes:'',warmup:d.warmup||'',createdAt:Date.now(),basedOn:G.edit.id,exercises:exs};
+    const doc={clientId:G.id,group:true,groupName:G.name,label:'1',seq:(d.seq||1)+1,quick:d.quick,status:'planned',date:'',notes:'',warmup:d.warmup||'',createdAt:Date.now(),basedOn:G.edit.id,exercises:exs};
     G.edit={id:ref.id,doc:gEnsureMembers(doc),local:true}; await saveDoc('sessions/'+ref.id,doc); render(); window.scrollTo(0,0); break;}
   }
 }
