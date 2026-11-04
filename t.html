@@ -232,7 +232,7 @@ function exCard(x,key,i,logging,si){
 function render(){
   var p=PLAN,h='<h1>שלום '+esc(p.first||p.name||'')+' 👋</h1><p class="sub">התוכנית האישית שלך'+(p.coach?' מ'+esc(p.coach):'')+'. אפשר לפתוח אותה מכל מקום, גם בחו"ל.</p>';
   if(!lsg('rs_a2hs_'+SID)&&!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches))){var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    h+='<div class="card a2hs"><button class="x" data-a2hs aria-label="סגירה">×</button><b>📲 לשמור את הדף כאייקון בטלפון</b><ol>'+(ios?'<li>לוחצים על כפתור השיתוף <b>⬆️</b></li><li>בוחרים <b>"הוספה למסך הבית"</b></li>':'<li>לוחצים על <b>⋮</b> למעלה</li><li>בוחרים <b>"הוספה למסך הבית"</b></li>')+'</ol></div>'}
+    h+='<div class="card a2hs"><button class="x" data-a2hs aria-label="סגירה">×</button><b>כדי לשמור את הדף בלי לחפש אותו:</b><ol>'+(ios?'<li>לוחצים על כפתור השיתוף <b>⬆️</b></li><li>בוחרים <b>"הוספה למסך הבית"</b></li>':'<li>לוחצים על <b>⋮</b> למעלה</li><li>בוחרים <b>"הוספה למסך הבית"</b></li>')+'</ol></div>'}
   var N=p.next||[];
   if(N.length){
     h+='<h2>האימון שלי</h2>';
