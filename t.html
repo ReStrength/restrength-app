@@ -171,6 +171,8 @@ var TTS=!!(window.speechSynthesis&&window.SpeechSynthesisUtterance),SAYING=null;
 var UTT=null,HEV=null;function vScore(x){var n=String(x.name||''),v=0;if(/natural|neural|online/i.test(n))v+=8;if(/enhanced|premium|משופר|איכות/i.test(n))v+=6;if(/hila|carmit|כרמית|הילה/i.test(n))v+=3;if(/google/i.test(n))v+=2;if(/asaf|אסף/i.test(n))v-=1;if(x.localService===false)v+=1;return v}
 function heVoice(){var L=(window.speechSynthesis.getVoices()||[]).filter(function(x){return /^he|^iw/i.test(x.lang)});L.sort(function(a,b){return vScore(b)-vScore(a)});return L[0]||null}
 if(TTS){HEV=heVoice();try{window.speechSynthesis.onvoiceschanged=function(){HEV=heVoice()}}catch(e){}}
+/* ההקראה והסרטונים לא עוצרים מוזיקה (ספוטיפיי וכו') שמתנגנת ברקע */
+try{if(navigator.audioSession)navigator.audioSession.type='ambient'}catch(e){}
 var GAUD=null,GPRE=null;
 /* טקסט ברור להקראה: טווחים, כפול, ק"ג וחצאים נקראים במילים */
 function ttsClean(t){return String(t).replace(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/g,'$1 עד $2').replace(/(\d)\s*[×xX]\s*(\d)/g,'$1 פעמים $2').replace(/×/g,' פעמים ').replace(/ק"ג|ק״ג|\bקג\b/g,'קילו').replace(/(\d+)\.5\b/g,'$1 וחצי').replace(/[()\[\]*_#\/\\|•]/g,' ').replace(/\s+/g,' ').trim()}
