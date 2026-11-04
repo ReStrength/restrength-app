@@ -1457,7 +1457,7 @@ function progTable(ctx,doc){
 function pastWeeks(ctx,c,label,curId,limit,title){
   let done=doneSessions(ctx).filter(d=>String(d.label)===String(label)&&d.id!==curId); if(limit) done=done.slice(0,limit);
   if(!done.length) return '';
-  return `<div class="past">${title===''?'':`<h3 class="muted">${title||'שבועות קודמים'}</h3>`}${done.map(d=>{const exs=d.exercises||[];const tags=groupTags(exs);return `<div class="pastweek"><div class="spread"><b>${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}שבוע ${d.seq} · ${fmt(d.date)}${d.coach?` · ${esc(d.coach)}`:''}</b><button class="btn ghost sm" data-act="openSess" data-pane-id="${d.id}" data-id="${d.id}">עריכה</button></div>
+  return `<div class="past">${title===''?'':`<h3 class="muted">${title||'שבועות קודמים'}</h3>`}${done.map(d=>{const exs=d.exercises||[];const tags=groupTags(exs);return `<div class="pastweek"><div class="spread"><b>${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}${d.selfLog?'🏠 אימון לבד (מהדף האישי)':'שבוע '+d.seq} · ${fmt(d.date)}${d.coach?` · ${esc(d.coach)}`:''}</b><button class="btn ghost sm" data-act="openSess" data-pane-id="${d.id}" data-id="${d.id}">עריכה</button></div>
    <div class="sheet-wrap"><table class="sheet ro"><thead><tr><th>תרגיל</th><th>סטים×חזרות</th><th>משקל עבודה</th><th>הערות / טמפו</th><th>תוצאות</th><th>כאב</th></tr></thead><tbody>
    ${exs.map((e,i)=>{const st=exStats(e);return `${tags[i].first?`<tr class="gsep"><td colspan="6">${tags[i].ss?`סופר סט ${tags[i].n}`:`תרגיל ${tags[i].n}`}</td></tr>`:''}<tr class="${tags[i].ss?'ssr':''} ${tags[i].first?'gfirst':''}"><td class="nm">${esc(e.name)}${(e.prog||[]).length?`<div class="prevline">התקדמות: ${e.prog.map(k=>(PROGS.find(p=>p[0]===k)||[,k])[1]).join(' + ')}</div>`:''}${e.note?`<div class="prevline">${esc(e.note)}</div>`:''}</td><td dir="ltr">${e.targetSets}×${e.repMin}-${e.repMax}</td><td>${num(e.targetKg)!=null?e.targetKg+' ק"ג':'—'}</td><td class="nt">${esc(e.tempo||'')}</td><td dir="ltr" class="rs">${st.reps.join(', ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
    </tbody></table></div>${d.warmup?`<div class="small muted">חימום: ${esc(d.warmup)}</div>`:''}${d.notes?`<div class="small muted">הערות: ${esc(d.notes)}</div>`:''}</div>`}).join('')}</div>`;
@@ -1520,7 +1520,7 @@ function tSession(c){
   const p=partnerOf(c);
   const toggle=p?`<div class="labels"><button class="chip" aria-pressed="${!S.pairMode}" data-act="pairOff">אימון אישי – ${esc(c.name)}</button><button class="chip" aria-pressed="${S.pairMode}" data-act="pairOn">אימון זוגי – ${esc(c.name)} ו${esc(p.name)}</button></div>`:'';
   if(S.pairMode&&p&&S.Q) return toggle+`<div class="pairgrid">${paneHtml(S.P,c,0,true)}${paneHtml(S.Q,p,1,true)}</div>`;
-  return toggle+paneHtml(S.P,c,0,false);
+  return toggle+tpSelfBox(c)+paneHtml(S.P,c,0,false);
 }
 
 /* ----- cues & substitutes ----- */
@@ -1583,7 +1583,7 @@ function archiveHtml(ctx){const a=(ctx&&ctx.archive)||[]; if(!a.length) return '
 function tHistory(c){
   const done=doneSessions(S.P);
   if(!done.length&&!(S.P&&S.P.archive&&S.P.archive.length)) return `<div class="card empty"><strong>עדיין אין אימונים שבוצעו</strong><span>אחרי שמסיימים אימון בלשונית "תוכנית אימונים", הוא נשמר כאן עם כל התוצאות.</span></div>`;
-  return `<div class="hist">${done.map(d=>`<div class="card"><div class="spread"><div><h3>${fmt(d.date)} · ${labelName(c,d.label)}שבוע ${d.seq}</h3><span class="muted small">${d.coach?esc(d.coach):''}${d.notes?` · ${esc(d.notes)}`:''}</span></div><button class="btn sm" data-act="openSess" data-id="${d.id}">פתיחה לעריכה</button></div>
+  return `<div class="hist">${done.map(d=>`<div class="card"><div class="spread"><div><h3>${fmt(d.date)} · ${labelName(c,d.label)}${d.selfLog?'🏠 אימון לבד (מהדף האישי)':'שבוע '+d.seq}</h3><span class="muted small">${d.coach?esc(d.coach):''}${d.notes?` · ${esc(d.notes)}`:''}</span></div><button class="btn sm" data-act="openSess" data-id="${d.id}">פתיחה לעריכה</button></div>
    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>יעד</th><th>בפועל</th><th>כאב</th></tr></thead><tbody>
    ${(d.exercises||[]).map(e=>{const st=exStats(e);return `<tr><td>${e.ss?`<span class="muted small">ס״ס ${esc(e.ss)} · </span>`:''}${esc(e.name)}</td><td class="muted" dir="ltr" style="text-align:right">${e.targetSets}×${e.repMin}–${e.repMax}${e.unit==='kg'&&e.targetKg!==''?` @ ${e.targetKg}kg`:''}</td><td dir="ltr" style="text-align:right">${st.done.map((s,i)=>e.unit==='kg'?`${st.kgs[i]}×${st.reps[i]}`:`${st.reps[i]}`).join(' · ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
    </tbody></table></div></div>`).join('')}</div>`+archiveHtml(S.P);
@@ -1898,6 +1898,7 @@ async function act(name,el){
     const m={...(S.cues||{})}; if(t||v) m[n]={t,v}; else delete m[n]; S.cues=m; await saveDoc('settings/cues',m); toast('הדגשים נשמרו'); S.cueEdit=null; render(); break;}
   case 'cueEdit': S.cueEdit=el.dataset.name; render(); break;
   case 'cueDel': {const m={...(S.cues||{})}; delete m[el.dataset.name]; S.cues=m; await saveDoc('settings/cues',m); render(); break;}
+  case 'goPortal': S.tab='portal'; render(); window.scrollTo(0,0); break;
   case 'goHistory': S.tab='history'; S.moreOpen=true; render(); window.scrollTo(0,0); break;
   case 'pickMe': S.loginPick=el.dataset.id; S.loginErr=''; render(); afterLoginFocus(); break;
   case 'loginBack': S.loginPick=null; S.loginErr=''; render(); break;
@@ -2047,7 +2048,7 @@ async function tpLoad(c,force){
   S.tpBusy[c.id]='load';
   try{const x=await tpCtx(c); const r=await tpPost('reps',{s:x.s,w:x.w});
     const L=(await Promise.all((r.reps||[]).map(o=>PC.decJ(x.k,o.blob).then(v=>({...v,t:o.t,r:v.r||o.r}),()=>null)))).filter(Boolean).sort((a,b)=>b.t-a.t);
-    S.tpReps[c.id]=L; S.tpNew[c.id]=L.filter(o=>o.t>(c.portalSeen||0)).length;
+    S.tpReps[c.id]=L; S.tpNew[c.id]=L.filter(o=>o.t>(c.portalSeen||0)).length; tpAutoImport(c);
   }catch(e){ S.tpReps[c.id]=S.tpReps[c.id]||[]; }
   finally{ S.tpBusy[c.id]=null; scheduleRender(); }
 }
@@ -2091,13 +2092,13 @@ function tPortal(c){
   <div class="card"><h2>🎥 סרטוני הדגמה לתרגילים בתוכנית</h2>
     ${names.length?`<p class="muted small">צלמו את התרגיל פעם אחת, והמתאמן יראה אותו בדף שלו ליד התרגיל.</p><div class="tpgrid">${names.map(n=>`<div class="tpex"><span>${esc(n)}</span>${V[n]?`<span class="row"><span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpVid" data-ex="${esc(n)}" data-write>החלפה</button><button class="btn ghost sm" data-act="tpVidDel" data-ex="${esc(n)}" data-write>מחיקה</button></span>`:`<button class="btn sm" data-act="tpVid" data-ex="${esc(n)}" data-write>📷 צילום הדגמה</button>`}</div>`).join('')}</div>`:'<p class="muted">אין עדיין אימון מתוכנן. בונים אימון בלשונית "תוכנית אימונים", והתרגילים יופיעו כאן.</p>'}</div>
   <div class="card"><h2>🏠 תרגילים לבית / לחו"ל</h2><p class="muted small">תרגילים נוספים שהמתאמן יכול לעשות לבד. אפשר לצרף סרטון שלכם.</p>
-    ${H.map((x,i)=>`<div class="tphome"><div class="form-grid">
+    ${H.map((x,i)=>{const hs=tpHomeStats(c)[x.n];return `<div class="tphome">${x.n?`<div class="small" style="margin-bottom:6px">${hs?`✓ עשה/תה <b>${hs.n} פעמים</b> בשבועיים · אחרון ${tpDay(hs.last)}${hs.pain!=null?` · <span style="${hs.pain>=4?'color:var(--bad);font-weight:700':''}">כאב ${hs.pain}/10</span>`:''}`:'<span class="muted">עוד לא דיווח/ה שעשה את זה</span>'}</div>`:''}<div class="form-grid">
       <label class="f">תרגיל<input list="lib" data-th="${i}.n" value="${esc(x.n||'')}"></label>
       <label class="f">סטים<input inputmode="numeric" data-th="${i}.sets" value="${esc(x.sets||'')}" dir="ltr"></label>
       <label class="f">חזרות / שניות<input data-th="${i}.reps" value="${esc(x.reps||'')}" dir="ltr" placeholder="8-10"></label>
       <label class="f">משקל (ק"ג)<input inputmode="decimal" data-th="${i}.kg" value="${esc(x.kg||'')}" dir="ltr" placeholder="לא חובה"></label>
       <label class="f" style="grid-column:1/-1">דגשים<input data-th="${i}.note" value="${esc(x.note||'')}" placeholder="למשל: לאט, לנשום, עד כאב 3"></label></div>
-      <div class="row">${x.m?`<span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpHVid" data-i="${i}" data-write>החלפת סרטון</button>`:`<button class="btn sm" data-act="tpHVid" data-i="${i}" data-write>📷 צילום / סרטון</button>`}<button class="btn ghost sm" data-act="tpHDel" data-i="${i}" data-write>הסרה</button></div></div>`).join('')}
+      <div class="row">${x.m?`<span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpHVid" data-i="${i}" data-write>החלפת סרטון</button>`:`<button class="btn sm" data-act="tpHVid" data-i="${i}" data-write>📷 צילום / סרטון</button>`}<button class="btn ghost sm" data-act="tpHDel" data-i="${i}" data-write>הסרה</button></div></div>`}).join('')}
     <div class="row" style="margin-top:10px"><button class="btn" data-act="tpHAdd" data-write>+ תרגיל</button>${H.length?`<button class="btn primary" data-act="tpHSave" data-write>שמירה ועדכון הדף</button>`:''}${H.some(x=>x.n)&&c.portalPub?`<a class="btn primary" data-own="1" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,tpHomeMsg(c)))}" target="_blank" rel="noopener">📲 שליחת התרגילים בווטסאפ</a>`:''}</div>${c.phone?'':'<p class="muted small" style="margin:6px 0 0">כדי שהווטסאפ ייפתח ישר אצל המתאמן, הוסיפו את הטלפון שלו בתיק המתאמן.</p>'}</div>
   <div class="spread"><span></span>${S.tpConfirmDel===c.id?`<span class="row small"><span class="muted">לבטל את הקישור? הדף יפסיק לעבוד, וגם מה שהמתאמן שלח יימחק.</span><button class="btn danger sm" data-act="tpDel" data-write>כן, ביטול</button><button class="btn ghost sm" data-act="tpDelNo">לא</button></span>`:`<button class="btn ghost sm" data-act="tpDelAsk" data-write>ביטול הקישור</button>`}</div>`;
 }
@@ -2105,6 +2106,34 @@ function tpInbox(){const L=S.clients.filter(c=>c.portal&&tpMine(c)&&S.tpNew[c.id
   if(!L.length) return '';
   return `<div class="card tpinbox"><h2 style="margin:0 0 6px">📩 התיבה שלי: הודעות מהמתאמנים</h2>${L.map(x=>`<button class="tpinrow" data-tpopen="${x.c.id}"><b>${esc(x.c.name)}</b> <span class="tpbadge">${x.n}</span><span class="muted small">${x.last?(x.last.kind==='pain'?'🤕 דיווח כאב':x.last.kind==='log'?'🏋️ תיעוד אימון':x.last.kind==='media'?'📷 צילום / סרטון':x.last.kind==='done'?'✓ תרגול בבית':'✍️ הודעה'):''}</span></button>`).join('')}</div>`}
 document.addEventListener('click',e=>{const a=e.target.closest('a[data-own]');if(a){const c=client();if(c&&S.meId&&tpOwner(c)!==S.meId)updClient(c.id,{portalOwner:S.meId})}const b=e.target.closest('[data-tpopen]');if(b){openClient(b.dataset.tpopen,'portal')}},true);
+/* אימון שהמתאמן תיעד בדף נכנס לבד להיסטוריה של התוכנית (אפשר לפתוח ולערוך) */
+async function tpImportLog(c,o){
+  const id=('tp_'+c.id+'_'+o.r).replace(/[^A-Za-z0-9_-]/g,'');
+  let plan=null; try{const q=await S.db.collection('sessions').where('clientId','==',c.id).get(); const ps=q.docs.map(d=>d.data()).filter(x=>x.status==='planned'&&String(x.label)===String(o.label||'1')); plan=ps[0]||null}catch(e){}
+  const exercises=(o.ex||[]).map(e=>{const l=libFind(e.n);const sets=(e.sets||[]).filter(s=>s.reps!==''&&s.reps!=null);const pe=plan&&(plan.exercises||[]).find(x=>x.name===e.n)||{};return {id:uid(),name:e.n,unit:e.unit||pe.unit||(l?l[1]:'kg'),group:pe.group||(l?l[2]:'other'),ss:pe.ss||'',rirTarget:3,tempo:pe.tempo||'',targetSets:pe.targetSets||sets.length,targetKg:pe.targetKg??'',repMin:pe.repMin??'',repMax:pe.repMax??'',sets:sets.map(s=>({kg:s.kg||'',reps:s.reps||''})),rir:'',rpe:o.rpe??'',pain:o.pain??'',note:''}});
+  const ok=await saveDoc('sessions/'+id,{clientId:c.id,label:o.label||'1',programNo:1,seq:0,status:'done',approved:true,date:o.date||isoOf(o.t*1000),coach:'',selfLog:true,notes:'🏠 אימון לבד, תועד בדף האישי'+(o.min?' · '+o.min+' דק׳':'')+(o.rpe?' · מאמץ '+o.rpe:'')+(o.pain!=null?' · כאב '+o.pain+'/10':'')+(o.note?' · '+o.note:''),warmup:'',exercises,createdAt:Date.now(),completedAt:o.t*1000});
+  if(ok){c.portalImported={...(c.portalImported||{}),[o.r]:id};await updClient(c.id,{portalImported:c.portalImported});}
+  return ok;
+}
+async function tpAutoImport(c){
+  if(!S.canWrite||!tpMine(c)) return; const imp=c.portalImported||{};
+  for(const o of (S.tpReps[c.id]||[]).filter(o=>o.kind==='log'&&!imp[o.r]&&(o.ex||[]).length)){try{await tpImportLog(c,o)}catch(e){}}
+}
+/* סיכום מה המתאמן עשה לבד, ליד התוכנית */
+function tpHomeStats(c,days=14){const since=Date.now()/1000-days*86400,M={};
+  (S.tpReps[c.id]||[]).filter(o=>o.kind==='done'&&o.t>=since).forEach(o=>{const k=o.ex||'';const m=M[k]||(M[k]={n:0,last:0,pain:null,maxPain:0});m.n++;if(o.t>m.last){m.last=o.t;m.pain=o.pain}if(o.pain>m.maxPain)m.maxPain=o.pain});return M}
+function tpDay(t){const d=new Date(t*1000);return d.getDate()+'.'+(d.getMonth()+1)}
+function tpSelfBox(c){
+  if(!c.portal) return ''; if(S.tpReps[c.id]==null){setTimeout(()=>tpLoad(c),0);return ''}
+  const since=Date.now()/1000-14*86400, L=S.tpReps[c.id].filter(o=>o.t>=since);
+  const logs=L.filter(o=>o.kind==='log'), H=tpHomeStats(c), hk=Object.keys(H), pains=L.filter(o=>o.kind==='pain');
+  if(!logs.length&&!hk.length&&!pains.length) return '';
+  const pc=v=>v!=null?` · <span style="${v>=4?'color:var(--bad);font-weight:700':''}">כאב ${v}/10</span>`:'';
+  return `<div class="card selfbox"><div class="spread"><h3 style="margin:0">🏠 מה ${esc(String(c.name).split(' ')[0])} עשה/תה לבד (שבועיים אחרונים)</h3><button class="btn ghost sm" data-act="goPortal">לכל הפרטים</button></div>
+   ${logs.length?`<div class="small" style="margin-top:6px"><b>אימונים מהתוכנית:</b><ul style="margin:4px 0">${logs.map(o=>`<li>${tpDay(o.t)} · אימון ${esc(o.label||'')} · ${(o.ex||[]).map(e=>esc(e.n)+' <span dir="ltr">'+(e.sets||[]).filter(s=>s.reps!=='').map(s=>(s.kg?esc(s.kg)+'×':'')+esc(s.reps)).join(', ')+'</span>').join(' | ')}${o.rpe?' · מאמץ '+o.rpe:''}${pc(o.pain)}</li>`).join('')}</ul><span class="muted">נכנסו לבד ללשונית "שבוע קודם" ולהיסטוריה. שם אפשר לפתוח ולתקן.</span></div>`:''}
+   ${hk.length?`<div class="small" style="margin-top:6px"><b>תרגילים לבית:</b><ul style="margin:4px 0">${hk.map(k=>{const m=H[k];return `<li>${esc(k)}: <b>${m.n} פעמים</b> · אחרון ${tpDay(m.last)}${pc(m.pain)}${m.maxPain>=4&&m.pain<4?` <span class="muted">(היה עד ${m.maxPain})</span>`:''}</li>`}).join('')}</ul></div>`:''}
+   ${pains.length?`<div class="small" style="margin-top:6px;color:var(--bad)"><b>🤕 דיווחי כאב:</b> ${pains.map(o=>tpDay(o.t)+' · '+o.pain+'/10'+(o.text?' '+esc(o.text):'')).join(' | ')}</div>`:''}</div>`;
+}
 function tpPickFile(cb){const i=document.createElement('input');i.type='file';i.accept='video/*,image/*';i.onchange=()=>{const f=i.files&&i.files[0];if(f)cb(f)};i.click()}
 function tpHRead(c){const H=clone(c.homeEx||[]);document.querySelectorAll('[data-th]').forEach(el=>{const [i,k]=el.dataset.th.split('.');if(H[+i])H[+i][k]=el.value.trim()});H.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:(x.unit||'bw')});return H}
 async function tpAct(name,el){
@@ -2123,12 +2152,7 @@ async function tpAct(name,el){
     box.innerHTML='<span class="muted small">טוען…</span>';
     try{const x=await tpCtx(c); const b=await PC.getBlob(x.k,n,pi=>tpPost('rmget',{s:x.s,w:x.w,r,i:pi}),t,f=>{box.innerHTML=`<span class="muted small">טוען… ${Math.round(f*100)}%</span>`}); S.tpUrls[r]=URL.createObjectURL(b); el.click();}catch(e){box.innerHTML='<span class="muted small">לא נטען. נסו שוב</span>'}
     break;}
-  case 'tpImport': {const o=(S.tpReps[c.id]||[]).find(x=>x.r===el.dataset.r); if(!o) return;
-    const ref=S.db.collection('sessions').doc();
-    const exercises=(o.ex||[]).map(e=>{const l=libFind(e.n);return {id:uid(),name:e.n,unit:e.unit||(l?l[1]:'kg'),group:l?l[2]:'other',ss:'',rirTarget:3,tempo:'',targetSets:(e.sets||[]).length,targetKg:'',repMin:'',repMax:'',sets:(e.sets||[]).map(s=>({kg:s.kg||'',reps:s.reps||''})),rir:'',rpe:o.rpe??'',pain:'',note:''}});
-    const ok=await saveDoc('sessions/'+ref.id,{clientId:c.id,label:o.label||'1',programNo:1,seq:0,status:'done',approved:true,date:o.date||isoOf(o.t*1000),coach:'',selfLog:true,notes:'אימון עצמאי – נשלח מהדף האישי'+(o.note?': '+o.note:''),warmup:'',exercises,createdAt:Date.now(),completedAt:o.t*1000});
-    if(ok){await updClient(c.id,{portalImported:{...(c.portalImported||{}),[o.r]:ref.id}});toast('נוסף להיסטוריה ✓ (אימון עצמאי)');}
-    break;}
+  case 'tpImport': {const o=(S.tpReps[c.id]||[]).find(x=>x.r===el.dataset.r); if(!o) return; if(await tpImportLog(c,o)) toast('נוסף להיסטוריה ✓ (אימון עצמאי)'); break;}
   case 'tpVid': case 'tpHVid': tpPickFile(async f=>{
     if(f.size>300*1048576){toast('הקובץ גדול מדי (עד 300MB)');return}
     toast('מעלה… 0%');
