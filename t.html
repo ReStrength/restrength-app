@@ -175,7 +175,7 @@ var GAUD=null,GPRE=null;
 /* טקסט ברור להקראה: טווחים, כפול, ק"ג וחצאים נקראים במילים */
 function ttsClean(t){return String(t).replace(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/g,'$1 עד $2').replace(/(\d)\s*[×xX]\s*(\d)/g,'$1 פעמים $2').replace(/×/g,' פעמים ').replace(/ק"ג|ק״ג|\bקג\b/g,'קילו').replace(/(\d+)\.5\b/g,'$1 וחצי').replace(/[()\[\]*_#\/\\|•]/g,' ').replace(/\s+/g,' ').trim()}
 function ttsChunks(t){var out=[],cur='';String(t).replace(/\s+/g,' ').replace(/([.:,!?])\s/g,'$1\u0001').split('\u0001').forEach(function(p){if(cur&&(cur+' '+p).length>180){out.push(cur);cur=p}else cur=cur?cur+' '+p:p;while(cur.length>190){var i=cur.lastIndexOf(' ',180);if(i<40)i=180;out.push(cur.slice(0,i));cur=cur.slice(i).trim()}});if(cur)out.push(cur);return out}
-function ttsUrl(x){return (window.TTSB||BASE)+'tts?v=n1&q='+encodeURIComponent(x)}
+function ttsUrl(x){return (window.TTSB||BASE)+'tts?v=g9&q='+encodeURIComponent(x)}
 /* הקראה מהשרת שלנו (קול עברי ברור), עובדת גם בדפדפן שנפתח מתוך ווטסאפ */
 function gsay(text,btn,onfail){var ch=ttsChunks(text),i=0,a=GPRE||new Audio();GPRE=null;if(GAUD&&GAUD!==a)try{GAUD.pause()}catch(e){}GAUD=a;SAYING=btn;btn.classList.add('on');a.muted=false;
   function end(){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}}
