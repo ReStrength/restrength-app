@@ -248,7 +248,7 @@ function render(){
   }
   if((p.home||[]).length){h+='<h2>תרגילים שהמאמן נתן לך</h2>';p.home.forEach(function(x,i){h+=exCard(x,'h'+i,i,false)})}
   h+='<h2>רוצה לשלוח משהו ל'+esc(p.coach||'מאמן')+'?</h2><div class="card"><div class="more" style="margin-top:0"><button class="btn alt" data-act="media"><span>📷</span>צילום / סרטון</button><button class="btn alt" data-act="pain"><span>🤕</span>כאב לי משהו</button><button class="btn alt" data-act="text"><span>✍️</span>הודעה</button></div></div>';
-  if((p.home||[]).length)h+='<div class="card"><b>⏰ תזכורת יומית לתרגל בבית</b><p class="sub" style="margin:4px 0 10px">בוחרים שעה, והטלפון יזכיר כל יום.</p><div class="more" style="grid-template-columns:repeat(3,1fr)">'+['08:00','10:00','12:00','16:00','18:00','20:00'].map(function(t){return '<button class="btn alt" data-rem="'+t+'" style="font-size:22px;min-height:56px">'+t+'</button>'}).join('')+'</div></div>';
+  if((p.home||[]).length)h+='<div class="card"><b>⏰ תזכורת יומית לתרגל בבית</b><p class="sub" style="margin:4px 0 10px">בוחרים שעה, והטלפון יזכיר כל יום.</p><div class="more" style="grid-template-columns:repeat(3,1fr)">'+['08:00','10:00','12:00','16:00','18:00','20:00'].map(function(t){return '<button class="btn alt" data-rem="'+t+'" style="font-size:22px;min-height:56px">'+t+'</button>'}).join('')+'</div><div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap"><label for="remt" style="font-size:20px">שעה אחרת:</label><input type="time" id="remt" step="300" style="font-size:22px;min-height:56px;padding:6px 10px;border-radius:12px;border:2px solid #ddd;direction:ltr"><button class="btn alt" data-remc="1" style="font-size:22px;min-height:56px;width:auto;padding:0 18px">קבע</button></div></div>';
   h+='<h2>מה שלחתי</h2><div class="card hist" id="hist"><p class="sub">עוד לא נשלח כלום.</p></div>';
   h+='<p class="sub center" style="margin-top:24px">כוח מחודש · הדף הזה אישי. רק מי שיש לו את הקישור יכול לראות אותו.</p>';
   $('app').innerHTML=h;paintHist();paintDone();
@@ -266,6 +266,7 @@ document.addEventListener('click',function(e){
   b=e.target.closest('[data-play]');if(b){play(b.dataset.play);return}
   b=e.target.closest('[data-say]');if(b){var k=b.dataset.say,x=k[0]==='h'?PLAN.home[+k.slice(1)]:PLAN.next[+k.slice(1).split('_')[0]].ex[+k.split('_')[1]];say(exSpeech(x,k[0]==='h'?+k.slice(1):+k.split('_')[1]),b);return}
   b=e.target.closest('[data-rem]');if(b){remind(b.dataset.rem);return}
+  b=e.target.closest('[data-remc]');if(b){var tv=($('remt')||{}).value;if(!tv){toast('בחרו שעה ואז לחצו "קבע"');return}remind(tv);return}
   b=e.target.closest('[data-hdone]');if(b){var hx=PLAN.home[+b.dataset.hdone];askPain('איך הרגיש?',function(p){return sendRep({kind:'done',r:PC.rid(),ex:hx.n,pain:p}).then(function(){toast(p>=6?'נשלח למאמן. אם כואב, עושים פחות או בטווח קטן יותר.':'נשלח למאמן ✓ כל הכבוד!');paintDone()})});return}
   b=e.target.closest('[data-act]');if(!b)return;var a=b.dataset.act;
   if(a==='startlog')startLog();
