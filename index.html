@@ -2033,7 +2033,7 @@ async function tpBuild(c){
   const next=planned.map(s=>({label:String(s.label||''),warmup:s.warmup||'',ex:(s.exercises||[]).filter(e=>e.name).map(e=>{const u=unitOf(e),tp=String(e.tempo||'').trim(),heb=/[א-ת]/.test(tp);
     return {n:e.name,ss:e.ss||'',unit:u,sets:String(e.targetSets||''),reps:tpReps2(e),kg:u==='kg'&&num(e.targetKg)?String(e.targetKg):'',tempo:heb?'':tp,note:heb?tp:'',m:V[e.name]||null,last:lastOf(e.name)}})}));
   const home=(c.homeEx||[]).filter(x=>x.n).map(x=>({n:x.n,unit:x.unit||'bw',sets:x.sets||'',reps:x.reps||'',kg:x.kg||'',note:x.note||'',m:x.m||null}));
-  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,u:Date.now()};
+  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,remote:!!c.remote,u:Date.now()};
 }
 function tpKeep(c){const k={};Object.values(c.exVideos||{}).forEach(m=>{if(m&&m.k)k[m.k]=m.n});(c.homeEx||[]).forEach(x=>{if(x.m&&x.m.k)k[x.m.k]=x.m.n});return k}
 async function tpPublish(cid,quiet){
@@ -2087,7 +2087,7 @@ function tPortal(c){
     <button class="btn primary" data-act="tpCreate" data-write ${S.tpBusy[c.id]?'disabled':''}>${S.tpBusy[c.id]?'יוצר…':'יצירת דף אישי'}</button></div>`;
   if(S.tpReps[c.id]==null) setTimeout(()=>tpLoad(c),0);
   const L=S.tpReps[c.id]||[], seen=c.portalSeen||0, A=c.portalAck||{}, imp=c.portalImported||{};
-  const link=tpLink(c), wa=tpWa(c,`שלום ${String(c.name).split(' ')[0]}, זה הדף האישי שלך בכוח מחודש. יש בו את התוכנית שלך, ואפשר לתעד בו אימון ולשלוח לנו תמונה או סרטון:\n${link}`);
+  const link=tpLink(c), wa=tpWa(c,c.remote?`שלום ${String(c.name).split(' ')[0]}, זו התוכנית שלך לליווי מרחוק בכוח מחודש: 2 אימונים בשבוע בסופר סטים.\nכותבים את התרגילים פעם אחת, אחרי כל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט ולוחצים "סיימתי". הדף בונה לבד את האימון הבא, ואני רואה את התוצאות.\nבדף יש כפתור "סרטון הסבר קצר".\n${link}`:`שלום ${String(c.name).split(' ')[0]}, זה הדף האישי שלך בכוח מחודש. יש בו את התוכנית שלך, ואפשר לתעד בו אימון ולשלוח לנו תמונה או סרטון:\n${link}`);
   const {planned}= {planned:(S.P&&S.P.clientId===c.id?plannedSessions(S.P):[])};
   const names=[...new Set(planned.flatMap(s=>(s.exercises||[]).map(e=>e.name).filter(Boolean)))], V=c.exVideos||{};
   const H=c.homeEx||[];
@@ -2100,6 +2100,7 @@ function tPortal(c){
     <div class="row" style="margin-top:10px"><a class="btn primary" data-own="1" href="${esc(wa)}" target="_blank" rel="noopener">שליחה בווטסאפ</a><button class="btn" data-act="tpCopy">העתקת הקישור</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">פתיחת הדף</a>
     <button class="btn" data-act="tpPub" data-write ${S.tpBusy[c.id]==='pub'?'disabled':''}>${S.tpBusy[c.id]==='pub'?'מעדכן…':'↻ עדכון הדף'}</button></div>
     <p class="muted small" style="margin:8px 0 0">כל שינוי באימון המתוכנן מתעדכן בדף לבד אחרי כמה שניות.</p>
+    <label class="row small" style="margin-top:8px;gap:8px;cursor:pointer"><input type="checkbox" data-act="tpRemote" data-write ${c.remote?'checked':''}> <b>🌍 ליווי מרחוק:</b> המתאמן כותב בעצמו את התרגילים והתוצאות (2 אימונים, סופר סטים), והדף בונה לו לבד את האימון הבא. התוצאות מגיעות לכאן.</label>
     <p class="small" style="margin:6px 0 0">📩 מה שהמתאמן שולח מגיע לתיבה של <b>${esc(coachName(tpOwner(c)))}</b>${tpMine(c)?'':` <button class="btn ghost sm" data-act="tpOwn" data-write>להעביר אליי</button>`}</p></div>
   <div class="card"><div class="spread"><h2 style="margin:0">📩 מה ${esc(String(c.name).split(' ')[0])} שלח/ה</h2><span class="row"><button class="btn ghost sm" data-act="tpRefresh">רענון</button>${L.some(o=>o.t>seen)?`<button class="btn ghost sm" data-act="tpSeen" data-write>סימון הכל כנקרא</button>`:''}</span></div>${repsHtml}</div>
   <div class="card"><h2>🎥 סרטוני הדגמה לתרגילים בתוכנית</h2>
@@ -2177,6 +2178,7 @@ async function tpAct(name,el){
   case 'tpVidDel': {const V={...(c.exVideos||{})};delete V[el.dataset.ex];await updClient(c.id,{exVideos:V});c.exVideos=V;tpPublish(c.id,true);render();break;}
   case 'tpHAdd': {const H=tpHRead(c);H.push({n:'',sets:'2',reps:'8-10',kg:'',note:'',unit:'bw'});await updClient(c.id,{homeEx:H});c.homeEx=H;render();setTimeout(()=>{const i=document.querySelector(`[data-th="${H.length-1}.n"]`);if(i){i.scrollIntoView({block:'center'});i.focus()}},200);break;}
   case 'tpHDel': {const H=tpHRead(c);H.splice(+el.dataset.i,1);await updClient(c.id,{homeEx:H});c.homeEx=H;tpPublish(c.id,true);break;}
+  case 'tpRemote': {const v=!c.remote;await updClient(c.id,{remote:v});c.remote=v;await tpPublish(c.id);break;}
   case 'tpHSave': {const H=tpHRead(c);await updClient(c.id,{homeEx:H,portalOwner:S.meId||tpOwner(c)});c.homeEx=H;await tpPublish(c.id);break;}
   case 'tpOwn': await updClient(c.id,{portalOwner:S.meId}); toast('מעכשיו מה שהמתאמן שולח יגיע אליך'); render(); break;
   case 'tpDelAsk': S.tpConfirmDel=c.id; render(); break;

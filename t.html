@@ -86,6 +86,8 @@ textarea{width:100%;min-height:140px;font:inherit;font-size:21px;border:2px soli
 .rules.top{border:2px solid #f08c00;background:#fff8e6;margin-bottom:6px}
 .pq{margin-top:12px}.pql{font-size:18px;font-weight:700;margin-bottom:6px}.pscale{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.pscale.big{grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
 .pn{min-height:52px;border-radius:12px;border:2px solid var(--line);background:#fff;font:inherit;font-size:22px;font-weight:800;cursor:pointer}.pn.pg{color:#2b8a3e}.pn.pw{color:#e67700}.pn.pr{color:#c92a2a}.pn.sel{background:#151313;color:#fff;border-color:#151313}.pscale.big .pn{min-height:64px;font-size:26px}
+.rex .t{display:flex;gap:8px;align-items:center}.rin{flex:1;font-size:20px;font-weight:700;padding:8px 10px;border:2px solid var(--line);border-radius:10px;min-width:0}
+.rrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}.rrow label{display:flex;flex-direction:column;font-size:14px;color:var(--muted);gap:2px}.rrow select,.rrow input{font-size:18px;padding:6px;border:2px solid var(--line);border-radius:8px;width:72px}.rng{display:flex;align-items:center;gap:2px}.rng input{width:48px}
 </style>
 <style>
 .band img{height:56px}
@@ -215,15 +217,19 @@ function remind(hm){var p=hm.split(':'),d=new Date();d.setDate(d.getDate()+(d.ge
   sheet('<h3>⏰ כמעט סיימנו</h3><p class="sub center" style="font-size:20px">בחלון שנפתח לוחצים <b>"הוסף"</b> או <b>"שמירה"</b>.<br>מעכשיו הטלפון יזכיר כל יום ב-'+hm+'.</p><button class="btn done" id="rok">הבנתי</button>');$('rok').onclick=unsheet}
 var FACES=[[0,'😀','בלי כאב'],[2,'🙂','קצת כאב'],[4,'😐','כאב בינוני'],[6,'😣','כואב'],[8,'😫','כואב מאוד']];
 function exSpeech(x,i){var t=['תרגיל '+(i+1)+'. '+x.n+'.'];var u=x.unit==='sec'?' שניות':' חזרות';if(x.sets)t.push(x.sets+' סטים, '+(x.reps?String(x.reps).replace('-',' עד ')+u:'')+'.');if(x.kg)t.push('משקל '+x.kg+' קילו.');if(x.tempo)t.push('קצב: '+x.tempo+'.');if(x.note)t.push('דגשים: '+x.note+'.');t.push('לא עובדים עד כאב. אם כואב, עוצרים.');return t.join(' ')}
-try{if(location.hash.length>5)localStorage.setItem('rs_th',location.hash);else{var _sh=localStorage.getItem('rs_th');if(_sh)history.replaceState(null,'',location.pathname+_sh)}}catch(e){}
+try{if(location.hash==='#demo'){}else if(location.hash.length>5)localStorage.setItem('rs_th',location.hash);else{var _sh=localStorage.getItem('rs_th');if(_sh)history.replaceState(null,'',location.pathname+_sh)}}catch(e){}
 if(!/iphone|ipad|ipod/i.test(navigator.userAgent)){try{var ml=document.createElement('link');ml.rel='manifest';ml.href='tm.webmanifest';document.head.appendChild(ml)}catch(e){}}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__BIP=e;var a=document.querySelector('.a2hs');if(a)a.innerHTML=a2hsInner(false)});
 function a2hsInner(ios){if(window.__BIP)return '<button class="x" data-a2hs aria-label="סגירה">×</button><button class="btn done big" data-inst style="margin:4px 0 0">📲 להוסיף למסך הבית</button>';return '<button class="x" data-a2hs aria-label="סגירה">×</button><b>כדי לשמור את הדף בלי לחפש אותו:</b><ol>'+(ios?'<li>לוחצים על כפתור השיתוף <b>⬆️</b></li><li>בוחרים <b>"הוספה למסך הבית"</b></li>':'<li>לוחצים על <b>⋮</b> למעלה</li><li>בוחרים <b>"הוספה למסך הבית"</b></li>')+'</ol>'}
 var h=location.hash.slice(1).split('.'),SID=h[0]||'',KS=h[1]||'',K,W,PLAN,REPS=[],URLS={},TAB=0,LOG=null;
+var DEMO=SID==='demo';
+if(DEMO){PLAN={v:1,name:'תומר',first:'תומר',coach:'ירין',remote:true,next:[],home:[]};try{localStorage.removeItem('rs_rp_demo')}catch(e){}setTimeout(function(){render()},0)}
+if(!DEMO){
 if(!SID||!KS){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
 if(!window.crypto||!crypto.subtle){fail('הדפדפן הזה ישן מדי. פתחו את הקישור בכרום או בספארי.');return}
 var raw;try{raw=PC.unb64u(KS)}catch(e){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
 Promise.all([PC.key(raw),PC.wOf(raw)]).then(function(a){K=a[0];W=a[1];return post('plan',{s:SID})}).then(function(r){return PC.decJ(K,r.blob)}).then(function(p){PLAN=p;TAB=Math.min(+(lsg('rs_tt_'+SID)||0),(p.next||[]).length-1);if(TAB<0)TAB=0;try{LOG=JSON.parse(lsg('rs_tl_'+SID)||'null')}catch(e){LOG=null}render();loadReps()},function(e){fail(String(e&&e.message)==='404'?'הדף הזה כבר לא פעיל. בקשו מהמאמן קישור חדש.':'לא הצלחנו לטעון. בדקו שיש אינטרנט ונסו שוב.<br><br><button class="btn alt" onclick="location.reload()">לנסות שוב</button>')});
+}
 function loadReps(){post('reps',{s:SID,w:W}).then(function(r){return Promise.all((r.reps||[]).map(function(x){return PC.decJ(K,x.blob).then(function(o){o.t=x.t*1000;return o},function(){return null})}))}).then(function(L){REPS=L.filter(Boolean).sort(function(a,b){return a.t-b.t});paintHist();paintDone()},function(){})}
 
 function dose(x){var p=[];if(x.sets)p.push(ltr(x.sets)+' סטים');if(x.reps)p.push(ltr(x.reps)+(x.unit==='sec'?' שניות':' חזרות'));if(x.kg)p.push(ltr(x.kg)+' ק"ג');return p.join(' × ').replace(' × '+ltr(x.kg),' · '+ltr(x.kg))}
@@ -238,11 +244,68 @@ function exCard(x,key,i,logging,si){
   if(key[0]==='h')h+='<div id="dd_'+key+'"></div><button class="btn done" data-hdone="'+i+'">✓ עשיתי</button>';
   if(logging){var L=LOG.ex[si]||{sets:[]};h+='<div class="sets">'+L.sets.map(function(s,j){return '<div class="setr"><span>סט '+(j+1)+'</span>'+(x.unit==='kg'?'<label>ק"ג<input inputmode="decimal" data-lg="'+si+'.'+j+'.kg" value="'+esc(s.kg)+'"></label>':'<label></label>')+'<label>'+(x.unit==='sec'?'שניות':'חזרות')+'<input inputmode="numeric" data-lg="'+si+'.'+j+'.reps" value="'+esc(s.reps)+'"></label></div>'}).join('')+'<button class="addset" data-addset="'+si+'">+ עוד סט</button></div>'}
   return h+'</div>'}
+/* ===== ליווי מרחוק: המתאמן כותב את התרגילים והתוצאות, והדף בונה לבד את האימון הבא ===== */
+var RP=null,RT=0;
+function rpKey(){return 'rs_rp_'+SID}
+function rpBlank(l){return {label:l,ex:[1,1,2,2,3,3].map(function(ss){return {n:'',ss:String(ss),sets:2,min:8,max:10,kg:'',res:[],st:0}})}}
+function rpLoad(){if(RP)return;try{RP=JSON.parse(lsg(rpKey())||'null')}catch(e){RP=null}
+  if(!RP){var N=(PLAN.next||[]).filter(function(s){return (s.ex||[]).length});
+    RP={w:N.length?N.map(function(s){return {label:s.label||'',ex:s.ex.map(function(x){var r=String(x.reps||'').match(/(\d+)\D+(\d+)/);return {n:x.n,ss:x.ss||'',sets:+x.sets||2,min:r?+r[1]:(+x.reps||8),max:r?+r[2]:(+x.reps||10),kg:x.kg||'',sec:x.unit==='sec',res:[],st:0}})}}):[rpBlank('A'),rpBlank('B')],n:0};rpSave()}
+  RT=Math.min(+(lsg('rs_rpt_'+SID)||0),RP.w.length-1)}
+function rpSave(){lss(rpKey(),JSON.stringify(RP))}
+function remoteHtml(){rpLoad();var W=RP.w[RT],h='<h2>האימון שלי</h2>';
+  h+='<div class="card" style="font-size:17px"><b>איך זה עובד:</b> כותבים את התרגילים פעם אחת. בכל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט, ולוחצים "סיימתי". הדף בונה לבד את האימון הבא. <br>עוצרים כל סט כשנשארות בערך 3 חזרות "בבנק", לא עד כשל. <button class="btn alt" data-rhelp style="margin-top:8px">▶ סרטון הסבר קצר</button></div>';
+  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
+  var lastSS=null;
+  W.ex.forEach(function(x,i){var k=RT+'.'+i;
+    if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
+    h+='<div class="card ex rex"><div class="t"><span class="num">'+(i+1)+'</span><input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל"></div>'+
+     '<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
+     '<label>סטים<select data-rp="'+k+'.sets">'+[1,2,3,4,5].map(function(v){return '<option'+(v===+x.sets?' selected':'')+'>'+v+'</option>'}).join('')+'</select></label>'+
+     '<label>'+(x.sec?'שניות':'חזרות')+'<span class="rng"><input inputmode="numeric" data-rp="'+k+'.min" value="'+esc(x.min)+'">–<input inputmode="numeric" data-rp="'+k+'.max" value="'+esc(x.max)+'"></span></label>'+
+     '<label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>';
+    if(x.msg)h+='<div class="prevl">🔁 '+esc(x.msg)+'</div>';
+    h+='<div class="sets">';for(var j=0;j<(+x.sets||1);j++){var r=x.res[j]||{};h+='<div class="setr"><span>סט '+(j+1)+'</span><label>'+(x.sec?'שניות':'חזרות')+'<input inputmode="numeric" data-rr="'+k+'.'+j+'.reps" value="'+esc(r.reps==null?'':r.reps)+'"></label><label>ק"ג<input inputmode="decimal" data-rr="'+k+'.'+j+'.kg" value="'+esc(r.kg==null?(x.kg||''):r.kg)+'" placeholder="'+esc(x.kg||'גוף')+'"></label></div>'}
+    h+='</div><button class="btn alt" data-rdel="'+i+'" style="min-height:44px;font-size:16px;margin-top:6px">🗑 למחוק תרגיל</button></div>'});
+  h+='<button class="btn alt" data-radd="1">+ תרגיל</button>';
+  h+='<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את האימון הבא</button></div>';
+  return h}
+function rpUni(n){return /רגל אחת|יד אחת|מכרע|לאנג|לאנצ|בולגרי|סטפ|עלייה על מדרגה|סינגל/.test(n)}
+function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''&&r.reps!=null&&!isNaN(+r.reps)});if(!done.length)return null;
+  var reps=done.map(function(r){return +r.reps}),mx=Math.max.apply(0,reps),top=reps.every(function(r){return r>=x.max})&&done.length>=(+x.sets||1),miss=reps.some(function(r){return r<=x.min-2});
+  var kgs=done.map(function(r){return r.kg===''||r.kg==null?NaN:+r.kg}).filter(function(v){return !isNaN(v)&&v>0}),work=kgs.length?Math.min.apply(0,kgs):(+x.kg||0),m='',same=false;
+  var ph=String(x.n).match(/(?:הגבהה|גובה)\s*(\d)/);
+  if(/שכיבות ס[מש]יכה/.test(x.n)&&ph&&top){var hh=+ph[1];if(hh>1){x.n=x.n.replace(/((?:הגבהה|גובה)\s*)\d/,'$1'+(hh-1));m='יורדים להגבהה '+(hh-1)+' בסמית וחוזרים ל-'+x.min+' חזרות'}else m='הגעת להגבהה 1. הבא: שכיבות סמיכה על הרצפה'}
+  else if(x.sec){if(top){x.min=+x.min+5;x.max=+x.max+5;m='עוד 5 שניות: '+x.min+'–'+x.max+' שנ׳'}else{m='אותו זמן, לנסות להחזיק קצת יותר';same=true}}
+  else if(work>0){if(top||(rpUni(x.n)&&mx>=8)||mx>12){var st=work<10?1:2.5;x.kg=String(Math.round((work+st)*2)/2);m='מוסיפים '+st+' ק"ג: '+x.kg+' ק"ג (חוזרים לתחתית הטווח)'}
+    else if(miss){x.kg=String(Math.max(0,Math.round(work*0.9*2)/2));m='היה קשה מדי: מורידים ל-'+x.kg+' ק"ג'}
+    else{x.kg=String(work);m='אותו משקל ('+work+' ק"ג), לשאוף לחזרה אחת יותר בכל סט';same=true}}
+  else{if(top){if((+x.sets||1)<4){x.sets=(+x.sets||1)+1;m='מוסיפים סט: '+x.sets+' סטים'}else{x.min=+x.min+2;x.max=+x.max+2;m='יעד חזרות חדש: '+x.min+'–'+x.max+', או גרסה קשה יותר'}}else{m='לשאוף לחזרה אחת יותר בכל סט';same=true}}
+  x.st=same?(x.st||0)+1:0;if(x.st>=3&&work>0)m+=' · תקוע 3 אימונים: לנסות טופ סט (סט כבד אחד ל-6–8 חזרות) ואחריו 2 סטים עם 10% פחות משקל';
+  return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
+function rpFinish(){var W=RP.w[RT],log=[],ch=[];
+  W.ex.forEach(function(x){if(!x.n)return;var r=rpStep(x);if(!r)return;log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets});ch.push([x.n,r.m]);x.msg=r.m;x.res=[]});
+  if(!log.length){toast('עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.');return}
+  RP.n=(RP.n||0)+1;rpSave();
+  var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log}).catch(function(){});
+  sheet('<h3>💪 כל הכבוד! ככה נראה האימון הבא</h3><ul style="margin:6px 0;padding-inline-start:20px;font-size:18px">'+ch.map(function(c){return '<li style="margin:6px 0"><b>'+esc(c[0])+':</b> '+esc(c[1])+'</li>'}).join('')+'</ul><button class="btn done" id="rok">מעולה</button>');
+  $('rok').onclick=function(){unsheet();if(RP.w.length>1){RT=(RT+1)%RP.w.length;lss('rs_rpt_'+SID,RT)}render();window.scrollTo(0,0)}}
+document.addEventListener('input',function(e){var t=e.target;if(!RP)return;var a=t.getAttribute&&t.getAttribute('data-rp'),b=t.getAttribute&&t.getAttribute('data-rr');
+  if(a){var p=a.split('.'),x=RP.w[+p[0]].ex[+p[1]],f=p[2];x[f]=(f==='min'||f==='max'||f==='sets')?(+t.value||''):t.value;rpSave();if(f==='kg')document.querySelectorAll('[data-rr^="'+p[0]+'.'+p[1]+'."][data-rr$=".kg"]').forEach(function(el){el.placeholder=t.value||'גוף';var jj=+el.getAttribute('data-rr').split('.')[2];if(!x.res[jj]||x.res[jj].kg==null)el.value=t.value});if(f==='sets'||f==='ss')render()}
+  if(b){var q=b.split('.'),y=RP.w[+q[0]].ex[+q[1]];y.res[+q[2]]=y.res[+q[2]]||{};y.res[+q[2]][q[3]]=t.value;rpSave()}},true);
+document.addEventListener('change',function(e){var t=e.target;if(t.tagName==='SELECT'&&t.getAttribute('data-rp')){var p=t.getAttribute('data-rp').split('.'),x=RP.w[+p[0]].ex[+p[1]];x[p[2]]=p[2]==='sets'?+t.value:t.value;rpSave();render()}},true);
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-rtab],[data-radd],[data-rdel],[data-rfin],[data-rhelp]');if(!b||!RP)return;
+  if(b.hasAttribute('data-rtab')){RT=+b.getAttribute('data-rtab');lss('rs_rpt_'+SID,RT);render();return}
+  if(b.hasAttribute('data-radd')){var W=RP.w[RT],ls=W.ex[W.ex.length-1];W.ex.push({n:'',ss:ls?ls.ss:'',sets:2,min:8,max:10,kg:'',res:[],st:0});rpSave();render();setTimeout(function(){var ins=document.querySelectorAll('.rin');if(ins.length)ins[ins.length-1].focus()},50);return}
+  if(b.hasAttribute('data-rdel')){if(!confirm('למחוק את התרגיל?'))return;RP.w[RT].ex.splice(+b.getAttribute('data-rdel'),1);rpSave();render();return}
+  if(b.hasAttribute('data-rfin')){rpFinish();return}
+  if(b.hasAttribute('data-rhelp')){sheet('<h3>איך משתמשים בדף</h3><video src="remote-howto.mp4" controls playsinline autoplay style="width:100%;border-radius:12px"></video><button class="btn alt" id="rhc">סגירה</button>');$('rhc').onclick=unsheet;return}},true);
 function render(){
   var p=PLAN,h='<h1>שלום '+esc(p.first||p.name||'')+' 👋</h1><p class="sub">התוכנית האישית שלך'+(p.coach?' מ'+esc(p.coach):'')+'. אפשר לפתוח אותה מכל מקום, גם בחו"ל.</p>';
   if(!lsg('rs_a2hs_'+SID)&&!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches))){var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
     h+='<div class="card a2hs">'+a2hsInner(ios)+'</div>'}
-  var N=p.next||[];
+  var N=p.remote?[]:(p.next||[]);
+  if(p.remote)h+=remoteHtml();
   if(N.length){
     h+='<h2>האימון שלי</h2>';
     if(N.length>1)h+='<div class="tabs2">'+N.map(function(s,i){return '<button data-tab="'+i+'" aria-pressed="'+(i===TAB)+'">אימון '+esc(s.label||(i+1))+'</button>'}).join('')+'</div>';
@@ -295,7 +358,7 @@ function askPainWhere(){askPain('כמה כואב?',function(p){return new Promis
   $('pws').onclick=function(){this.disabled=true;sendRep({kind:'pain',r:PC.rid(),pain:p,text:$('pw').value.trim()}).then(function(){unsheet();toast('נשלח למאמן. הוא יחזור אליך.');res()},function(e){$('pws').disabled=false;rej(e)})}})})}
 function dayKey(t){var d=new Date(t);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()}
 function paintDone(){if(!PLAN)return;(PLAN.home||[]).forEach(function(x,i){var el=$('dd_h'+i);if(!el)return;var k=dayKey(Date.now()),n=REPS.filter(function(o){return o.kind==='done'&&o.ex===x.n&&dayKey(o.t)===k}).length;el.innerHTML=n?'<div class="did">✓ עשית היום'+(n>1?' '+n+' פעמים':'')+' 👏</div>':''})}
-function sendRep(o){o.ts=Date.now();return PC.encJ(K,o).then(function(blob){return post('rep',{s:SID,w:W,blob:blob,r:o.r})}).then(function(){o.t=Date.now();REPS.push(o);paintHist()})}
+function sendRep(o){o.ts=Date.now();if(DEMO){o.t=Date.now();REPS.push(o);return Promise.resolve()}return PC.encJ(K,o).then(function(blob){return post('rep',{s:SID,w:W,blob:blob,r:o.r})}).then(function(){o.t=Date.now();REPS.push(o);paintHist()})}
 function askText(){sheet('<h3>הודעה למאמן</h3><textarea id="tx" placeholder="כתבו כאן…"></textarea><button class="btn done" id="txs">שליחה</button><button class="btn alt" id="txc">ביטול</button>');
   $('txc').onclick=unsheet;$('txs').onclick=function(){var v=$('tx').value.trim();if(!v)return;this.disabled=true;sendRep({kind:'text',r:PC.rid(),text:v}).then(function(){unsheet();toast('נשלח למאמן ✓')},function(){$('txs').disabled=false;toast('לא נשלח. בדקו אינטרנט ונסו שוב.')})}}
 function shrink(f){return new Promise(function(res){if(!/^image\//.test(f.type)||/gif/.test(f.type)){res(f);return}var u=URL.createObjectURL(f),im=new Image();im.onload=function(){var s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){res(b||f)},'image/jpeg',0.82)};im.onerror=function(){res(f)};im.src=u})}
