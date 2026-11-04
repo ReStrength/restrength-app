@@ -96,6 +96,7 @@ label.f > input,label.f > select,label.f > textarea{font-weight:400;color:var(--
 .tprep{border-top:1px solid var(--line,#e5e5e5);padding:10px 0}.tprep:first-of-type{border-top:0}.tprep.new{background:linear-gradient(90deg,transparent,rgba(234,35,40,.05))}
 .tprep table td{padding:2px 8px 2px 0}
 .tpgrid{display:grid;gap:8px}.tpex{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--line,#e5e5e5);border-radius:12px;padding:8px 12px}
+.tpinbox{border:2px solid var(--accent,#EA2328)}.tpinrow{display:flex;gap:8px;align-items:center;width:100%;text-align:start;background:none;border:0;border-top:1px solid var(--line,#e5e5e5);padding:10px 4px;font:inherit;cursor:pointer}.tpinrow:first-of-type{border-top:0}
 .tphome{border:1px solid var(--line,#e5e5e5);border-radius:12px;padding:10px;margin-top:10px}
 .gfeel{white-space:nowrap}.gfeel .fb{font:inherit;font-size:15px;font-weight:700;border:2px solid var(--line,#ddd);background:#fff;border-radius:10px;padding:8px 10px;margin-inline-end:4px;cursor:pointer;min-width:58px}
 .gfeel .fb.up[aria-pressed=true]{background:#2b8a3e;border-color:#2b8a3e;color:#fff}.gfeel .fb.ok[aria-pressed=true]{background:#1c7ed6;border-color:#1c7ed6;color:#fff}.gfeel .fb.warn[aria-pressed=true]{background:#e67700;border-color:#e67700;color:#fff}.gfeel .fb.bad[aria-pressed=true]{background:#c92a2a;border-color:#c92a2a;color:#fff}
@@ -920,7 +921,7 @@ function periodicDue(c){const base=c.lastAssessmentDate||c.startDate; return !!b
 function assessDue(c){ if(c.lastAssessmentDate) return daysSince(c.lastAssessmentDate)>90; return daysSince(c.startDate||isoOf(c.createdAt))>14; }
 function clientFlags(c){
   const f=[];
-  if(S.tpNew&&S.tpNew[c.id]) f.push(['acc',`📩 ${S.tpNew[c.id]} חדשים מהמתאמן`]);
+  if(S.tpNew&&S.tpNew[c.id]&&tpMine(c)) f.push(['acc',`📩 ${S.tpNew[c.id]} חדשים מהמתאמן`]);
   if(c.pendingApproval) f.push(['warn','תוכנית ממתינה לאישור']);
   else if(!c.hasPlan) f.push(['warn','אין אימון מתוכנן']);
   if(!c.lastSessionDate){ if(daysSince(c.startDate||isoOf(c.createdAt))>7) f.push(['bad','טרם נרשמו תוצאות']); }
@@ -1363,6 +1364,7 @@ function vCoaches(){
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
+     ${k.id!=='none'&&k.id===S.meId?tpInbox():''}
      ${k.id!=='none'?abHtml(k):''}
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&pairsOfCoach(k.id).length?`<div class="cgrid">${pairsOfCoach(k.id).map(pk=>`<button class="ccard gcard pcard" data-group="${esc(pk)}"><span class="cn">👥 ${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · תוכנית אחת לשניהם, ומתחלפים בסופר סטים</span></button>`).join('')}</div>`:''}
@@ -1388,7 +1390,7 @@ function vClient(){
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
   const safety=(c.limits?`<div class="safety"><b>⚠ מגבלות והתוויות נגד:</b><span>${esc(c.limits)}</span></div>`:'')+(c.conditions?`<div class="safety med"><b>🩺 מצבים רפואיים ואבחנות:</b><span>${esc(c.conditions)}</span></div>`:'');
-  const main=[['session','תוכנית אימונים'],['prev','שבוע קודם'],['portal',`📱 דף למתאמן${S.tpNew[c.id]?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['profile','תיק מתאמן']], more=[['history','היסטוריה'],['progress','גרפי התקדמות'],['assess','מבדקים']];
+  const main=[['session','תוכנית אימונים'],['prev','שבוע קודם'],['portal',`📱 דף למתאמן${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['profile','תיק מתאמן']], more=[['history','היסטוריה'],['progress','גרפי התקדמות'],['assess','מבדקים']];
   const open=S.moreOpen||more.some(t=>t[0]===S.tab);
   const tb=t=>`<button class="tab" role="tab" aria-selected="${S.tab===t[0]}" data-tab="${t[0]}">${t[1]}</button>`;
   let addDayHtml='';
@@ -1995,6 +1997,8 @@ const tpCx={};
 async function tpCtx(c){if(!c||!c.portal)return null;const p=c.portal;if(tpCx[p.s])return tpCx[p.s];const raw=PC.unb64u(p.k);const o={s:p.s,k:await PC.key(raw),w:await PC.wOf(raw)};tpCx[p.s]=o;return o}
 function tpWa(c,txt){let p=String(c.phone||'').replace(/[^\d]/g,'');if(p.startsWith('0'))p='972'+p.slice(1);return 'https://wa.me/'+(p.length>=11?p:'')+'?text='+encodeURIComponent(txt)}
 function tpHomeMsg(c){const H=(c.homeEx||[]).filter(x=>x.n);const f=String(c.name).split(' ')[0];return `שלום ${f}, הכנתי לך תרגילים לבית`+(H.some(x=>x.m)?' עם סרטון שלי':'')+':\n'+H.map((x,i)=>`${i+1}. ${x.n}`+(x.sets||x.reps?` – ${x.sets?x.sets+' סטים':''}${x.sets&&x.reps?' × ':''}${x.reps?x.reps+' חזרות':''}`:'')+(x.note?` (${x.note})`:'')).join('\n')+`\n\nהכל נמצא בדף האישי שלך${H.some(x=>x.m)?', כולל הסרטונים':''}:\n${tpLink(c)}`}
+function tpOwner(c){return c.portalOwner||c.coachId||''}
+function tpMine(c){return !!(S.meId&&tpOwner(c)===S.meId)}
 function tpLink(c){return TPAGE+'#'+c.portal.s+'.'+c.portal.k}
 async function tpApi(path,body,bin){const t=await window.FB.idToken();const r=await fetch(TPB+'studio/share/'+path,{method:'POST',cache:'no-store',credentials:'omit',headers:{'Content-Type':bin?'application/octet-stream':'application/json','X-RS-FB':t},body:bin?body:JSON.stringify(body)});if(!r.ok)throw new Error('http '+r.status);return r.json()}
 async function tpPost(path,body){const r=await fetch(TPB+'pa/'+path,{method:'POST',cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);const ct=r.headers.get('Content-Type')||'';return ct.includes('json')?r.json():r.arrayBuffer()}
@@ -2022,7 +2026,7 @@ async function tpPublish(cid,quiet){
   let c=clientById(cid); if(!c) return false;
   if(S.tpBusy[cid]==='pub') return false; S.tpBusy[cid]='pub'; if(!quiet) scheduleRender();
   try{
-    if(!c.portal){const raw=PC.rnd(32); c={...c,portal:{s:PC.id(18),k:PC.b64u(raw),at:Date.now()}}; await updClient(cid,{portal:c.portal,portalSeen:Math.floor(Date.now()/1000)});}
+    if(!c.portal){const raw=PC.rnd(32); c={...c,portal:{s:PC.id(18),k:PC.b64u(raw),at:Date.now()},portalOwner:S.meId||c.coachId||''}; await updClient(cid,{portal:c.portal,portalOwner:c.portalOwner,portalSeen:Math.floor(Date.now()/1000)});}
     const x=await tpCtx(c); const plan=await tpBuild(c);
     const [blob,wth]=await Promise.all([PC.encJ(x.k,plan),PC.wthOf(x.w)]);
     await tpApi(x.s,{wth,plan:blob}); tpApi(x.s+'/clean',{keep:tpKeep(c)}).catch(()=>{});
@@ -2047,7 +2051,7 @@ async function tpLoad(c,force){
   }catch(e){ S.tpReps[c.id]=S.tpReps[c.id]||[]; }
   finally{ S.tpBusy[c.id]=null; scheduleRender(); }
 }
-async function tpPoll(){ if(!S.db) return; for(const c of S.clients.filter(c=>c.portal&&(c.status||'active')==='active')){ try{ S.tpReps[c.id]=null; await tpLoad(c,true);}catch(e){} } }
+async function tpPoll(){ if(!S.db) return; for(const c of S.clients.filter(c=>c.portal&&(c.status||'active')==='active'&&tpMine(c))){ try{ S.tpReps[c.id]=null; await tpLoad(c,true);}catch(e){} } }
 /* עדכון אוטומטי של הדף כשהתוכנית משתנה */
 const tpSig={}; let tpT={};
 function tpWatch(ctx){const c=clientById(ctx.clientId); if(!c||!c.portal||!S.canWrite) return;
@@ -2056,8 +2060,10 @@ function tpWatch(ctx){const c=clientById(ctx.clientId); if(!c||!c.portal||!S.can
   clearTimeout(tpT[c.id]); tpT[c.id]=setTimeout(()=>tpPublish(c.id,true),8000);}
 function tpDesc(o){
   if(o.kind==='log'){const rows=(o.ex||[]).map(e=>`<tr><td>${esc(e.n)}</td><td dir="ltr" style="text-align:right">${(e.sets||[]).map(s=>(s.kg?esc(s.kg)+'×':'')+esc(s.reps||'–')).join(', ')}</td></tr>`).join('');
-    return `<b>🏋️ תיעוד אימון${o.label?' '+esc(o.label):''}</b> <span class="muted small">${o.date?fmt(o.date):''}${o.min?` · ${o.min} דק׳`:''}${o.rpe?` · מאמץ ${o.rpe}`:''}</span><table class="small" style="margin-top:6px">${rows}</table>${o.note?`<div class="small" style="margin-top:4px">💬 ${esc(o.note)}</div>`:''}`}
+    return `<b>🏋️ תיעוד אימון${o.label?' '+esc(o.label):''}</b> <span class="muted small">${o.date?fmt(o.date):''}${o.min?` · ${o.min} דק׳`:''}${o.rpe?` · מאמץ ${o.rpe}`:''}${o.pain!=null?` · <b style="${o.pain>=4?'color:var(--bad)':''}">כאב ${o.pain}/10</b>`:''}</span><table class="small" style="margin-top:6px">${rows}</table>${o.note?`<div class="small" style="margin-top:4px">💬 ${esc(o.note)}</div>`:''}`}
   if(o.kind==='media') return `<b>${/^video/.test(o.mt||'')?'🎥 סרטון':'📷 תמונה'}</b>${o.note?` <span>${esc(o.note)}</span>`:''}<div id="tpm_${esc(o.r)}"></div>`;
+  if(o.kind==='done') return `<b>✓ עשה/תה בבית:</b> ${esc(o.ex||'')}${o.pain!=null?` · <span style="${o.pain>=4?'color:var(--bad);font-weight:700':''}">כאב ${o.pain}/10</span>`:''}`;
+  if(o.kind==='pain') return `<b style="color:var(--bad)">🤕 דיווח כאב ${o.pain}/10</b>${o.text?`: ${esc(o.text)}`:''}`;
   return `<b>✍️ הודעה:</b> ${esc(o.text||'')}`;
 }
 function tPortal(c){
@@ -2077,9 +2083,10 @@ function tPortal(c){
       ${o.kind==='log'?(imp[o.r]?'<span class="chip up">נוסף להיסטוריה ✓</span>':`<button class="btn sm" data-act="tpImport" data-r="${esc(o.r)}" data-write>הוספה להיסטוריה כאימון</button>`):''}
       ${A[o.r]!=null?`<span class="chip up">✓ ענית${A[o.r]?': '+esc(A[o.r]):''}</span>`:`<input class="tpack" data-r="${esc(o.r)}" placeholder="תשובה קצרה (לא חובה)" style="flex:1;min-width:140px"><button class="btn sm" data-act="tpAck" data-r="${esc(o.r)}" data-write>✓ ראיתי</button>`}</div></div>`).join('');
   return `<div class="card"><div class="spread"><h2 style="margin:0">📱 הדף האישי של ${esc(c.name)}</h2><span class="muted small">עודכן: ${c.portalPub?new Date(c.portalPub).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}</span></div>
-    <div class="row" style="margin-top:10px"><a class="btn primary" href="${esc(wa)}" target="_blank" rel="noopener">שליחה בווטסאפ</a><button class="btn" data-act="tpCopy">העתקת הקישור</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">פתיחת הדף</a>
+    <div class="row" style="margin-top:10px"><a class="btn primary" data-own="1" href="${esc(wa)}" target="_blank" rel="noopener">שליחה בווטסאפ</a><button class="btn" data-act="tpCopy">העתקת הקישור</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">פתיחת הדף</a>
     <button class="btn" data-act="tpPub" data-write ${S.tpBusy[c.id]==='pub'?'disabled':''}>${S.tpBusy[c.id]==='pub'?'מעדכן…':'↻ עדכון הדף'}</button></div>
-    <p class="muted small" style="margin:8px 0 0">כל שינוי באימון המתוכנן מתעדכן בדף לבד אחרי כמה שניות.</p></div>
+    <p class="muted small" style="margin:8px 0 0">כל שינוי באימון המתוכנן מתעדכן בדף לבד אחרי כמה שניות.</p>
+    <p class="small" style="margin:6px 0 0">📩 מה שהמתאמן שולח מגיע לתיבה של <b>${esc(coachName(tpOwner(c)))}</b>${tpMine(c)?'':` <button class="btn ghost sm" data-act="tpOwn" data-write>להעביר אליי</button>`}</p></div>
   <div class="card"><div class="spread"><h2 style="margin:0">📩 מה ${esc(String(c.name).split(' ')[0])} שלח/ה</h2><span class="row"><button class="btn ghost sm" data-act="tpRefresh">רענון</button>${L.some(o=>o.t>seen)?`<button class="btn ghost sm" data-act="tpSeen" data-write>סימון הכל כנקרא</button>`:''}</span></div>${repsHtml}</div>
   <div class="card"><h2>🎥 סרטוני הדגמה לתרגילים בתוכנית</h2>
     ${names.length?`<p class="muted small">צלמו את התרגיל פעם אחת, והמתאמן יראה אותו בדף שלו ליד התרגיל.</p><div class="tpgrid">${names.map(n=>`<div class="tpex"><span>${esc(n)}</span>${V[n]?`<span class="row"><span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpVid" data-ex="${esc(n)}" data-write>החלפה</button><button class="btn ghost sm" data-act="tpVidDel" data-ex="${esc(n)}" data-write>מחיקה</button></span>`:`<button class="btn sm" data-act="tpVid" data-ex="${esc(n)}" data-write>📷 צילום הדגמה</button>`}</div>`).join('')}</div>`:'<p class="muted">אין עדיין אימון מתוכנן. בונים אימון בלשונית "תוכנית אימונים", והתרגילים יופיעו כאן.</p>'}</div>
@@ -2091,9 +2098,13 @@ function tPortal(c){
       <label class="f">משקל (ק"ג)<input inputmode="decimal" data-th="${i}.kg" value="${esc(x.kg||'')}" dir="ltr" placeholder="לא חובה"></label>
       <label class="f" style="grid-column:1/-1">דגשים<input data-th="${i}.note" value="${esc(x.note||'')}" placeholder="למשל: לאט, לנשום, עד כאב 3"></label></div>
       <div class="row">${x.m?`<span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpHVid" data-i="${i}" data-write>החלפת סרטון</button>`:`<button class="btn sm" data-act="tpHVid" data-i="${i}" data-write>📷 צילום / סרטון</button>`}<button class="btn ghost sm" data-act="tpHDel" data-i="${i}" data-write>הסרה</button></div></div>`).join('')}
-    <div class="row" style="margin-top:10px"><button class="btn" data-act="tpHAdd" data-write>+ תרגיל</button>${H.length?`<button class="btn primary" data-act="tpHSave" data-write>שמירה ועדכון הדף</button>`:''}${H.some(x=>x.n)&&c.portalPub?`<a class="btn primary" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,tpHomeMsg(c)))}" target="_blank" rel="noopener">📲 שליחת התרגילים בווטסאפ</a>`:''}</div>${c.phone?'':'<p class="muted small" style="margin:6px 0 0">כדי שהווטסאפ ייפתח ישר אצל המתאמן, הוסיפו את הטלפון שלו בתיק המתאמן.</p>'}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="tpHAdd" data-write>+ תרגיל</button>${H.length?`<button class="btn primary" data-act="tpHSave" data-write>שמירה ועדכון הדף</button>`:''}${H.some(x=>x.n)&&c.portalPub?`<a class="btn primary" data-own="1" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,tpHomeMsg(c)))}" target="_blank" rel="noopener">📲 שליחת התרגילים בווטסאפ</a>`:''}</div>${c.phone?'':'<p class="muted small" style="margin:6px 0 0">כדי שהווטסאפ ייפתח ישר אצל המתאמן, הוסיפו את הטלפון שלו בתיק המתאמן.</p>'}</div>
   <div class="spread"><span></span>${S.tpConfirmDel===c.id?`<span class="row small"><span class="muted">לבטל את הקישור? הדף יפסיק לעבוד, וגם מה שהמתאמן שלח יימחק.</span><button class="btn danger sm" data-act="tpDel" data-write>כן, ביטול</button><button class="btn ghost sm" data-act="tpDelNo">לא</button></span>`:`<button class="btn ghost sm" data-act="tpDelAsk" data-write>ביטול הקישור</button>`}</div>`;
 }
+function tpInbox(){const L=S.clients.filter(c=>c.portal&&tpMine(c)&&S.tpNew[c.id]).map(c=>({c,n:S.tpNew[c.id],last:(S.tpReps[c.id]||[])[0]}));
+  if(!L.length) return '';
+  return `<div class="card tpinbox"><h2 style="margin:0 0 6px">📩 התיבה שלי: הודעות מהמתאמנים</h2>${L.map(x=>`<button class="tpinrow" data-tpopen="${x.c.id}"><b>${esc(x.c.name)}</b> <span class="tpbadge">${x.n}</span><span class="muted small">${x.last?(x.last.kind==='pain'?'🤕 דיווח כאב':x.last.kind==='log'?'🏋️ תיעוד אימון':x.last.kind==='media'?'📷 צילום / סרטון':x.last.kind==='done'?'✓ תרגול בבית':'✍️ הודעה'):''}</span></button>`).join('')}</div>`}
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-own]');if(a){const c=client();if(c&&S.meId&&tpOwner(c)!==S.meId)updClient(c.id,{portalOwner:S.meId})}const b=e.target.closest('[data-tpopen]');if(b){openClient(b.dataset.tpopen,'portal')}},true);
 function tpPickFile(cb){const i=document.createElement('input');i.type='file';i.accept='video/*,image/*';i.onchange=()=>{const f=i.files&&i.files[0];if(f)cb(f)};i.click()}
 function tpHRead(c){const H=clone(c.homeEx||[]);document.querySelectorAll('[data-th]').forEach(el=>{const [i,k]=el.dataset.th.split('.');if(H[+i])H[+i][k]=el.value.trim()});H.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:(x.unit||'bw')});return H}
 async function tpAct(name,el){
@@ -2129,7 +2140,8 @@ async function tpAct(name,el){
   case 'tpVidDel': {const V={...(c.exVideos||{})};delete V[el.dataset.ex];await updClient(c.id,{exVideos:V});c.exVideos=V;tpPublish(c.id,true);render();break;}
   case 'tpHAdd': {const H=tpHRead(c);H.push({n:'',sets:'2',reps:'8-10',kg:'',note:'',unit:'bw'});await updClient(c.id,{homeEx:H});c.homeEx=H;render();setTimeout(()=>{const i=document.querySelector(`[data-th="${H.length-1}.n"]`);if(i){i.scrollIntoView({block:'center'});i.focus()}},200);break;}
   case 'tpHDel': {const H=tpHRead(c);H.splice(+el.dataset.i,1);await updClient(c.id,{homeEx:H});c.homeEx=H;tpPublish(c.id,true);break;}
-  case 'tpHSave': {const H=tpHRead(c);await updClient(c.id,{homeEx:H});c.homeEx=H;await tpPublish(c.id);break;}
+  case 'tpHSave': {const H=tpHRead(c);await updClient(c.id,{homeEx:H,portalOwner:S.meId||tpOwner(c)});c.homeEx=H;await tpPublish(c.id);break;}
+  case 'tpOwn': await updClient(c.id,{portalOwner:S.meId}); toast('מעכשיו מה שהמתאמן שולח יגיע אליך'); render(); break;
   case 'tpDelAsk': S.tpConfirmDel=c.id; render(); break;
   case 'tpDelNo': S.tpConfirmDel=null; render(); break;
   case 'tpDel': {S.tpConfirmDel=null; try{const x=await tpCtx(c); await tpApi(x.s+'/del',{}); }catch(e){} await updClient(c.id,{portal:null,portalPub:null}); S.tpReps[c.id]=null; toast('הקישור בוטל'); render(); break;}
