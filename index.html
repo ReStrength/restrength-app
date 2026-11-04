@@ -845,6 +845,9 @@ function exHistory(ctx,name,upTo){
   return out;
 }
 function isUnilateral(name){return /מכרע|לאנצ|לאנג|בולגרי|ברגל אחת|ביד אחת|עלייה על מדרגה|סטפ אפ|סינגל|חד.צדדי|רגל אחת|יד אחת/.test(String(name||''))}
+function pushH(ex){if(!/שכיבות ס[מש]יכה|פוש.?אפ/.test(String(ex.name||'')))return null;
+  const re=/(?:הגבהה|גובה)\s*(?:מס['׳]?\s*)?(\d)/;let m=String(ex.name).match(re);if(m)return {h:+m[1],m:m[0],where:'name'};
+  if(!/סמית/.test(String(ex.name)+' '+String(ex.tempo||'')))return null;m=String(ex.tempo||'').match(re)||String(ex.tempo||'').match(/מס['׳]?\s*(\d)/);return m?{h:+m[1],m:m[0],where:'tempo'}:null}
 function carry(ex){return {name:ex.name,unit:ex.unit,group:ex.group||'other',ss:ex.ss||'',rirTarget:ex.rirTarget??3,tempo:ex.tempo||''}}
 function buildNext(ctx,d,docId){
   const exercises=(d.exercises||[]).filter(e=>e.name).map(ex=>{
@@ -855,19 +858,29 @@ function buildNext(ctx,d,docId){
     let text=s.reason; const st=exStats(ex); const topRep=st.reps.length?Math.max(...st.reps):0;
     if(unitOf(ex)!=='sec'&&s.type!=='flag'&&(topRep>12||base.repMax>12)){rec='kg';text=`עבר 12 חזרות – לשאוף להוסיף משקל עבודה ולחזור לטווח חזרות נמוך יותר`;}
     if(unitOf(ex)!=='sec'&&isUnilateral(ex.name)&&s.type!=='flag'){ if(topRep>=8||base.repMax>8){rec='kg';} text=`תרגיל חד־צדדי: להגביל את הטווח עד 8 חזרות ולהתקדם במשקל עבודה – בתרגילים כאלה הדופק מעייף לפני השריר`+(s.type==='down'?` · ${s.reason}`:''); }
-    return {id:uid(),...carry(ex),...base,base,prog:[],rec,
+    /* שכיבות סמיכה בסמית: הכי קל הגבהה 7, יורדים עד 1, ואז רצפה (הכי קשה) */
+    const ph=pushH(ex); let nm=null,nt=null;
+    if(ph&&s.type!=='flag'&&s.type!=='down'&&(s.type==='up'||topRep>=base.repMax)){
+      if(ph.h>1){const h2=ph.h-1;if(ph.where==='name')nm=ex.name.replace(ph.m,ph.m.replace(String(ph.h),String(h2)));else nt=String(ex.tempo||'').replace(ph.m,ph.m.replace(String(ph.h),String(h2)));
+        rec='harder';text=`השלים את הטווח בהגבהה ${ph.h} ← יורדים להגבהה ${h2} בסמית (סופרים מלמטה), וחוזרים לתחתית טווח החזרות`;}
+      else {rec='harder';text='השלים את הטווח בהגבהה 1 (הכי נמוכה בסמית) ← השלב הבא: שכיבות סמיכה על הרצפה, בהתחלה פחות חזרות';}
+    }
+    /* תקוע: למתאמנים מתקדמים אפשר טופ סט + דאון סט */
+    if(s.type==='stall'&&unitOf(ex)==='kg'&&!isUnilateral(ex.name)){rec=rec||'top';text+=' · אפשרות למתקדמים: טופ סט + דאון סט';}
+    const cx=carry(ex);if(nm)cx.name=nm;if(nt!=null)cx.tempo=nt;
+    return {id:uid(),...cx,...base,base,prog:[],rec,
       sets:Array.from({length:base.targetSets},()=>({kg:'',reps:''})),rir:'',pain:'',note:'',sugg:{type:s.type,text}};
   });
   return {clientId:d.clientId,label:d.label||'1',programNo:d.programNo||1,seq:(Number(d.seq)||1)+1,status:'planned',approved:true,date:'',coach:'',notes:'',warmup:d.warmup||'',exercises,basedOn:docId,createdAt:Date.now()};
 }
-const PROGS=[['kg','משקל עבודה'],['reps','חזרות'],['sets','סטים'],['tempo','טמפו'],['rom','טווח תנועה'],['harder','מנח קשה יותר']];
-const PNOTE={tempo:'טמפו: 2 שנ׳ בלימה, שנייה עצירה בחלק הקשה',rom:'טווח תנועה גדול יותר',harder:'מנח קשה יותר (למשל: לעמוד קדימה יותר ב־TRX, להוריד את המדרגה)'};
+const PROGS=[['kg','משקל עבודה'],['reps','חזרות'],['sets','סטים'],['tempo','טמפו'],['rom','טווח תנועה'],['harder','מנח קשה יותר'],['top','טופ סט + דאון סט']];
+const PNOTE={tempo:'טמפו: 2 שנ׳ בלימה, שנייה עצירה בחלק הקשה',rom:'טווח תנועה גדול יותר',harder:'מנח קשה יותר (למשל: לעמוד קדימה יותר ב־TRX, להוריד את המדרגה, להוריד הגבהה בסמית)',top:'טופ סט: סט אחד כבד ב־6–8 חזרות (רזרבה 2), ואחריו 2 סטי דאון סט עם כ־10% פחות משקל ל־8–10 חזרות (רזרבה 3)'};
 const KG_STEPS=[0.5,1,1.5,2,2.5];
 function kgDefault(ex){const b=ex.base||{};return stepFor(ex.group,num(b.targetKg)||0)}
 function kgChips(ex){const on=(ex.prog||[]).includes('kg'), cur=num(ex.kgStep)??kgDefault(ex), def=kgDefault(ex);
   return `<span class="kgchips"><span class="muted small">משקל:</span>${KG_STEPS.map(v=>`<button class="pchip${ex.rec==='kg'&&v===def?' rec':''}" aria-pressed="${on&&cur===v}" data-act="prog" data-k="kg" data-v="${v}" data-write dir="ltr">+${v}${ex.rec==='kg'&&v===def?' ★':''}</button>`).join('')}<span class="muted small">ק״ג</span></span>`}
 function applyNotes(ex){let lines=String(ex.tempo||'').split('\n').filter(l=>!Object.values(PNOTE).includes(l.trim()));
-  ['tempo','rom','harder'].forEach(k=>{if((ex.prog||[]).includes(k))lines.push(PNOTE[k])}); ex.tempo=lines.filter((l,i)=>l.trim()||i<lines.length-1).join('\n').replace(/^\n+/,'')}
+  ['tempo','rom','harder','top'].forEach(k=>{if((ex.prog||[]).includes(k))lines.push(PNOTE[k])}); ex.tempo=lines.filter((l,i)=>l.trim()||i<lines.length-1).join('\n').replace(/^\n+/,'')}
 function progLabel(ex,k){const b=ex.base||{};if(k==='kg')return `משקל +${stepFor(ex.group,num(b.targetKg)||0)} ק"ג`;if(k==='reps')return 'חזרות +1';if(k==='sets')return 'סט נוסף';if(k==='tempo')return 'טמפו';if(k==='harder')return 'מנח קשה יותר';return 'טווח תנועה'}
 function applyProg(ex){const b=ex.base;if(!b)return;const has=k=>(ex.prog||[]).includes(k);
   ex.targetKg=has('kg')?r05((num(b.targetKg)||0)+(num(ex.kgStep)??stepFor(ex.group,num(b.targetKg)||0))):b.targetKg;

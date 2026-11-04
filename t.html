@@ -175,7 +175,7 @@ var GAUD=null,GPRE=null;
 /* טקסט ברור להקראה: טווחים, כפול, ק"ג וחצאים נקראים במילים */
 function ttsClean(t){return String(t).replace(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/g,'$1 עד $2').replace(/(\d)\s*[×xX]\s*(\d)/g,'$1 פעמים $2').replace(/×/g,' פעמים ').replace(/ק"ג|ק״ג|\bקג\b/g,'קילו').replace(/(\d+)\.5\b/g,'$1 וחצי').replace(/[()\[\]*_#\/\\|•]/g,' ').replace(/\s+/g,' ').trim()}
 function ttsChunks(t){var out=[],cur='';String(t).replace(/\s+/g,' ').replace(/([.:,!?])\s/g,'$1\u0001').split('\u0001').forEach(function(p){if(cur&&(cur+' '+p).length>180){out.push(cur);cur=p}else cur=cur?cur+' '+p:p;while(cur.length>190){var i=cur.lastIndexOf(' ',180);if(i<40)i=180;out.push(cur.slice(0,i));cur=cur.slice(i).trim()}});if(cur)out.push(cur);return out}
-function ttsUrl(x){return (window.TTSB||BASE)+'tts?q='+encodeURIComponent(x)}
+function ttsUrl(x){return (window.TTSB||BASE)+'tts?v=n1&q='+encodeURIComponent(x)}
 /* הקראה מהשרת שלנו (קול עברי ברור), עובדת גם בדפדפן שנפתח מתוך ווטסאפ */
 function gsay(text,btn,onfail){var ch=ttsChunks(text),i=0,a=GPRE||new Audio();GPRE=null;if(GAUD&&GAUD!==a)try{GAUD.pause()}catch(e){}GAUD=a;SAYING=btn;btn.classList.add('on');a.muted=false;
   function end(){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}}
@@ -189,7 +189,10 @@ function say(text,btn){
   if(GAUD){try{GAUD.pause()}catch(e){}GAUD=null}
   /* מכינים נגן כבר בלחיצה, כדי שאם קול המכשיר לא יעבוד, הגיבוי יוכל להתנגן (בטלפונים מותר רק בלחיצה) */
   var first=ttsChunks(text)[0]||text;try{GPRE=new Audio(ttsUrl(first));GPRE.muted=true;var pp=GPRE.play();if(pp&&pp.then)pp.then(function(){if(GPRE){GPRE.pause();try{GPRE.currentTime=0}catch(e){}}}).catch(function(){})}catch(e){GPRE=null}
-  if(!TTS||!(HEV||heVoice())){gsay(text,btn,ttsOff);return}
+  /* קודם הקול הטבעי מהשרת (נעים וברור), ואם לא זמין: הקול של המכשיר */
+  gsay(text,btn,function(){devSay(text,btn)})}
+function devSay(text,btn){
+  if(!TTS||!(HEV||heVoice())){ttsOff();return}
   var ss=window.speechSynthesis;
   if(ss.speaking||ss.pending)ss.cancel();document.querySelectorAll('.say.on').forEach(function(b){b.classList.remove('on')});
   /* משפט אחרי משפט: הפסקה קצרה בין משפטים, קצב איטי וברור לגיל המבוגר */
@@ -201,7 +204,7 @@ function say(text,btn){
     u.onerror=function(e){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}if(!started&&!(e&&e.error==='interrupted'||e&&e.error==='canceled'))ttsFail()};
     ss.speak(u)});
   setTimeout(function(){if(!started&&!ss.speaking&&SAYING===btn)ttsFail()},1800);
-  function ttsFail(){if(failed)return;failed=true;SAYING=null;btn.classList.remove('on');try{ss.cancel()}catch(e){}gsay(text,btn,ttsOff)}
+  function ttsFail(){if(failed)return;failed=true;SAYING=null;btn.classList.remove('on');try{ss.cancel()}catch(e){}ttsOff()}
 }
 function remind(hm){var p=hm.split(':'),d=new Date();d.setDate(d.getDate()+(d.getHours()*60+d.getMinutes()>=(+p[0])*60+(+p[1])?1:0));
   function z(n){return ('0'+n).slice(-2)}var ds=d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'T'+p[0]+p[1]+'00',url=location.href;
@@ -244,7 +247,7 @@ function render(){
     h+=lg?'<div class="sticky"><button class="btn done big" data-act="sendlog">✓ סיימתי. שליחה למאמן</button><button class="btn alt" data-act="cancellog">ביטול התיעוד</button></div>':'<button class="btn done big" data-act="startlog">▶ מתאמן/ת עכשיו? לתיעוד האימון</button>';
   }
   if((p.home||[]).length){h+='<h2>תרגילים שהמאמן נתן לך</h2>';p.home.forEach(function(x,i){h+=exCard(x,'h'+i,i,false)})}
-  h+='<h2>לשלוח למאמן</h2><div class="card"><div class="more" style="margin-top:0"><button class="btn alt" data-act="media"><span>📷</span>צילום / סרטון</button><button class="btn alt" data-act="pain"><span>🤕</span>כאב לי משהו</button><button class="btn alt" data-act="text"><span>✍️</span>הודעה</button></div></div>';
+  h+='<h2>רוצה לשלוח משהו ל'+esc(p.coach||'מאמן')+'?</h2><div class="card"><div class="more" style="margin-top:0"><button class="btn alt" data-act="media"><span>📷</span>צילום / סרטון</button><button class="btn alt" data-act="pain"><span>🤕</span>כאב לי משהו</button><button class="btn alt" data-act="text"><span>✍️</span>הודעה</button></div></div>';
   if((p.home||[]).length)h+='<div class="card"><b>⏰ תזכורת יומית לתרגל בבית</b><p class="sub" style="margin:4px 0 10px">בוחרים שעה, והטלפון יזכיר כל יום.</p><div class="more" style="grid-template-columns:repeat(3,1fr)">'+['08:00','10:00','12:00','16:00','18:00','20:00'].map(function(t){return '<button class="btn alt" data-rem="'+t+'" style="font-size:22px;min-height:56px">'+t+'</button>'}).join('')+'</div></div>';
   h+='<h2>מה שלחתי</h2><div class="card hist" id="hist"><p class="sub">עוד לא נשלח כלום.</p></div>';
   h+='<p class="sub center" style="margin-top:24px">כוח מחודש · הדף הזה אישי. רק מי שיש לו את הקישור יכול לראות אותו.</p>';
