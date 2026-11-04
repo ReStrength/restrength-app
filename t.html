@@ -215,6 +215,10 @@ function remind(hm){var p=hm.split(':'),d=new Date();d.setDate(d.getDate()+(d.ge
   sheet('<h3>⏰ כמעט סיימנו</h3><p class="sub center" style="font-size:20px">בחלון שנפתח לוחצים <b>"הוסף"</b> או <b>"שמירה"</b>.<br>מעכשיו הטלפון יזכיר כל יום ב-'+hm+'.</p><button class="btn done" id="rok">הבנתי</button>');$('rok').onclick=unsheet}
 var FACES=[[0,'😀','בלי כאב'],[2,'🙂','קצת כאב'],[4,'😐','כאב בינוני'],[6,'😣','כואב'],[8,'😫','כואב מאוד']];
 function exSpeech(x,i){var t=['תרגיל '+(i+1)+'. '+x.n+'.'];var u=x.unit==='sec'?' שניות':' חזרות';if(x.sets)t.push(x.sets+' סטים, '+(x.reps?String(x.reps).replace('-',' עד ')+u:'')+'.');if(x.kg)t.push('משקל '+x.kg+' קילו.');if(x.tempo)t.push('קצב: '+x.tempo+'.');if(x.note)t.push('דגשים: '+x.note+'.');t.push('לא עובדים עד כאב. אם כואב, עוצרים.');return t.join(' ')}
+try{if(location.hash.length>5)localStorage.setItem('rs_th',location.hash);else{var _sh=localStorage.getItem('rs_th');if(_sh)history.replaceState(null,'',location.pathname+_sh)}}catch(e){}
+if(!/iphone|ipad|ipod/i.test(navigator.userAgent)){try{var ml=document.createElement('link');ml.rel='manifest';ml.href='tm.webmanifest';document.head.appendChild(ml)}catch(e){}}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__BIP=e;var a=document.querySelector('.a2hs');if(a)a.innerHTML=a2hsInner(false)});
+function a2hsInner(ios){if(window.__BIP)return '<button class="x" data-a2hs aria-label="סגירה">×</button><button class="btn done big" data-inst style="margin:4px 0 0">📲 להוסיף למסך הבית</button>';return '<button class="x" data-a2hs aria-label="סגירה">×</button><b>כדי לשמור את הדף בלי לחפש אותו:</b><ol>'+(ios?'<li>לוחצים על כפתור השיתוף <b>⬆️</b></li><li>בוחרים <b>"הוספה למסך הבית"</b></li>':'<li>לוחצים על <b>⋮</b> למעלה</li><li>בוחרים <b>"הוספה למסך הבית"</b></li>')+'</ol>'}
 var h=location.hash.slice(1).split('.'),SID=h[0]||'',KS=h[1]||'',K,W,PLAN,REPS=[],URLS={},TAB=0,LOG=null;
 if(!SID||!KS){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
 if(!window.crypto||!crypto.subtle){fail('הדפדפן הזה ישן מדי. פתחו את הקישור בכרום או בספארי.');return}
@@ -237,7 +241,7 @@ function exCard(x,key,i,logging,si){
 function render(){
   var p=PLAN,h='<h1>שלום '+esc(p.first||p.name||'')+' 👋</h1><p class="sub">התוכנית האישית שלך'+(p.coach?' מ'+esc(p.coach):'')+'. אפשר לפתוח אותה מכל מקום, גם בחו"ל.</p>';
   if(!lsg('rs_a2hs_'+SID)&&!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches))){var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    h+='<div class="card a2hs"><button class="x" data-a2hs aria-label="סגירה">×</button><b>כדי לשמור את הדף בלי לחפש אותו:</b><ol>'+(ios?'<li>לוחצים על כפתור השיתוף <b>⬆️</b></li><li>בוחרים <b>"הוספה למסך הבית"</b></li>':'<li>לוחצים על <b>⋮</b> למעלה</li><li>בוחרים <b>"הוספה למסך הבית"</b></li>')+'</ol></div>'}
+    h+='<div class="card a2hs">'+a2hsInner(ios)+'</div>'}
   var N=p.next||[];
   if(N.length){
     h+='<h2>האימון שלי</h2>';
@@ -263,6 +267,7 @@ function startLog(){var S=PLAN.next[TAB];LOG={tab:TAB,label:S.label||'',start:Da
 document.addEventListener('input',function(e){var t=e.target;if(!t.dataset||!t.dataset.lg||!LOG)return;var a=t.dataset.lg.split('.');LOG.ex[+a[0]].sets[+a[1]][a[2]]=t.value.trim();saveLog()});
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-tab]');if(b){if(LOG&&!confirm('לעבור אימון? מה שמילאת יימחק.'))return;LOG=null;saveLog();TAB=+b.dataset.tab;lss('rs_tt_'+SID,TAB);render();return}
+  b=e.target.closest('[data-inst]');if(b){var ev=window.__BIP;if(ev){ev.prompt();(ev.userChoice||Promise.resolve({})).then(function(c){window.__BIP=null;var a=document.querySelector('.a2hs');if(c&&c.outcome==='accepted'){lss('rs_a2hs_'+SID,1);if(a)a.remove()}else if(a)a.innerHTML=a2hsInner(/iphone|ipad|ipod/i.test(navigator.userAgent))})}return}
   b=e.target.closest('[data-a2hs]');if(b){lss('rs_a2hs_'+SID,1);b.parentNode.remove();return}
   b=e.target.closest('[data-addset]');if(b){var x=LOG.ex[+b.dataset.addset],ls=x.sets[x.sets.length-1]||{};x.sets.push({kg:ls.kg||'',reps:''});saveLog();render();return}
   b=e.target.closest('[data-play]');if(b){play(b.dataset.play);return}
