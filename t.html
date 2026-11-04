@@ -166,36 +166,43 @@ function fail(m){$('app').innerHTML='<div class="err">'+m+'</div>'}
 function dmy(iso){return iso?iso.slice(8,10)+'.'+iso.slice(5,7):''}
 function dt(t){var d=new Date(t);return d.getDate()+'.'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
 
+window.TTSB='https://yaringohar.com/clinic/';
 var TTS=!!(window.speechSynthesis&&window.SpeechSynthesisUtterance),SAYING=null;
 var UTT=null,HEV=null;function vScore(x){var n=String(x.name||''),v=0;if(/natural|neural|online/i.test(n))v+=8;if(/enhanced|premium|משופר|איכות/i.test(n))v+=6;if(/hila|carmit|כרמית|הילה/i.test(n))v+=3;if(/google/i.test(n))v+=2;if(/asaf|אסף/i.test(n))v-=1;if(x.localService===false)v+=1;return v}
 function heVoice(){var L=(window.speechSynthesis.getVoices()||[]).filter(function(x){return /^he|^iw/i.test(x.lang)});L.sort(function(a,b){return vScore(b)-vScore(a)});return L[0]||null}
 if(TTS){HEV=heVoice();try{window.speechSynthesis.onvoiceschanged=function(){HEV=heVoice()}}catch(e){}}
-var GAUD=null;
+var GAUD=null,GPRE=null;
+/* טקסט ברור להקראה: טווחים, כפול, ק"ג וחצאים נקראים במילים */
+function ttsClean(t){return String(t).replace(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/g,'$1 עד $2').replace(/(\d)\s*[×xX]\s*(\d)/g,'$1 פעמים $2').replace(/×/g,' פעמים ').replace(/ק"ג|ק״ג|\bקג\b/g,'קילו').replace(/(\d+)\.5\b/g,'$1 וחצי').replace(/[()\[\]*_#\/\\|•]/g,' ').replace(/\s+/g,' ').trim()}
 function ttsChunks(t){var out=[],cur='';String(t).replace(/\s+/g,' ').replace(/([.:,!?])\s/g,'$1\u0001').split('\u0001').forEach(function(p){if(cur&&(cur+' '+p).length>180){out.push(cur);cur=p}else cur=cur?cur+' '+p:p;while(cur.length>190){var i=cur.lastIndexOf(' ',180);if(i<40)i=180;out.push(cur.slice(0,i));cur=cur.slice(i).trim()}});if(cur)out.push(cur);return out}
-function gsay(text,btn,onfail){var ch=ttsChunks(text),i=0,a=new Audio();if(GAUD)try{GAUD.pause()}catch(e){}GAUD=a;SAYING=btn;btn.classList.add('on');
-  function u(x){return 'https://translate.google.com/translate_tts?ie=UTF-8&tl=iw&client=tw-ob&ttsspeed=0.85&q='+encodeURIComponent(x)}
+function ttsUrl(x){return (window.TTSB||BASE)+'tts?q='+encodeURIComponent(x)}
+/* הקראה מהשרת שלנו (קול עברי ברור), עובדת גם בדפדפן שנפתח מתוך ווטסאפ */
+function gsay(text,btn,onfail){var ch=ttsChunks(text),i=0,a=GPRE||new Audio();GPRE=null;if(GAUD&&GAUD!==a)try{GAUD.pause()}catch(e){}GAUD=a;SAYING=btn;btn.classList.add('on');a.muted=false;
   function end(){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}}
   function fail(){if(GAUD!==a)return;GAUD=null;end();if(onfail)onfail()}
-  a.onended=function(){if(GAUD!==a)return;i++;if(i<ch.length){a.src=u(ch[i]);var p=a.play();if(p&&p.catch)p.catch(fail)}else{GAUD=null;end()}};a.onerror=fail;
-  a.src=u(ch[0]);var p=a.play();if(p&&p.catch)p.catch(fail)}
+  a.onended=function(){if(GAUD!==a)return;i++;if(i<ch.length){a.src=ttsUrl(ch[i]);var p=a.play();if(p&&p.catch)p.catch(fail)}else{GAUD=null;end()}};a.onerror=fail;
+  if(a.src.indexOf(ttsUrl(ch[0]))<0)a.src=ttsUrl(ch[0]);try{a.currentTime=0}catch(e){}var p=a.play();if(p&&p.catch)p.catch(fail)}
+function ttsOff(){toast('ההקראה לא זמינה כרגע. נסו שוב בעוד רגע.')}
 function say(text,btn){
+  text=ttsClean(text);
   if(SAYING===btn){if(GAUD){try{GAUD.pause()}catch(e){}GAUD=null}if(TTS)window.speechSynthesis.cancel();SAYING=null;btn.classList.remove('on');return}
   if(GAUD){try{GAUD.pause()}catch(e){}GAUD=null}
-  if(!TTS||!(HEV||heVoice())){gsay(text,btn,function(){ttsHelp()});return}
+  /* מכינים נגן כבר בלחיצה, כדי שאם קול המכשיר לא יעבוד, הגיבוי יוכל להתנגן (בטלפונים מותר רק בלחיצה) */
+  var first=ttsChunks(text)[0]||text;try{GPRE=new Audio(ttsUrl(first));GPRE.muted=true;var pp=GPRE.play();if(pp&&pp.then)pp.then(function(){if(GPRE){GPRE.pause();try{GPRE.currentTime=0}catch(e){}}}).catch(function(){})}catch(e){GPRE=null}
+  if(!TTS||!(HEV||heVoice())){gsay(text,btn,ttsOff);return}
   var ss=window.speechSynthesis;
   if(ss.speaking||ss.pending)ss.cancel();document.querySelectorAll('.say.on').forEach(function(b){b.classList.remove('on')});
   /* משפט אחרי משפט: הפסקה קצרה בין משפטים, קצב איטי וברור לגיל המבוגר */
   var parts=(String(text).replace(/\s+/g,' ').match(/[^.!?:]+[.!?:]*/g)||[String(text)]).map(function(x){return x.trim()}).filter(Boolean),started=false,failed=false;HEV=HEV||heVoice();
   SAYING=btn;btn.classList.add('on');try{ss.resume()}catch(e){}
-  parts.forEach(function(pt,ix){var u=new SpeechSynthesisUtterance(pt);UTT=u;u.lang='he-IL';u.rate=0.82;u.pitch=1;u.volume=1;if(HEV)u.voice=HEV;
-    u.onstart=function(){started=true};
+  parts.forEach(function(pt,ix){var u=new SpeechSynthesisUtterance(pt);UTT=u;u.lang='he-IL';u.rate=0.8;u.pitch=1;u.volume=1;if(HEV)u.voice=HEV;
+    u.onstart=function(){started=true;if(GPRE){try{GPRE.pause()}catch(e){}GPRE=null}};
     if(ix===parts.length-1)u.onend=function(){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}};
     u.onerror=function(e){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}if(!started&&!(e&&e.error==='interrupted'||e&&e.error==='canceled'))ttsFail()};
     ss.speak(u)});
   setTimeout(function(){if(!started&&!ss.speaking&&SAYING===btn)ttsFail()},1800);
-  function ttsFail(){if(failed)return;failed=true;SAYING=null;btn.classList.remove('on');gsay(text,btn,ttsHelp)}
+  function ttsFail(){if(failed)return;failed=true;SAYING=null;btn.classList.remove('on');try{ss.cancel()}catch(e){}gsay(text,btn,ttsOff)}
 }
-function ttsHelp(){sheet('<h3>🔊 ההקראה לא עובדת כאן</h3><p class="sub center" style="font-size:20px">'+(/android/i.test(navigator.userAgent)?'לוחצים על שלוש הנקודות ⋮ למעלה ובוחרים <b>"פתיחה בכרום"</b>, ואז לוחצים שוב על "להקריא לי".':'לוחצים על הכפתור של הדפדפן ובוחרים <b>"פתיחה ב-Safari"</b>, ואז לוחצים שוב על "להקריא לי".')+(HEV?'':'<br><br>אם עדיין לא עובד: בהגדרות הטלפון צריך להוסיף קול בעברית להקראה.')+'</p><button class="btn done" id="tok">הבנתי</button>');$('tok').onclick=unsheet}
 function remind(hm){var p=hm.split(':'),d=new Date();d.setDate(d.getDate()+(d.getHours()*60+d.getMinutes()>=(+p[0])*60+(+p[1])?1:0));
   function z(n){return ('0'+n).slice(-2)}var ds=d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'T'+p[0]+p[1]+'00',url=location.href;
   var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//ReStrength//Home//HE','BEGIN:VEVENT','UID:rs-'+SID+'-'+hm.replace(':','')+'@yaringohar.com','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','DTSTART:'+ds,'DURATION:PT15M','RRULE:FREQ=DAILY','SUMMARY:לתרגל 💪 התרגילים מכוח מחודש','DESCRIPTION:פותחים את הדף ולוחצים עשיתי'+(url?'\\n'+url:''),url?'URL:'+url:'','BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:הגיע הזמן לתרגל','TRIGGER:PT0M','END:VALARM','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
