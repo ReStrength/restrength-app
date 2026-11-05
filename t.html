@@ -88,6 +88,8 @@ textarea{width:100%;min-height:140px;font:inherit;font-size:21px;border:2px soli
 .pn{min-height:52px;border-radius:12px;border:2px solid var(--line);background:#fff;font:inherit;font-size:22px;font-weight:800;cursor:pointer}.pn.pg{color:#2b8a3e}.pn.pw{color:#e67700}.pn.pr{color:#c92a2a}.pn.sel{background:#151313;color:#fff;border-color:#151313}.pscale.big .pn{min-height:64px;font-size:26px}
 .rex .t{display:flex;gap:8px;align-items:center}.rin{flex:1;font-size:20px;font-weight:700;padding:8px 10px;border:2px solid var(--line);border-radius:10px;min-width:0}
 .rrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}.rrow label{display:flex;flex-direction:column;font-size:14px;color:var(--muted);gap:2px}.rrow select,.rrow input{font-size:18px;padding:6px;border:2px solid var(--line);border-radius:8px;width:72px}.rng{display:flex;align-items:center;gap:2px}.rng input{width:48px}
+.ssg{padding:14px 14px 6px}.ssh{font-size:20px;font-weight:800;color:var(--accent,#E31E24);margin:0 2px 6px}
+.ssx{padding:10px 2px 12px}.ssx+.ssx{border-top:2px dashed var(--line,#e2ddd6)}
 </style>
 <style>
 .band img{height:56px}
@@ -315,8 +317,9 @@ function remoteHtml(){rpLoad();if(WK()&&RP.planAt&&Date.now()-RP.planAt>9*864e5&
   if(W.run){h+=runHtml(W)+'<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את הריצה הבאה</button></div>';return h}
   var lastSS=null;
   W.ex.forEach(function(x,i){var k=RT+'.'+i;
-    if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
-    h+='<div class="card ex rex"><div class="t"><span class="num">'+(i+1)+'</span>'+(WK()?'<b style="font-size:20px;flex:1">'+esc(x.n)+'</b>':'<input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל">')+'</div>'+
+    if(WK()){if(x.ss!==lastSS){if(lastSS!==null)h+='</div>';h+='<div class="card ssg"><div class="ssh">'+(x.ss?'סופר סט '+esc(x.ss):'תרגיל')+'</div>'}}
+    else if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
+    h+='<div class="'+(WK()?'ssx ex rex':'card ex rex')+'"><div class="t"><span class="num">'+(i+1)+'</span>'+(WK()?'<b style="font-size:20px;flex:1">'+esc(x.n)+'</b>':'<input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל">')+'</div>'+
      (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+dlSets(x)+' סטים × '+x.max+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג':'')+'</div><label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
      '<label>סטים<select data-rp="'+k+'.sets">'+[1,2,3,4,5].map(function(v){return '<option'+(v===+x.sets?' selected':'')+'>'+v+'</option>'}).join('')+'</select></label>'+
      '<label>'+(x.sec?'שניות':'חזרות')+'<span class="rng"><input inputmode="numeric" data-rp="'+k+'.min" value="'+esc(x.min)+'">–<input inputmode="numeric" data-rp="'+k+'.max" value="'+esc(x.max)+'"></span></label>'+
@@ -328,6 +331,7 @@ function remoteHtml(){rpLoad();if(WK()&&RP.planAt&&Date.now()-RP.planAt>9*864e5&
     h+='<div class="sets">'+(RP.deload&&WK()?'<div class="sub">שבוע קל: '+dlSets(x)+' סטים</div>':'');for(var j=0;j<(WK()?dlSets(x):(+x.sets||1));j++){var r=x.res[j]||{};h+='<div class="setr"><span>סט '+(j+1)+'</span><label>'+(x.sec?'שניות':'חזרות')+'<input inputmode="numeric" data-rr="'+k+'.'+j+'.reps" value="'+esc(r.reps==null?'':r.reps)+'"></label><label>ק"ג<input inputmode="decimal" data-rr="'+k+'.'+j+'.kg" value="'+esc(r.kg==null?(x.kg||''):r.kg)+'" placeholder="'+esc(x.kg||'גוף')+'"></label></div>'}
     h+='</div>'+(WK()?'':'<button class="btn alt" data-rdel="'+i+'" style="min-height:44px;font-size:16px;margin-top:6px">🗑 למחוק תרגיל</button>')+'</div>'});
   if(!WK())h+='<button class="btn alt" data-radd="1">+ תרגיל</button>';
+  if(WK()&&lastSS!==null)h+='</div>';
   if(WK())h+='<button class="btn alt" data-rall="1" style="margin-top:8px">✓ הצלחתי את כל האימון</button>';
   h+='<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את האימון הבא</button></div>';
   return h}
