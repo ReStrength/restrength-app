@@ -315,7 +315,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
     h+='<div class="card" style="font-size:17px"><b>שבוע '+(RP.wk||1)+(RP.deload?' · שבוע קל 🌿':'')+'</b> · בוצעו '+dn+' מתוך '+RP.w.length+' אימונים'+
      '<button class="btn '+(dn>=RP.w.length?'done':'alt')+'" data-wplan style="margin-top:10px">📅 תכנון שבוע האימונים הבא</button><div class="sub" style="margin-top:6px">לוחצים בסוף השבוע. ההתקדמות מתונה והדרגתית, וכל שבוע רביעי הוא שבוע קל.</div></div>'}
   h+='<div class="card" style="font-size:17px"><b>איך זה עובד:</b> '+(WK()?'בכל תרגיל כתוב בדיוק מה לעשות. הצלחת הכל? לוחצים ✓. לא הצלחת? לוחצים "לא הכל" וכותבים כמה עשית. בריצה כותבים ק"מ וזמן. בסוף לוחצים "סיימתי".':'כותבים את התרגילים פעם אחת. בכל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט, ולוחצים "סיימתי". הדף בונה לבד את האימון הבא.')+' <br>'+(WK()?'<b>לא להגיע עד כשל מוחלט.</b>':'עוצרים כל סט כשנשארות בערך 3 חזרות "בבנק", לא עד כשל.')+' <button class="btn alt" data-rhelp style="margin-top:8px">▶ סרטון הסבר קצר</button></div>';
-  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">'+(WK()&&w.doneAt>(RP.planAt||0)?'✓ ':'')+(w.run?'🏃 ':'')+'אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
+  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">'+(WK()&&w.doneAt>(RP.planAt||0)?'✓ ':'')+(WK()?(w.run?'🏃 ':'💪 '):(w.run?'🏃 ':''))+'אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
   if(W.run){h+=runHtml(W)+'<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את הריצה הבאה</button></div>';return h}
   var lastSS=null;
   W.ex.forEach(function(x,i){var k=RT+'.'+i;
