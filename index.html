@@ -2112,7 +2112,7 @@ function tPortal(c){
     <button class="btn primary" data-act="tpCreate" data-write ${S.tpBusy[c.id]?'disabled':''}>${S.tpBusy[c.id]?'יוצר…':'יצירת דף אישי'}</button></div>`;
   if(S.tpReps[c.id]==null) setTimeout(()=>tpLoad(c),0);
   const L=S.tpReps[c.id]||[], seen=c.portalSeen||0, A=c.portalAck||{}, imp=c.portalImported||{};
-  const link=tpLink(c), wa=tpWa(c,c.remote?`שלום ${String(c.name).split(' ')[0]}, זו התוכנית שלך לליווי מרחוק בכוח מחודש: 2 אימונים בשבוע בסופר סטים.\nכותבים את התרגילים פעם אחת, אחרי כל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט ולוחצים "סיימתי". הדף בונה לבד את האימון הבא, ואני רואה את התוצאות.\nבדף יש כפתור "סרטון הסבר קצר".\n${link}`:`שלום ${String(c.name).split(' ')[0]}, זה הדף האישי שלך בכוח מחודש. יש בו את התוכנית שלך, ואפשר לתעד בו אימון ולשלוח לנו תמונה או סרטון:\n${link}`);
+  const link=tpLink(c), wa=tpWa(c,c.remote?`שלום ${String(c.name).split(' ')[0]}, זו התוכנית שלך לליווי מרחוק בכוח מחודש${c.remoteSeed&&c.remoteSeed.w&&c.remoteSeed.w.some(w=>w.run)?`: ${c.remoteSeed.w.filter(w=>!w.run).length} אימוני כוח בסופר סטים ו-${c.remoteSeed.w.filter(w=>w.run).length} ריצות בשבוע`:': 2 אימונים בשבוע בסופר סטים'}.\nכותבים את התרגילים פעם אחת, אחרי כל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט ולוחצים "סיימתי". הדף בונה לבד את האימון הבא, ואני רואה את התוצאות.\nבדף יש כפתור "סרטון הסבר קצר".\n${link}`:`שלום ${String(c.name).split(' ')[0]}, זה הדף האישי שלך בכוח מחודש. יש בו את התוכנית שלך, ואפשר לתעד בו אימון ולשלוח לנו תמונה או סרטון:\n${link}`);
   const {planned}= {planned:(S.P&&S.P.clientId===c.id?plannedSessions(S.P):[])};
   const names=[...new Set(planned.flatMap(s=>(s.exercises||[]).map(e=>e.name).filter(Boolean)))], V=c.exVideos||{};
   const H=c.homeEx||[];
