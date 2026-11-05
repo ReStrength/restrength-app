@@ -720,8 +720,8 @@ const CORE_TESTS = ['chair30','tug','grip_r','grip_l'];
 const GOAL_TESTS = {general:['armcurl'], falls:['balance4','sls_r','sls_l','gait4m'], endurance:['step2','walk6','gait4m'], function:['sts5','gait4m'], shoulder:['sh_flex_r','sh_flex_l','sh_er_r','sh_er_l','spadi','pain'], back:['odi','pain','sts5'], kneehip:['sts5','sls_r','sls_l','pain'], bone:['balance4','weight']};
 function gripFlag(v,c){ if(!c||!c.sex) return null; const th=c.sex==='M'?27:16; return v<th?`מתחת ל-${th} ק"ג – כוח אחיזה נמוך (EWGSOP2)`:null; }
 const HEB = ['א','ב','ג','ד'];
-const TTYPES={personal:'אימון אישי',pair:'אימון זוגי',group:'אימון קבוצתי'};
-function ttype(c){return c.trainingType||(c.partnerId?'pair':'personal')}
+const TTYPES={personal:'אימון אישי',pair:'אימון זוגי',group:'אימון קבוצתי',remote:'ליווי מרחוק'};
+function ttype(c){return c.remote?'remote':(c.trainingType||(c.partnerId?'pair':'personal'))}
 
 
 /* ---------- helpers ---------- */
@@ -1057,7 +1057,7 @@ function newClientForm(coachId){
   const pairs=activeClients().filter(x=>!x.partnerId).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
   return `<div class="card ncf"><h2>מתאמן חדש</h2>
     <label class="f" for="n_name">שם מלא<input id="n_name" autocomplete="off"></label>
-    <div class="nq"><div class="nql">אימון אישי או זוגי?</div><div class="nbtns"><button type="button" class="nbig" data-ntype="personal" aria-pressed="false">👤 אישי</button><button type="button" class="nbig" data-ntype="pair" aria-pressed="false">👥 זוגי</button></div><input type="hidden" id="n_type"></div>
+    <div class="nq"><div class="nql">אימון אישי, זוגי או ליווי מרחוק?</div><div class="nbtns"><button type="button" class="nbig" data-ntype="personal" aria-pressed="false">👤 אישי</button><button type="button" class="nbig" data-ntype="pair" aria-pressed="false">👥 זוגי</button><button type="button" class="nbig" data-ntype="remote" aria-pressed="false">🌍 ליווי מרחוק</button></div><input type="hidden" id="n_type"></div>
     <div class="nq" id="n_pairwrap" hidden><div class="nql">עם מי?</div>
       <select id="n_partner"><option value="__new">בן/בת זוג חדש/ה (עוד לא במערכת)</option>${pairs.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}<option value="">עוד לא ידוע</option></select>
       <label class="f" for="n_pname" id="n_pnamewrap">שם בן/בת הזוג<input id="n_pname" autocomplete="off"></label></div>
@@ -1539,12 +1539,41 @@ function paneHtml(ctx,c,pane,pair){
    <label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label><div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
 function tSession(c){
+  if(c.remote) return remoteProg(c);
   const p=partnerOf(c);
   const toggle=p?`<div class="labels"><button class="chip" aria-pressed="${!S.pairMode}" data-act="pairOff">אימון אישי – ${esc(c.name)}</button><button class="chip" aria-pressed="${S.pairMode}" data-act="pairOn">אימון זוגי – ${esc(c.name)} ו${esc(p.name)}</button></div>`:'';
   if(S.pairMode&&p&&S.Q) return toggle+`<div class="pairgrid">${paneHtml(S.P,c,0,true)}${paneHtml(S.Q,p,1,true)}</div>`;
   return toggle+tpSelfBox(c)+paneHtml(S.P,c,0,false);
 }
 
+
+/* ----- ליווי מרחוק: התוכנית נבנית כאן, נשלחת לדף של המתאמן, והוא מתקדם לבד מאימון לאימון ומשבוע לשבוע ----- */
+const RT_SEEDS={
+ sr:{name:'2 אימוני כוח + 2 ריצות בשבוע',w:[{label:'1',ex:[['',1],['',1],['',2],['',2],['',3],['',3]]},{label:'2',run:{kind:'tempo',km:3,p1:'5:30',p2:'5:40'}},{label:'3',ex:[['',1],['',1],['',2],['',2],['',3]]},{label:'4',run:{kind:'long',km:5,p1:'6:00',p2:'6:00'}}]},
+ ab:{name:'2 אימוני כוח בשבוע (A/B)',w:[{label:'A',ex:[['',1],['',1],['',2],['',2],['',3],['',3]]},{label:'B',ex:[['',1],['',1],['',2],['',2],['',3],['',3]]}]}};
+function rtSeed(k){const t=RT_SEEDS[k];return {v:'v'+Date.now(),w:t.w.map(w=>w.run?{label:w.label,run:{...w.run}}:{label:w.label,ex:w.ex.map(([n,ss])=>({n,ss,sets:3,min:8,max:12}))})}}
+function remoteProg(c){
+  const sd=S.rtEdit&&S.rtEdit.id===c.id?S.rtEdit.seed:c.remoteSeed;
+  const head=`<div class="card"><div class="spread"><div><h2 style="margin:0">🌍 תוכנית ליווי מרחוק</h2><span class="muted small">${esc(String(c.name).split(' ')[0])} מתאמן לבד לפי הדף האישי: ממלא תוצאות, והדף מתכנן לבד את האימון והשבוע הבא בהתקדמות הדרגתית (טמפו ← טווח ← משקל קילו אחד ← חזרות ← לעיתים רחוקות סט; בריצות חצי ק"מ או 5 שניות לק"מ). כל שבוע רביעי שבוע קל. התוצאות, המטרות והכאבים מגיעים לתיבה.</span></div></div>`;
+  if(!sd) return head+`<p><b>מתחילים מתבנית:</b></p><div class="row">${Object.entries(RT_SEEDS).map(([k,t])=>`<button class="btn primary" data-act="tpRtTpl" data-k="${k}" data-write>${esc(t.name)}</button>`).join('')}</div></div>`;
+  const ed=!!(S.rtEdit&&S.rtEdit.id===c.id);
+  const inp=(path,val,ph,w)=>`<input data-rte="${path}" value="${esc(val??'')}" placeholder="${ph||''}" style="width:${w||'100%'}"${ed?'':' disabled'}>`;
+  const wk=sd.w.map((w,wi)=>w.run?`<div class="card" style="margin:10px 0"><h3 style="margin:0 0 8px">🏃 אימון ${esc(w.label)} · ${w.run.kind==='tempo'?'ריצת קצב':'ריצה ארוכה'}</h3><div class="row" style="align-items:flex-end">
+      ${ed?`<label class="f">סוג<select data-rte="${wi}.run.kind"><option value="tempo"${w.run.kind==='tempo'?' selected':''}>ריצת קצב</option><option value="long"${w.run.kind!=='tempo'?' selected':''}>ריצה ארוכה</option></select></label>`:''}
+      <label class="f">ק"מ${inp(wi+'.run.km',w.run.km,'',  '90px')}</label><label class="f">קצב מ־ (דק׳:שנ׳)${inp(wi+'.run.p1',w.run.p1,'5:30','110px')}</label><label class="f">עד${inp(wi+'.run.p2',w.run.p2,'5:40','110px')}</label></div></div>`
+    :`<div class="card" style="margin:10px 0"><h3 style="margin:0 0 8px">💪 אימון ${esc(w.label)} · כוח בסופר סטים</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>סופר סט</th><th>תרגיל</th><th>סטים</th><th>חזרות</th>${ed?'<th></th>':''}</tr></thead><tbody>
+      ${w.ex.map((x,xi)=>`<tr><td>${inp(wi+'.ex.'+xi+'.ss',x.ss,'','50px')}</td><td>${ed?`<input list="lib" data-rte="${wi}.ex.${xi}.n" value="${esc(x.n)}" placeholder="שם התרגיל" style="min-width:200px">`:`<b>${esc(x.n||'—')}</b>`}</td><td>${inp(wi+'.ex.'+xi+'.sets',x.sets,'','55px')}</td><td dir="ltr" style="text-align:right">${inp(wi+'.ex.'+xi+'.min',x.min,'','50px')} – ${inp(wi+'.ex.'+xi+'.max',x.max,'','50px')}</td>${ed?`<td><button class="btn ghost sm" data-act="tpRtDelEx" data-w="${wi}" data-x="${xi}">מחיקה</button></td>`:''}</tr>`).join('')}
+      </tbody></table></div>${ed?`<button class="btn sm" data-act="tpRtAddEx" data-w="${wi}">+ תרגיל</button>`:''}</div>`).join('');
+  const portal=c.portal&&c.portalPub;
+  const acts=ed?`<div class="row"><button class="btn primary" data-act="tpRtSave" data-write>שמירה ועדכון הדף של ${esc(String(c.name).split(' ')[0])}</button><button class="btn ghost" data-act="tpRtCancel">ביטול</button></div><p class="muted small">שמירה שומרת את ההתקדמות שכבר הייתה בתרגילים ובריצות שנשארו בתוכנית. עד 15 חזרות בכל תרגיל.</p>`
+    :`<div class="row"><button class="btn" data-act="tpRtEdit" data-write>✏️ עריכת התוכנית</button>${portal?`<a class="btn primary" data-own="1" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,rtMsg(c)))}" target="_blank" rel="noopener">📲 שליחה ל${esc(String(c.name).split(' ')[0])} בוואטסאפ</a><a class="btn" href="${esc(tpLink(c))}" target="_blank" rel="noopener">איך זה נראה אצלו</a>`:`<button class="btn primary" data-act="tpCreate" data-write ${S.tpBusy[c.id]?'disabled':''}>${S.tpBusy[c.id]?'יוצר…':'יצירת הדף האישי לשליחה'}</button>`}</div>${c.phone?'':'<p class="muted small">כדי שהוואטסאפ ייפתח ישר אצלו, צריך טלפון בתיק המתאמן.</p>'}`;
+  return head+acts+'</div>'+wk;
+}
+function rtMsg(c){const f=String(c.name).split(' ')[0],sd=c.remoteSeed||{w:[]},nr=sd.w.filter(w=>w.run).length,ns=sd.w.length-nr;
+  return `היי ${f} 💪 זו תוכנית האימונים שלך בליווי מרחוק: ${ns} אימוני כוח${nr?` ו-${nr} ריצות`:''} בשבוע.\nבהתחלה כותבים בדף את המטרות שלך. אחרי כל אימון ממלאים כמה חזרות ובאיזה משקל עשית (ובריצה: כמה ק"מ ובכמה זמן) ולוחצים "סיימתי".\nבסוף השבוע לוחצים "תכנון שבוע האימונים הבא", והדף בונה לבד את השבוע הבא בהתקדמות הדרגתית. אם כואב משהו, מדווחים שם.\n${tpLink(c)}`}
+
+function rteSet(t){const k=t.dataset&&t.dataset.rte;if(!k||!S.rtEdit)return;const p=k.split('.');let o=S.rtEdit.seed.w[+p[0]];for(let i=1;i<p.length-1;i++)o=o[isNaN(+p[i])?p[i]:+p[i]];o[p[p.length-1]]=t.value}
+document.addEventListener('input',e=>rteSet(e.target));document.addEventListener('change',e=>{rteSet(e.target);if(e.target.dataset&&e.target.dataset.rte&&/run\.kind$/.test(e.target.dataset.rte))render()});
 /* ----- cues & substitutes ----- */
 function cueHtml(name){const c=name&&S.cues&&S.cues[name]; if(!c||(!c.t&&!c.v)) return '';
   const v=c.v&&/^https?:\/\//.test(c.v)?`<a href="${esc(c.v)}" target="_blank" rel="noopener">🎬 סרטון</a>`:'';
@@ -1780,7 +1809,7 @@ async function act(name,el){
     if(partner==='__new'&&!pname){toast('צריך להזין את שם בן/בת הזוג');return}
     const coachId=$('#n_coach').value,startDate=$('#n_start').value||today();
     const ref=S.db.collection('clients').doc(); const pref=partner==='__new'?S.db.collection('clients').doc():null; if(pref)partner=pref.id;
-    const base={coachId,freq:fq,trainingType:ttyp,groupName:'',startDate,status:'active',goals:[],createdAt:Date.now(),hasPlan:false,pendingApproval:false};
+    const base={coachId,freq:fq,trainingType:ttyp,remote:ttyp==='remote',groupName:'',startDate,status:'active',goals:[],createdAt:Date.now(),hasPlan:false,pendingApproval:false};
     const ok=await saveDoc('clients/'+ref.id,{...base,name,partnerId:partner});
     if(ok){ if(pref) await saveDoc('clients/'+pref.id,{...base,name:pname,partnerId:ref.id}); else if(partner) await updClient(partner,{partnerId:ref.id,trainingType:'pair'});
       S.showNew=false; openClient(ref.id,'session'); toast(ttyp==='pair'?'הזוג נוצר. בונים את האימון הראשון, ואותה תוכנית תופיע לשניהם':'המתאמן נוצר. בונים את האימון הראשון'); }
@@ -1788,7 +1817,7 @@ async function act(name,el){
   case 'saveProfile': {
     const goals=[...document.querySelectorAll('#p_goals [data-goal]')].filter(b=>b.getAttribute('aria-pressed')==='true').map(b=>b.dataset.goal);
     const by=$('#p_by')?num($('#p_by').value):(c.birthYear??null); const ttyp=$('#p_type').value; const newP=ttyp==='pair'?$('#p_partner').value:'', oldP=c.partnerId||'';
-    const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,groupName:c.groupName||'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
+    const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,remote:ttyp==='remote',groupName:c.groupName||'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
       goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),
       limits:$('#p_limits').value.trim(),conditions:$('#p_cond').value.trim(),surgeries:$('#p_surg').value.trim(),meds:$('#p_meds').value.trim(),history:$('#p_hist').value.trim(),
       emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},phone:$('#p_phone').value.trim(),updatedAt:Date.now()});
@@ -2187,6 +2216,13 @@ async function tpAct(name,el){
   const c=client(); if(!c) return;
   switch(name){
   case 'tpCreate': await tpPublish(c.id); break;
+  case 'tpRtTpl': {const sd=rtSeed(el.dataset.k);S.rtEdit={id:c.id,seed:sd};render();break;}
+  case 'tpRtEdit': S.rtEdit={id:c.id,seed:JSON.parse(JSON.stringify(c.remoteSeed))};render();break;
+  case 'tpRtCancel': S.rtEdit=null;render();break;
+  case 'tpRtAddEx': {const w=S.rtEdit.seed.w[+el.dataset.w],l=w.ex[w.ex.length-1];w.ex.push({n:'',ss:l?l.ss:1,sets:3,min:8,max:12});render();break;}
+  case 'tpRtDelEx': {S.rtEdit.seed.w[+el.dataset.w].ex.splice(+el.dataset.x,1);render();break;}
+  case 'tpRtSave': {const sd=S.rtEdit.seed;sd.w.forEach(w=>{if(w.ex){w.ex=w.ex.filter(x=>String(x.n||'').trim());w.ex.forEach(x=>{x.sets=Math.min(5,Math.max(1,num(x.sets)||3));x.min=Math.max(1,num(x.min)||8);x.max=Math.min(15,Math.max(x.min,num(x.max)||12))})}if(w.run){w.run.km=num(w.run.km)||3}});
+    sd.v='v'+Date.now();const ok=await updClient(c.id,{remoteSeed:sd,remote:true,trainingType:'remote'});if(ok){c.remoteSeed=sd;S.rtEdit=null;if(c.portal)await tpPublish(c.id,true);toast('התוכנית נשמרה והדף עודכן ✓');render()}break;}
   case 'tpGoHome': {S.tab='portal'; if(!c.portal) await tpPublish(c.id,true); render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},300); break;}
   case 'tpPub': await tpPublish(c.id); break;
   case 'tpCopy': try{await navigator.clipboard.writeText(tpLink(c));toast('הקישור הועתק')}catch(e){prompt('העתיקו את הקישור:',tpLink(c))} break;

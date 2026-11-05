@@ -249,9 +249,15 @@ var RP=null,RT=0;
 function rpKey(){return 'rs_rp_'+SID}
 function rpBlank(l){return {label:l,ex:[1,1,2,2,3,3].map(function(ss){return {n:'',ss:String(ss),sets:2,min:8,max:10,kg:'',res:[],st:0}})}}
 function rpFromSeed(sd){return {seedV:sd.v,n:0,w:(sd.w||[]).map(function(w){if(w.run)return {label:w.label||'ריצה',run:{kind:w.run.kind||'long',km:+w.run.km||3,p1:w.run.p1||'',p2:w.run.p2||w.run.p1||'',res:{}}};
-  return {label:w.label||'',ex:(w.ex||[]).map(function(x){return {n:x.n||'',ss:String(x.ss||''),sets:+x.sets||3,min:+x.min||8,max:+x.max||12,kg:x.kg||'',sec:!!x.sec,res:[],st:0}})}})}}
+  return {label:w.label||'',ex:(w.ex||[]).map(function(x){var o={sets:+x.sets||3,min:+x.min||8,max:Math.min(15,+x.max||12)};return {n:x.n||'',ss:String(x.ss||''),sets:o.sets,min:o.min,max:o.max,o:o,kg:x.kg||'',sec:!!x.sec,res:[],st:0}})}}).map(function(w){if(w.run)w.run.o={km:w.run.km,p1:w.run.p1,p2:w.run.p2};return w})}}
+/* המאמן עדכן את התוכנית: שומרים את ההתקדמות בתרגילים ובריצות שלא השתנו */
+function rpMerge(old,nw){['wk','planAt','goals','deload','n'].forEach(function(k){if(old[k]!=null)nw[k]=old[k]});
+  nw.w.forEach(function(W){var O=(old.w||[]).filter(function(x){return String(x.label)===String(W.label)})[0];if(!O)return;W.doneAt=O.doneAt;
+    if(W.run&&O.run&&O.run.kind===W.run.kind){var so=O.run.o||{};if(so.km==W.run.km&&so.p1==W.run.p1&&so.p2==W.run.p2){['km','p1','p2','msg'].forEach(function(k){W.run[k]=O.run[k]})}}
+    if(W.ex&&O.ex)W.ex.forEach(function(x){var y=O.ex.filter(function(e){return e.n===x.n})[0];if(!y)return;['kg','tp','rom','cyc','st','msg'].forEach(function(k){if(y[k]!=null)x[k]=y[k]});var yo=y.o||{};if(yo.sets==x.sets&&yo.min==x.min&&yo.max==x.max){x.sets=y.sets;x.min=y.min;x.max=y.max}})});
+  return nw}
 function rpLoad(){if(RP)return;try{RP=JSON.parse(lsg(rpKey())||'null')}catch(e){RP=null}
-  if(PLAN.seed&&(!RP||RP.seedV!==PLAN.seed.v)){RP=rpFromSeed(PLAN.seed);rpSave()}
+  if(PLAN.seed&&(!RP||RP.seedV!==PLAN.seed.v)){RP=RP&&RP.seedV?rpMerge(RP,rpFromSeed(PLAN.seed)):rpFromSeed(PLAN.seed);rpSave()}
   if(!RP){var N=(PLAN.next||[]).filter(function(s){return (s.ex||[]).length});
     RP={w:N.length?N.map(function(s){return {label:s.label||'',ex:s.ex.map(function(x){var r=String(x.reps||'').match(/(\d+)\D+(\d+)/);return {n:x.n,ss:x.ss||'',sets:+x.sets||2,min:r?+r[1]:(+x.reps||8),max:r?+r[2]:(+x.reps||10),kg:x.kg||'',sec:x.unit==='sec',res:[],st:0}})}}):[rpBlank('A'),rpBlank('B')],n:0};rpSave()}
   RT=Math.min(+(lsg('rs_rpt_'+SID)||0),RP.w.length-1)}
