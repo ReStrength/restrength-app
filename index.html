@@ -1320,13 +1320,7 @@ const WDN=['ראשון','שני','שלישי','רביעי','חמישי','שיש�
 function isoDay(s){const d=new Date(String(s)+'T12:00:00');return isNaN(d)?null:d}
 function comesToday(c){const wd=new Date().getDay();const ds=[...(c.recentDays||[]),c.lastSessionDate].filter(Boolean);
   return ds.some(x=>{const d=isoDay(x);return d&&d.getDay()===wd&&daysSince(x)<=35})}
-function todayHtml(act){
-  const td=today(),list=act.filter(c=>c.lastSessionDate===td||comesToday(c)).sort((a,b)=>(a.lastSessionDate===td)-(b.lastSessionDate===td)||String(a.name).localeCompare(String(b.name),'he'));
-  const head=`<div class="todayh"><h2>📅 היום, יום ${WDN[new Date().getDay()]}</h2><span class="muted small">לפי ימי האימון הקבועים, ולפי הימים שבהם הגיעו בשבועות האחרונים</span></div>`;
-  if(!list.length) return `<div class="todaybox">${head}<div class="muted">אין מתאמנים שמגיעים ביום הזה. כדי שיופיעו כאן, מסמנים בתיק של כל מתאמן את ימי האימון הקבועים שלו.</div></div>`;
-  return `<div class="todaybox">${head}<div class="tgrid">${list.map(c=>{const done=c.lastSessionDate===td;const p=partnerOf(c);
-    return `<button class="tcard${done?' done':''}" data-open="${c.id}"><span class="tn">${esc(c.name)}</span><span class="tm">${p?`בזוג עם ${esc(p.name)}`:TTYPES[ttype(c)]}</span><span class="ts">${done?'✓ התאמן היום':(c.lastSessionDate&&!c.hasPlan)?'⏳ צריך לתכנן אימון':'פתיחת התוכנית ←'}</span></button>`}).join('')}</div></div>
-  <h3 class="muted" style="margin-top:18px">כל המתאמנים</h3>`}
+function todayHtml(act){return `<h3 class="muted" style="margin-top:18px">כל המתאמנים</h3>`}
 /* ----- לו"ז מארבוקס: מי מגיע מתי (מוצפן, נפתח רק לצוות) ----- */
 const AB={key:null,list:[],sched:[],t:0,busy:false,err:'',ok:false};
 const ABURL='https://yaringohar.com/clinic/';
@@ -1473,7 +1467,7 @@ function progTable(ctx,doc){
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><span class="stp"><button type="button" data-step="1" tabindex="-1" aria-label="חזרה נוספת">+</button><button type="button" data-step="-1" tabindex="-1" aria-label="חזרה פחות">−</button></span><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"></td>`:'<td class="res off"></td>'}).join('')}
      <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" dir="ltr" placeholder="0–10" min="0" max="10" data-f="pain" value="${esc(ex.pain)}" data-st="${num(ex.pain)>=4?'low':''}" aria-label="כאב 0–10"></td>
      <td class="res eff" data-l="מאמץ"><input type="number" inputmode="numeric" min="1" max="10" data-f="rpe" value="${esc(ex.rpe??'')}" placeholder="${effDflt(ctx.clientId)}" data-st="${num(ex.rpe)>=9?'low':''}" aria-label="רמת מאמץ 1–10"></td>
-     <td class="acts"><button class="btn ghost sm" data-act="exUp" title="הזזת התרגיל למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" title="הזזת התרגיל למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="exDel" title="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx===ex.id?swapRow(ex,i,nSets):''}${sg}`}).join('');
+     <td class="acts"><button class="btn ghost sm" data-act="exUp" title="הזזת התרגיל למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" title="הזזת התרגיל למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="exDel" title="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${sg}`}).join('');
   return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
 }
 function pastWeeks(ctx,c,label,curId,limit,title){
