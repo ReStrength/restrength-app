@@ -444,8 +444,19 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .subrow,.gsearch{width:100%}
  .gsearch input{width:100%!important;box-sizing:border-box}
  .gres{min-width:0;width:100%}
- .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
- .tabs .tab{white-space:nowrap}
+ .tabs{flex-wrap:wrap;overflow-x:visible;row-gap:0}
+ .tabs .tab{white-space:nowrap;font-size:16px;padding:9px 9px}
+ .sheet.ro th:nth-child(4),.sheet.ro td.nt{display:none}
+ .sheet.ro td,.sheet.ro th{padding:6px 5px;font-size:15px}
+ .sheet.ro td[dir=ltr]{white-space:nowrap}
+ .sheet.ro td.rs{font-weight:700}
+ .sheet.ro{display:table!important;width:100%}
+ .sheet.ro thead{display:table-header-group}
+ .sheet.ro tbody{display:table-row-group!important}
+ .sheet.ro tr,.sheet.ro tr.gsep{display:table-row!important}
+ .sheet.ro td,.sheet.ro th,.sheet.ro tr.gsep td{display:table-cell!important}
+ .sheet.ro th:nth-child(4),.sheet.ro td.nt{display:none!important}
+ .sheet.ro td.nm{min-width:128px}
  .tabs-side{flex-direction:row;flex-wrap:wrap}
  .gtable td.gname{min-width:110px}
  .gtable td.gadapt input{min-width:110px}
@@ -1630,7 +1641,7 @@ function tHistory(c){
   if(!done.length&&!(S.P&&S.P.archive&&S.P.archive.length)) return `<div class="card empty"><strong>עדיין אין אימונים שבוצעו</strong><span>אחרי שמסיימים אימון בלשונית "תוכנית אימונים", הוא נשמר כאן עם כל התוצאות.</span></div>`;
   return `<div class="hist">${done.map(d=>`<div class="card"><div class="spread"><div><h3>${fmt(d.date)} · ${labelName(c,d.label)}${d.selfLog?'🏠 אימון לבד (מהדף האישי)':'שבוע '+d.seq}</h3><span class="muted small">${d.coach?esc(d.coach):''}${d.notes?` · ${esc(d.notes)}`:''}</span></div><button class="btn sm" data-act="openSess" data-id="${d.id}">פתיחה לעריכה</button></div>
    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>יעד</th><th>בפועל</th><th>כאב</th></tr></thead><tbody>
-   ${(d.exercises||[]).map(e=>{const st=exStats(e);return `<tr><td>${e.ss?`<span class="muted small">ס״ס ${esc(e.ss)} · </span>`:''}${esc(e.name)}</td><td class="muted" dir="ltr" style="text-align:right">${e.targetSets}×${e.repMin}–${e.repMax}${e.unit==='kg'&&e.targetKg!==''?` @ ${e.targetKg}kg`:''}</td><td dir="ltr" style="text-align:right">${st.done.map((s,i)=>e.unit==='kg'?`${st.kgs[i]}×${st.reps[i]}`:`${st.reps[i]}`).join(' · ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
+   ${(d.exercises||[]).map(e=>{const st=exStats(e);return `<tr><td>${e.ss?`<span class="muted small">ס״ס ${esc(e.ss)} · </span>`:''}${esc(e.name)}</td><td class="muted" dir="ltr" style="text-align:right;white-space:nowrap">${e.targetSets}×${e.repMin}–${e.repMax}${e.unit==='kg'&&e.targetKg!==''?` @ ${e.targetKg}kg`:''}</td><td dir="ltr" style="text-align:right">${st.done.map((s,i)=>unitOf(e)==='kg'?`${st.kgs[i]}×${st.reps[i]}`:`${st.reps[i]}`).join(' · ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
    </tbody></table></div></div>`).join('')}</div>`+archiveHtml(S.P);
 }
 
