@@ -450,6 +450,17 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .sheet.ro td,.sheet.ro th{padding:6px 5px;font-size:15px}
  .sheet.ro td[dir=ltr]{white-space:nowrap}
  .sheet.ro td.rs{font-weight:700}
+ .rtbl thead{display:none}
+ .rtbl,.rtbl tbody{display:block}
+ .rtbl tr{display:grid;grid-template-columns:58px 1fr 1fr auto;gap:6px 8px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+ .rtbl td{display:block;border:0!important;padding:0!important}
+ .rtbl td:nth-child(2){grid-column:2/5}
+ .rtbl td:nth-child(2) input{min-width:0!important;width:100%;box-sizing:border-box}
+ .rtbl td:nth-child(3){grid-column:2;white-space:nowrap}
+ .rtbl td:nth-child(3)::before{content:'סטים ';color:var(--muted);font-size:14px}
+ .rtbl td:nth-child(4)::before{content:'חזרות ';color:var(--muted);font-size:14px}
+ .rtbl td:nth-child(4){text-align:start!important;white-space:nowrap}
+ .rtbl td:nth-child(4) input,.rtbl td:nth-child(3) input{width:46px!important;min-width:0!important}
  .sheet.ro{display:table!important;width:100%}
  .sheet.ro thead{display:table-header-group}
  .sheet.ro tbody{display:table-row-group!important}
@@ -1567,7 +1578,7 @@ function remoteProg(c){
   const wk=sd.w.map((w,wi)=>w.run?`<div class="card" style="margin:10px 0"><h3 style="margin:0 0 8px">🏃 אימון ${esc(w.label)} · ${w.run.kind==='tempo'?'ריצת קצב':'ריצה ארוכה'}</h3><div class="row" style="align-items:flex-end">
       ${ed?`<label class="f">סוג<select data-rte="${wi}.run.kind"><option value="tempo"${w.run.kind==='tempo'?' selected':''}>ריצת קצב</option><option value="long"${w.run.kind!=='tempo'?' selected':''}>ריצה ארוכה</option></select></label>`:''}
       <label class="f">ק"מ${inp(wi+'.run.km',w.run.km,'',  '90px')}</label><label class="f">קצב מ־ (דק׳:שנ׳)${inp(wi+'.run.p1',w.run.p1,'5:30','110px')}</label><label class="f">עד${inp(wi+'.run.p2',w.run.p2,'5:40','110px')}</label></div></div>`
-    :`<div class="card" style="margin:10px 0"><h3 style="margin:0 0 8px">💪 אימון ${esc(w.label)} · כוח בסופר סטים</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>סופר סט</th><th>תרגיל</th><th>סטים</th><th>חזרות</th>${ed?'<th></th>':''}</tr></thead><tbody>
+    :`<div class="card" style="margin:10px 0"><h3 style="margin:0 0 8px">💪 אימון ${esc(w.label)} · כוח בסופר סטים</h3><div class="tbl-wrap"><table class="tbl rtbl"><thead><tr><th>סופר סט</th><th>תרגיל</th><th>סטים</th><th>חזרות</th>${ed?'<th></th>':''}</tr></thead><tbody>
       ${w.ex.map((x,xi)=>`<tr><td>${inp(wi+'.ex.'+xi+'.ss',x.ss,'','50px')}</td><td>${ed?`<input list="lib" data-rte="${wi}.ex.${xi}.n" value="${esc(x.n)}" placeholder="שם התרגיל" style="min-width:200px">`:`<b>${esc(x.n||'—')}</b>`}</td><td>${inp(wi+'.ex.'+xi+'.sets',x.sets,'','55px')}</td><td dir="ltr" style="text-align:right">${inp(wi+'.ex.'+xi+'.min',x.min,'','50px')} – ${inp(wi+'.ex.'+xi+'.max',x.max,'','50px')}</td>${ed?`<td><button class="btn ghost sm" data-act="tpRtDelEx" data-w="${wi}" data-x="${xi}">מחיקה</button></td>`:''}</tr>`).join('')}
       </tbody></table></div>${ed?`<button class="btn sm" data-act="tpRtAddEx" data-w="${wi}">+ תרגיל</button>`:''}</div>`).join('');
   const portal=c.portal&&c.portalPub;
