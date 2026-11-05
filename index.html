@@ -816,7 +816,9 @@ function suggest(ex,hist,dflt){
   const u=unitOf(ex);
   if(u==='kg'){
     const work=Math.min(...st.kgs);
-    if(allTop){const inc=stepFor(ex.group,work);s={...base,kg:r05(work+inc),type:'up',reason:`כל הסטים הגיעו ל-${max} חזרות ← +${inc} ק"ג (אפשר לבחור עד 2.5 ק"ג)`};}
+    const tx=String(ex.tempo||''),hasT=tx.includes('2 שנ׳ בלימה')||tx.includes('שנייה עצירה');
+    if(allTop&&!hasT&&max<=12){s={...base,kg:work,type:'up',rec:'tempo',reason:`כל הסטים הגיעו ל-${max} חזרות ← נשארים על ${work} ק"ג ומוסיפים טמפו: 2 שנ׳ בלימה ושנייה עצירה. בפעם הבאה שמגיעים לראש הטווח, מעלים משקל`};}
+    else if(allTop){const inc=stepFor(ex.group,work);s={...base,kg:r05(work+inc),type:'up',rec:'kg',reason:`כל הסטים הגיעו ל-${max} חזרות ← +${inc} ק"ג (אפשר לבחור עד 2.5 ק"ג)`};}
     else if(badMiss){const nk=Math.max(0,r05(work*0.9));s={...base,kg:nk,type:'down',reason:`סט אחד או יותר רחוק מתחתית הטווח (${min}) ← הורדה של כ-10% ל-${nk} ק"ג`};}
     else if(allIn){s={...base,kg:work,type:'reps',reason:`בתוך הטווח – אותו משקל (${work} ק"ג), לשאוף לחזרה נוספת בכל סט`};}
     else {s={...base,kg:work,type:'same',reason:'חלק מהסטים מתחת לטווח – חוזרים על אותו משקל'};}
@@ -824,8 +826,14 @@ function suggest(ex,hist,dflt){
     if(allTop) s={...base,repMin:min+5,repMax:max+5,type:'up',reason:`הוחזק ${max} שנ׳ בכל הסטים ← יעד חדש ${ltr((min+5)+'–'+(max+5))} שנ׳`};
     else s={...base,type:allIn?'reps':'same',reason:allIn?'בתוך הטווח – להאריך מעט בכל סט':'לא הגיע לזמן היעד – אותו יעד'};
   } else {
-    if(allTop){ if(sets<4) s={...base,sets:sets+1,type:'up',reason:`השלים ${max} חזרות בכל הסטים ← סט נוסף (${sets+1} סטים)`};
-      else s={...base,repMin:min+2,repMax:max+2,type:'up',reason:`השלים את הטווח ← יעד חזרות ${ltr((min+2)+'–'+(max+2))}, או מעבר לגרסה קשה יותר`}; }
+    if(allTop){ /* משקל גוף: מנוף (צעד קטן קדימה) ← טמפו ← טווח תנועה ← חזרות (עד 15) ← ורק בסוף סט */
+      const tx=String(ex.tempo||''),nm=String(ex.name||''),lev=/TRX|טי.?אר.?אקס|גומי|שיפוע|קיר|ספסל|מדרגה|סמית|מוט/i.test(nm),hasH=tx.includes(PNOTE.harder),hasT=tx.includes(PNOTE.tempo)||tx.includes('2 שנ׳ בלימה'),hasR=tx.includes(PNOTE.rom);
+      if(lev&&!hasH) s={...base,type:'up',rec:'harder',reason:`השלים ${max} חזרות ← קודם מגדילים מנוף: צעד אחד קטן קדימה (או מנח מעט קשה יותר), אותן חזרות`};
+      else if(!hasT) s={...base,type:'up',rec:'tempo',reason:`השלים ${max} חזרות ← מוסיפים טמפו: 2 שנ׳ בלימה ושנייה עצירה, אותן חזרות`};
+      else if(!hasR) s={...base,type:'up',rec:'rom',reason:`השלים ${max} חזרות ← מגדילים טווח תנועה, אותן חזרות`};
+      else if(max<15) s={...base,repMin:min+1,repMax:max+1,type:'up',rec:'reps',reason:`השלים ${max} חזרות ← חזרה נוספת: ${ltr((min+1)+'–'+(max+1))}`};
+      else if(sets<4) s={...base,sets:sets+1,type:'up',rec:'sets',reason:`הגיע ל-15 חזרות עם טמפו וטווח מלא ← סט נוסף (${sets+1} סטים)`};
+      else s={...base,type:'up',rec:'harder',reason:`הגיע לשיא בגרסה הזו ← צעד נוסף קדימה / מנח קשה יותר, וחוזרים לתחתית טווח החזרות`}; }
     else s={...base,type:allIn?'reps':'same',reason:allIn?'בתוך הטווח – לשאוף לחזרה נוספת':'מתחת לטווח – אותו יעד'};
   }
   const eff=effOf(ex,dflt);
@@ -855,9 +863,9 @@ function buildNext(ctx,d,docId){
     const s=suggest(ex,exHistory(ctx,ex.name,d.date),effDflt(ctx.clientId||d.clientId));
     const base={targetSets:num(ex.targetSets)||2,targetKg:ex.targetKg,repMin:num(ex.repMin)??6,repMax:num(ex.repMax)??10};
     let rec='';
-    if(s.type==='up'){ const u=unitOf(ex); rec=u==='kg'?'kg':(s.sets>base.targetSets?'sets':'reps'); }
+    if(s.type==='up'){ const u=unitOf(ex); rec=s.rec||(u==='kg'?'kg':(s.sets>base.targetSets?'sets':'reps')); }
     let text=s.reason; const st=exStats(ex); const topRep=st.reps.length?Math.max(...st.reps):0;
-    if(unitOf(ex)!=='sec'&&s.type!=='flag'&&(topRep>12||base.repMax>12)){rec='kg';text=`עבר 12 חזרות – לשאוף להוסיף משקל עבודה ולחזור לטווח חזרות נמוך יותר`;}
+    if(unitOf(ex)==='kg'&&s.type!=='flag'&&(topRep>12||base.repMax>12)){rec='kg';text=`עבר 12 חזרות – לשאוף להוסיף משקל עבודה ולחזור לטווח חזרות נמוך יותר`;}
     if(unitOf(ex)!=='sec'&&isUnilateral(ex.name)&&s.type!=='flag'){ if(topRep>=8||base.repMax>8){rec='kg';} text=`תרגיל חד־צדדי: להגביל את הטווח עד 8 חזרות ולהתקדם במשקל עבודה – בתרגילים כאלה הדופק מעייף לפני השריר`+(s.type==='down'?` · ${s.reason}`:''); }
     /* שכיבות סמיכה בסמית: הכי קל הגבהה 7, יורדים עד 1, ואז רצפה (הכי קשה) */
     const ph=pushH(ex); let nm=null,nt=null;
@@ -875,7 +883,7 @@ function buildNext(ctx,d,docId){
   return {clientId:d.clientId,label:d.label||'1',programNo:d.programNo||1,seq:(Number(d.seq)||1)+1,status:'planned',approved:true,date:'',coach:'',notes:'',warmup:d.warmup||'',exercises,basedOn:docId,createdAt:Date.now()};
 }
 const PROGS=[['kg','משקל עבודה'],['reps','חזרות'],['sets','סטים'],['tempo','טמפו'],['rom','טווח תנועה'],['harder','מנח קשה יותר'],['top','טופ סט + דאון סט']];
-const PNOTE={tempo:'טמפו: 2 שנ׳ בלימה, שנייה עצירה בחלק הקשה',rom:'טווח תנועה גדול יותר',harder:'מנח קשה יותר (למשל: לעמוד קדימה יותר ב־TRX, להוריד את המדרגה, להוריד הגבהה בסמית)',top:'טופ סט: סט אחד כבד ב־6–8 חזרות (רזרבה 2), ואחריו 2 סטי דאון סט עם כ־10% פחות משקל ל־8–10 חזרות (רזרבה 3)'};
+const PNOTE={tempo:'טמפו: 2 שנ׳ בלימה, שנייה עצירה בחלק הקשה',rom:'טווח תנועה גדול יותר',harder:'מנח קשה יותר / מנוף גדול יותר (למשל: צעד אחד קטן קדימה ב־TRX, להוריד את המדרגה, להוריד הגבהה בסמית)',top:'טופ סט: סט אחד כבד ב־6–8 חזרות (רזרבה 2), ואחריו 2 סטי דאון סט עם כ־10% פחות משקל ל־8–10 חזרות (רזרבה 3)'};
 const KG_STEPS=[0.5,1,1.5,2,2.5];
 function kgDefault(ex){const b=ex.base||{};return stepFor(ex.group,num(b.targetKg)||0)}
 function kgChips(ex){const on=(ex.prog||[]).includes('kg'), cur=num(ex.kgStep)??kgDefault(ex), def=kgDefault(ex);
