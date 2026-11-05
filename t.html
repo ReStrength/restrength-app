@@ -223,7 +223,7 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();win
 function a2hsInner(ios){if(window.__BIP)return '<button class="x" data-a2hs aria-label="סגירה">×</button><button class="btn done big" data-inst style="margin:4px 0 0">📲 להוסיף למסך הבית</button>';return '<button class="x" data-a2hs aria-label="סגירה">×</button><b>כדי לשמור את הדף בלי לחפש אותו:</b><ol>'+(ios?'<li>לוחצים על כפתור השיתוף <b>⬆️</b></li><li>בוחרים <b>"הוספה למסך הבית"</b></li>':'<li>לוחצים על <b>⋮</b> למעלה</li><li>בוחרים <b>"הוספה למסך הבית"</b></li>')+'</ol>'}
 var h=location.hash.slice(1).split('.'),SID=h[0]||'',KS=h[1]||'',K,W,PLAN,REPS=[],URLS={},TAB=0,LOG=null;
 var DEMO=SID==='demo';
-if(DEMO){PLAN={v:1,name:'תומר',first:'תומר',coach:'ירין',remote:true,next:[],home:[]};try{localStorage.removeItem('rs_rp_demo')}catch(e){}setTimeout(function(){render()},0)}
+if(DEMO){PLAN={v:1,name:'תומר',first:'תומר',coach:'ירין',remote:true,next:[],home:[]};if(/run/.test(location.search))PLAN.seed={v:'d1',w:[{label:'1',ex:[{n:'מתח הפוך',ss:1},{n:'לחיצת חזה',ss:1}]},{label:'2',run:{kind:'tempo',km:3,p1:'5:05',p2:'5:10'}},{label:'4',run:{kind:'long',km:5.5,p1:'5:50',p2:'5:50'}}]};try{localStorage.removeItem('rs_rp_demo')}catch(e){}setTimeout(function(){render()},0)}
 if(!DEMO){
 if(!SID||!KS){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
 if(!window.crypto||!crypto.subtle){fail('הדפדפן הזה ישן מדי. פתחו את הקישור בכרום או בספארי.');return}
@@ -248,14 +248,34 @@ function exCard(x,key,i,logging,si){
 var RP=null,RT=0;
 function rpKey(){return 'rs_rp_'+SID}
 function rpBlank(l){return {label:l,ex:[1,1,2,2,3,3].map(function(ss){return {n:'',ss:String(ss),sets:2,min:8,max:10,kg:'',res:[],st:0}})}}
+function rpFromSeed(sd){return {seedV:sd.v,n:0,w:(sd.w||[]).map(function(w){if(w.run)return {label:w.label||'ריצה',run:{kind:w.run.kind||'long',km:+w.run.km||3,p1:w.run.p1||'',p2:w.run.p2||w.run.p1||'',res:{}}};
+  return {label:w.label||'',ex:(w.ex||[]).map(function(x){return {n:x.n||'',ss:String(x.ss||''),sets:+x.sets||3,min:+x.min||8,max:+x.max||12,kg:x.kg||'',sec:!!x.sec,res:[],st:0}})}})}}
 function rpLoad(){if(RP)return;try{RP=JSON.parse(lsg(rpKey())||'null')}catch(e){RP=null}
+  if(PLAN.seed&&(!RP||RP.seedV!==PLAN.seed.v)){RP=rpFromSeed(PLAN.seed);rpSave()}
   if(!RP){var N=(PLAN.next||[]).filter(function(s){return (s.ex||[]).length});
     RP={w:N.length?N.map(function(s){return {label:s.label||'',ex:s.ex.map(function(x){var r=String(x.reps||'').match(/(\d+)\D+(\d+)/);return {n:x.n,ss:x.ss||'',sets:+x.sets||2,min:r?+r[1]:(+x.reps||8),max:r?+r[2]:(+x.reps||10),kg:x.kg||'',sec:x.unit==='sec',res:[],st:0}})}}):[rpBlank('A'),rpBlank('B')],n:0};rpSave()}
   RT=Math.min(+(lsg('rs_rpt_'+SID)||0),RP.w.length-1)}
 function rpSave(){lss(rpKey(),JSON.stringify(RP))}
+function secOf(t){var m=String(t||'').trim().match(/^(\d+)(?::(\d{1,2}))?(?::(\d{1,2}))?$/);if(!m)return NaN;var a=[+m[1],m[2]!=null?+m[2]:null,m[3]!=null?+m[3]:null];if(a[2]!=null)return a[0]*3600+a[1]*60+a[2];if(a[1]!=null)return a[0]*60+a[1];return a[0]*60}
+function mmss(sec){sec=Math.round(sec);return Math.floor(sec/60)+':'+('0'+(sec%60)).slice(-2)}
+function runTarget(r,plain){var L=plain?function(x){return '\u2066'+x+'\u2069'}:ltr;return '\u200F'+r.km+' ק"מ'+(r.p1?' בקצב '+L(r.p1+(r.p2&&r.p2!==r.p1?'–'+r.p2:''))+' לק"מ':'')}
+function runHtml(W){var r=W.run,x=r.res||{},k=RT,pc=x.km&&secOf(x.time)?mmss(secOf(x.time)/(+x.km)):'';
+  var h='<div class="card ex rex"><div class="t"><span class="num">🏃</span><b style="font-size:21px">'+(r.kind==='tempo'?'ריצת קצב':'ריצה ארוכה ונינוחה')+'</b></div>'+
+   '<div class="dose" style="font-size:20px;margin:8px 0">היעד היום: <b>'+runTarget(r)+'</b></div>'+
+   '<div class="note">'+(r.kind==='tempo'?'קצב מאתגר אבל יציב לאורך כל הריצה. מתחילים ב-5 דקות הליכה וריצה קלה לחימום.':'קצב שאפשר לדבר בו. לא רודפים אחרי מהירות, העיקר להשלים את המרחק.')+'</div>';
+  if(r.msg)h+='<div class="prevl">🔁 '+esc(r.msg)+'</div>';
+  h+='<div class="sets"><div class="setr"><span>בפועל</span><label>ק"מ<input inputmode="decimal" data-rn="'+k+'.km" value="'+esc(x.km||'')+'" placeholder="'+r.km+'"></label><label>זמן כולל (דק׳:שנ׳)<input inputmode="numeric" data-rn="'+k+'.time" value="'+esc(x.time||'')+'" placeholder="לדוגמה 31:20"></label></div>'+
+   '<div class="sub" id="rpace" style="margin:6px 4px">'+(pc?'קצב ממוצע: <b>'+ltr(pc)+'</b> לק"מ':'')+'</div></div></div>';
+  return h}
+function runStep(W){var r=W.run,x=r.res||{},km=+x.km,t=secOf(x.time);if(!km||!t)return null;var pace=t/km,p1=secOf(r.p1),p2=secOf(r.p2)||p1,m='',done=km>=r.km-0.05;
+  if(r.kind==='tempo'){if(done&&p2&&pace<=p2+2){r.p1=mmss(Math.max(240,p1-5));r.p2=mmss(Math.max(245,p2-5));m='עמדת ביעד! בשבוע הבא קצת יותר מהר: '+r.km+' ק"מ בקצב '+r.p1+'–'+r.p2}
+    else if(done&&pace<=p2+15){m='כמעט! נשארים על אותו יעד: '+runTarget(r,1)}else{m='נשארים על אותו יעד: '+runTarget(r,1)+'. העיקר לשמור על קצב אחיד'}}
+  else{if(done&&(!p1||pace<=p1+15)){r.km=Math.round((r.km+0.5)*10)/10;m='כל הכבוד! בשבוע הבא מוסיפים חצי ק"מ: '+runTarget(r,1)}else{m='נשארים על אותו יעד: '+runTarget(r,1)}}
+  return {log:{n:(r.kind==='tempo'?'ריצת קצב':'ריצה ארוכה'),unit:'run',sets:[{km:String(km),time:x.time,pace:mmss(pace)}]},m:m}}
 function remoteHtml(){rpLoad();var W=RP.w[RT],h='<h2>האימון שלי</h2>';
   h+='<div class="card" style="font-size:17px"><b>איך זה עובד:</b> כותבים את התרגילים פעם אחת. בכל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט, ולוחצים "סיימתי". הדף בונה לבד את האימון הבא. <br>עוצרים כל סט כשנשארות בערך 3 חזרות "בבנק", לא עד כשל. <button class="btn alt" data-rhelp style="margin-top:8px">▶ סרטון הסבר קצר</button></div>';
-  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
+  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">'+(w.run?'🏃 ':'')+'אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
+  if(W.run){h+=runHtml(W)+'<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את הריצה הבאה</button></div>';return h}
   var lastSS=null;
   W.ex.forEach(function(x,i){var k=RT+'.'+i;
     if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
@@ -284,7 +304,8 @@ function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''
   x.st=same?(x.st||0)+1:0;if(x.st>=3&&work>0)m+=' · תקוע 3 אימונים: לנסות טופ סט (סט כבד אחד ל-6–8 חזרות) ואחריו 2 סטים עם 10% פחות משקל';
   return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
 function rpFinish(){var W=RP.w[RT],log=[],ch=[];
-  W.ex.forEach(function(x){if(!x.n)return;var r=rpStep(x);if(!r)return;log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets});ch.push([x.n,r.m]);x.msg=r.m;x.res=[]});
+  if(W.run){var rr=runStep(W);if(!rr){toast('כותבים כמה ק"מ רצת ואת הזמן הכולל.');return}log.push(rr.log);ch.push([rr.log.n,rr.m]);W.run.msg=rr.m;W.run.res={}}
+  else W.ex.forEach(function(x){if(!x.n)return;var r=rpStep(x);if(!r)return;log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets});ch.push([x.n,r.m]);x.msg=r.m;x.res=[]});
   if(!log.length){toast('עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.');return}
   RP.n=(RP.n||0)+1;rpSave();
   var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log}).catch(function(){});
@@ -292,6 +313,7 @@ function rpFinish(){var W=RP.w[RT],log=[],ch=[];
   $('rok').onclick=function(){unsheet();if(RP.w.length>1){RT=(RT+1)%RP.w.length;lss('rs_rpt_'+SID,RT)}render();window.scrollTo(0,0)}}
 document.addEventListener('input',function(e){var t=e.target;if(!RP)return;var a=t.getAttribute&&t.getAttribute('data-rp'),b=t.getAttribute&&t.getAttribute('data-rr');
   if(a){var p=a.split('.'),x=RP.w[+p[0]].ex[+p[1]],f=p[2];x[f]=(f==='min'||f==='max'||f==='sets')?(+t.value||''):t.value;rpSave();if(f==='kg')document.querySelectorAll('[data-rr^="'+p[0]+'.'+p[1]+'."][data-rr$=".kg"]').forEach(function(el){el.placeholder=t.value||'גוף';var jj=+el.getAttribute('data-rr').split('.')[2];if(!x.res[jj]||x.res[jj].kg==null)el.value=t.value});if(f==='sets'||f==='ss')render()}
+  var rn=t.getAttribute&&t.getAttribute('data-rn');if(rn){var z=rn.split('.'),Wr=RP.w[+z[0]].run;Wr.res=Wr.res||{};Wr.res[z[1]]=t.value;rpSave();var km=+Wr.res.km,sc=secOf(Wr.res.time),el=document.getElementById('rpace');if(el)el.innerHTML=km&&sc?'קצב ממוצע: <b>'+ltr(mmss(sc/km))+'</b> לק"מ':'';return}
   if(b){var q=b.split('.'),y=RP.w[+q[0]].ex[+q[1]];y.res[+q[2]]=y.res[+q[2]]||{};y.res[+q[2]][q[3]]=t.value;rpSave()}},true);
 document.addEventListener('change',function(e){var t=e.target;if(t.tagName==='SELECT'&&t.getAttribute('data-rp')){var p=t.getAttribute('data-rp').split('.'),x=RP.w[+p[0]].ex[+p[1]];x[p[2]]=p[2]==='sets'?+t.value:t.value;rpSave();render()}},true);
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-rtab],[data-radd],[data-rdel],[data-rfin],[data-rhelp]');if(!b||!RP)return;

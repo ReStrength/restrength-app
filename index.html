@@ -2058,7 +2058,7 @@ async function tpBuild(c){
   const next=planned.map(s=>({label:String(s.label||''),warmup:s.warmup||'',ex:(s.exercises||[]).filter(e=>e.name).map(e=>{const u=unitOf(e),tp=String(e.tempo||'').trim(),heb=/[א-ת]/.test(tp);
     return {n:e.name,ss:e.ss||'',unit:u,sets:String(e.targetSets||''),reps:tpReps2(e),kg:u==='kg'&&num(e.targetKg)?String(e.targetKg):'',tempo:heb?'':tp,note:heb?tp:'',m:V[e.name]||null,last:lastOf(e.name)}})}));
   const home=(c.homeEx||[]).filter(x=>x.n).map(x=>({n:x.n,unit:x.unit||'bw',sets:x.sets||'',reps:x.reps||'',kg:x.kg||'',note:x.note||'',m:x.m||null}));
-  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,remote:!!c.remote,u:Date.now()};
+  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,remote:!!c.remote,seed:c.remote&&c.remoteSeed?c.remoteSeed:null,u:Date.now()};
 }
 function tpKeep(c){const k={};Object.values(c.exVideos||{}).forEach(m=>{if(m&&m.k)k[m.k]=m.n});(c.homeEx||[]).forEach(x=>{if(x.m&&x.m.k)k[x.m.k]=x.m.n});return k}
 async function tpPublish(cid,quiet){
