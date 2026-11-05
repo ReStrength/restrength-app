@@ -301,6 +301,7 @@ function remoteHtml(){rpLoad();if(WK()&&RP.planAt&&Date.now()-RP.planAt>9*864e5&
      '<label>סטים<select data-rp="'+k+'.sets">'+[1,2,3,4,5].map(function(v){return '<option'+(v===+x.sets?' selected':'')+'>'+v+'</option>'}).join('')+'</select></label>'+
      '<label>'+(x.sec?'שניות':'חזרות')+'<span class="rng"><input inputmode="numeric" data-rp="'+k+'.min" value="'+esc(x.min)+'">–<input inputmode="numeric" data-rp="'+k+'.max" value="'+esc(x.max)+'"></span></label>'+
      '<label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>';
+    if(x.tp||x.rom)h+='<div class="note" style="margin:6px 0">'+(x.tp?'⏱ טמפו: '+(x.tp>1?TP2:TP1):'')+(x.tp&&x.rom?'<br>':'')+(x.rom?'📏 '+ROM:'')+'</div>';
     if(x.msg)h+='<div class="prevl">🔁 '+esc(x.msg)+'</div>';
     h+='<div class="sets">'+(RP.deload&&WK()?'<div class="sub">שבוע קל: '+dlSets(x)+' סטים</div>':'');for(var j=0;j<(WK()?dlSets(x):(+x.sets||1));j++){var r=x.res[j]||{};h+='<div class="setr"><span>סט '+(j+1)+'</span><label>'+(x.sec?'שניות':'חזרות')+'<input inputmode="numeric" data-rr="'+k+'.'+j+'.reps" value="'+esc(r.reps==null?'':r.reps)+'"></label><label>ק"ג<input inputmode="decimal" data-rr="'+k+'.'+j+'.kg" value="'+esc(r.kg==null?(x.kg||''):r.kg)+'" placeholder="'+esc(x.kg||'גוף')+'"></label></div>'}
     h+='</div><button class="btn alt" data-rdel="'+i+'" style="min-height:44px;font-size:16px;margin-top:6px">🗑 למחוק תרגיל</button></div>'});
@@ -320,10 +321,28 @@ function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''
   else{if(top){if((+x.sets||1)<4){x.sets=(+x.sets||1)+1;m='מוסיפים סט: '+x.sets+' סטים'}else{x.min=+x.min+2;x.max=+x.max+2;m='יעד חזרות חדש: '+x.min+'–'+x.max+', או גרסה קשה יותר'}}else{m='לשאוף לחזרה אחת יותר בכל סט';same=true}}
   x.st=same?(x.st||0)+1:0;if(x.st>=3&&work>0)m+=' · תקוע 3 אימונים: לנסות טופ סט (סט כבד אחד ל-6–8 חזרות) ואחריו 2 סטים עם 10% פחות משקל';
   return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
+/* התקדמות בליווי מרחוק (שבועי), לפי הסדר: טמפו ← טווח תנועה ← משקל (קילו אחד) ← חזרות ← לעיתים רחוקות סט נוסף */
+var TP1='2 שניות בירידה ועצירה של שנייה בתחתית',TP2='3 שניות בירידה ועצירה של שנייה בתחתית',ROM='טווח תנועה גדול יותר: לרדת עמוק יותר ככל שנוח';
+function rpStepWk(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''&&r.reps!=null&&!isNaN(+r.reps)});if(!done.length)return null;
+  var reps=done.map(function(r){return +r.reps}),top=reps.every(function(r){return r>=x.max})&&done.length>=dlSets(x),miss=reps.some(function(r){return r<=x.min-2});
+  var kgs=done.map(function(r){return r.kg===''||r.kg==null?NaN:+r.kg}).filter(function(v){return !isNaN(v)&&v>0}),work=kgs.length?Math.min.apply(0,kgs):(+x.kg||0),m;
+  if(work>0)x.kg=String(work);
+  if(top){
+    if(!x.tp){x.tp=1;m='מוסיפים טמפו: '+TP1+'. אותו משקל ואותן חזרות'}
+    else if(!x.rom){x.rom=1;m='מגדילים טווח תנועה: '+ROM+'. אותו משקל ואותן חזרות'}
+    else{x.cyc=(x.cyc||0)+1;
+      if(x.cyc%10===0&&(+x.sets||3)<4){x.sets=(+x.sets||3)+1;m='מוסיפים סט אחד: '+x.sets+' סטים'}
+      else if(work>0&&(x.cyc%2===1||+x.max>=15)){x.kg=String(Math.round((work+1)*2)/2);m='מוסיפים קילו אחד: '+x.kg+' ק"ג, אותן חזרות'}
+      else if(work<=0&&x.cyc%4===0&&x.tp<2){x.tp=2;m='טמפו איטי יותר: '+TP2}
+      else{x.min=+x.min+1;x.max=+x.max+1;m='מוסיפים חזרה: '+x.min+'–'+x.max+' חזרות'}}
+    x.st=0}
+  else if(miss&&work>1){x.kg=String(Math.round((work-1)*2)/2);m='היה קשה מדי: מורידים קילו אחד, '+x.kg+' ק"ג';x.st=0}
+  else{m='אותו יעד, לשאוף לחזרה אחת יותר בכל סט';x.st=(x.st||0)+1}
+  return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
 function rpFinish(){var W0=RP.w[RT],wk=WK(),W=wk?JSON.parse(JSON.stringify(W0)):W0,log=[],ch=[];
   if(wk&&RP.deload){W.ex&&W.ex.forEach(function(x){x.st=x.st||0});}
   if(W.run){var rr=runStep(W);if(!rr){toast('כותבים כמה ק"מ רצת ואת הזמן הכולל.');return}log.push(rr.log);ch.push([rr.log.n,rr.m]);W.run.msg=rr.m;W.run.res={}}
-  else W.ex.forEach(function(x){if(!x.n)return;var r=rpStep(x);if(!r)return;log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets});ch.push([x.n,r.m]);x.msg=r.m;x.res=[]});
+  else W.ex.forEach(function(x){if(!x.n)return;var r=wk?rpStepWk(x):rpStep(x);if(!r)return;log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets});ch.push([x.n,r.m]);x.msg=r.m;x.res=[]});
   if(!log.length){toast('עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.');return}
   if(wk){W0.doneAt=Date.now();if(RP.deload){ch=ch.map(function(c){return [c[0],'שבוע קל, בלי העלאות. ממשיכים להתקדם בשבוע הבא']})}else{W.pend=null;var up=ch.filter(function(c){return !/^אותו|^נשארים|^לשאוף|^כמעט/.test(c[1])});W0.pend={ex:W.ex,run:W.run,sum:W.run?(up.length?up[0][1].replace(/^[^:]*! /,'').replace('בשבוע הבא ','').replace(/^מוסיפים/,'מוסיפים'):'אותו יעד'):(up.length?'עולים ב'+up.map(function(c){return c[0]}).join(', ')+'. בשאר אותו יעד':'אותו יעד, לשאוף לעוד חזרה')}}
     if(W0.run)W0.run.res={};else W0.ex.forEach(function(x){x.res=[]})}
