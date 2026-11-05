@@ -84,6 +84,7 @@ h3{font-size:15px;font-weight:700}
 input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:0}
 textarea{width:100%;min-height:70px;resize:vertical}
 input[type=number]{font-variant-numeric:tabular-nums}
+label.f[hidden]{display:none!important}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:15px;font-weight:600;color:var(--muted)}
 label.f > input,label.f > select,label.f > textarea{font-weight:400;color:var(--ink)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
@@ -930,8 +931,8 @@ function syncPlanFlags(ctx){
 }
 
 /* ---------- derived ---------- */
-function periodicDue(c){const base=c.lastAssessmentDate||c.startDate; return !!base&&daysSince(base)>=90}
-function assessDue(c){ if(c.lastAssessmentDate) return daysSince(c.lastAssessmentDate)>90; return daysSince(c.startDate||isoOf(c.createdAt))>14; }
+function periodicDue(c){const base=c.lastAssessmentDate||c.startDate; return !!base&&daysSince(base)>=60}
+function assessDue(c){ if(c.lastAssessmentDate) return daysSince(c.lastAssessmentDate)>=60; return daysSince(c.startDate||isoOf(c.createdAt))>14; }
 function clientFlags(c){
   const f=[];
   if(S.tpNew&&S.tpNew[c.id]&&tpMine(c)) f.push(['acc',`📩 ${S.tpNew[c.id]} חדשים מהמתאמן`]);
@@ -1398,11 +1399,12 @@ function vClient(){
   const head=`<div class="chead"><div style="min-width:0"><button class="btn ghost sm" data-act="backCoach">→ המתאמנים של ${esc(coachName(c.coachId)!=='—'?coachName(c.coachId):'ללא מאמן')}</button><h1>${esc(c.name)}</h1>
     <div class="row" style="margin:6px 0"><button class="btn ghost sm" data-act="openReport">📄 דוח התקדמות</button><button class="btn sm" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button></div>
     <div class="meta"><span>תאריך התחלה: <b>${c.startDate?fmt(c.startDate):'יירשם אוטומטית באימון הראשון'}</b></span></div>
-    ${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span><button class="btn ghost sm" data-act="goAssess">למבדקים</button></div>`:''}
+    ${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span></div>`:''}
+    ${!(c.goalsShort||c.goalText||c.goalsLong)?`<div class="row" style="margin-top:6px"><span class="chip info">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])}</span><button class="btn ghost sm" data-act="goGoals">לכתוב פעם אחת</button></div>`:''}
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
   const safety=(c.limits?`<div class="safety"><b>⚠ מגבלות והתוויות נגד:</b><span>${esc(c.limits)}</span></div>`:'')+(c.conditions?`<div class="safety med"><b>🩺 מצבים רפואיים ואבחנות:</b><span>${esc(c.conditions)}</span></div>`:'');
-  const main=[['session','תוכנית אימונים'],['prev','שבוע קודם'],['portal',`📱 דף למתאמן${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['profile','תיק מתאמן']], more=[['history','היסטוריה'],['progress','גרפי התקדמות'],['assess','מבדקים']];
+  const main=[['session','תוכנית אימונים'],['prev','היסטוריית אימונים'],['portal',`📱 דף למתאמן${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['profile','תיק מתאמן']], more=[['progress','גרפי התקדמות'],['assess','מבדקים']];
   const open=S.moreOpen||more.some(t=>t[0]===S.tab);
   const tb=t=>`<button class="tab" role="tab" aria-selected="${S.tab===t[0]}" data-tab="${t[0]}">${t[1]}</button>`;
   let addDayHtml='';
@@ -1410,7 +1412,7 @@ function vClient(){
     if(lb.length<2) addDayHtml=S.P.addOpen?`<span class="row small np-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lb.map(l=>`<button class="btn sm" data-act="addDay" data-src="${ls[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;}
   const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>`):'';
   const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}</button>${open?`<span class="morebox">${more.map(tb).join('')}</span>`:''}<span class="tabs-side">${addDayHtml}${np}</span></div>`;
-  const body=S.tab==='portal'?tPortal(c):S.tab==='session'?tSession(c):S.tab==='prev'?tPrev(c):S.tab==='history'?tHistory(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
+  const body=S.tab==='portal'?tPortal(c):S.tab==='session'?tSession(c):(S.tab==='prev'||S.tab==='history')?tPrev(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
   const pk=ttype(c)==='pair'?pairKey(c):'';
   const gBanner=pk&&partnerOf(c)?`<div class="banner info"><span><b>👥 אימון זוגי עם ${esc(partnerOf(c).name)}:</b> התוכנית המשותפת והסדר שבו מתחלפים נמצאים במסך הזוג. התוצאות נשמרות גם כאן.</span><button class="btn primary sm" data-group="${esc(pk)}">לאימון הזוגי</button></div>`:ttype(c)==='group'?`<div class="banner info"><span><b>👥 ${esc(c.groupName||'קבוצה')}:</b> התוכנית והתוצאות של האימון הקבוצתי מנוהלות במסך הקבוצה, ונשמרות גם כאן בהיסטוריה.</span><button class="btn primary sm" data-group="${esc(c.groupName||'קבוצה')}">לאימון הקבוצה</button></div>`:'';
   return head+safety+gBanner+noteHtml(c)+tabHtml+body;
@@ -1574,12 +1576,12 @@ function prevPane(ctx,c,pane,pair){
   const curId=ctx.edit&&ctx.edit.id; const done=doneSessions(ctx).filter(d=>d.id!==curId);
   const labels=[...new Set(done.map(d=>String(d.label)))].sort();
   const head=pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:'';
-  if(!labels.length) return `<section data-pane="${pane}">${head}<div class="card empty"><strong>עדיין אין שבוע קודם</strong><span>אחרי שמסיימים את האימון הראשון, הוא יופיע כאן עם כל התוצאות.</span></div></section>`;
+  if(!labels.length) return `<section data-pane="${pane}">${head}<div class="card empty"><strong>עדיין אין אימונים קודמים</strong><span>אחרי שמסיימים את האימון הראשון, הוא יופיע כאן עם כל התוצאות.</span></div></section>`;
   return `<section data-pane="${pane}">${head}${labels.map(l=>pastWeeks(ctx,c,l,curId,1,labels.length>1?'אימון '+l+' בשבוע':'')).join('')}</section>`;
 }
 function tPrev(c){
   const p=partnerOf(c);
-  const more=`<div class="row" style="margin-top:12px"><button class="btn ghost sm" data-act="goHistory">כל השבועות הקודמים ← היסטוריה</button></div>`;
+  const more=`<h2 style="margin:22px 0 8px">כל האימונים</h2>`+tHistory(c);
   if(S.pairMode&&p&&S.Q) return `<div class="pairgrid">${prevPane(S.P,c,0,true)}${prevPane(S.Q,p,1,true)}</div>`+more;
   return prevPane(S.P,c,0,false)+more;
 }
@@ -1619,18 +1621,36 @@ function tProgress(c){
 }
 
 /* ----- assessments ----- */
+/* ----- target exercises (תרגילי מטרה) ----- */
+function tgLast(name){if(!S.P||!S.P.loaded)return '';const h=exHistory(S.P,name);if(!h.length)return '';const e=h[h.length-1].ex,st=exStats(e),u=unitOf(e);
+  const reps=st.reps.join(', ');return (u==='kg'&&st.best?st.best+' ק"ג · ':'')+st.reps.length+' סטים: '+reps+(u==='sec'?' שנ׳':' חזרות')}
+function tgNames(){if(!S.P||!S.P.loaded)return [];return [...new Set([...plannedSessions(S.P),...doneSessions(S.P).slice(0,6)].flatMap(d=>(d.exercises||[]).map(e=>e.name)).filter(Boolean))]}
+function targetsHtml(c,list){const T=c.targets||[];const nm=tgNames();
+  const last=i=>{for(const a of list){const v=(a.tg||{})[T[i].n];if(v)return fmt(a.date)+': '+v}return ''};
+  return `<div class="card"><div class="spread"><div><h2>🎯 תרגילי מטרה</h2><span class="muted small">קובעים עם ${esc(String(c.name).split(' ')[0])} יעד ריאלי בתרגיל מהתוכנית, ובודקים אותו בכל מבדק תקופתי. למשל: שכיבות סמיכה בהגבהה 6, 3 סטים × 10 ← היעד: הגבהה 4, 3 סטים × 10.</span></div>${S.tgAdd?'':`<button class="btn" data-act="tgAdd" data-write>+ תרגיל מטרה</button>`}</div>
+  ${T.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>תרגיל</th><th>נקודת התחלה</th><th>היעד</th><th>מדידה אחרונה</th><th></th></tr></thead><tbody>${T.map((t,i)=>`<tr><td><b>${esc(t.n)}</b>${t.set?`<div class="muted small">נקבע ${fmt(t.set)}</div>`:''}</td><td>${esc(t.now||'—')}</td><td><b>${esc(t.goal||'—')}</b></td><td>${esc(last(i)||'עוד לא נמדד')}</td><td>${t.done?'<span class="chip up">✓ הושג</span>':`<button class="btn ghost sm" data-act="tgDone" data-i="${i}" data-write>✓ הושג</button>`}<button class="btn ghost sm" data-act="tgDel" data-i="${i}" data-write>מחיקה</button></td></tr>`).join('')}</tbody></table></div>`:(S.tgAdd?'':'<p class="muted">עוד לא נקבע תרגיל מטרה.</p>')}
+  ${S.tgAdd?`<div class="form-grid"><label class="f" for="tg_n">תרגיל<input id="tg_n" list="tglist" placeholder="בוחרים מהתוכנית"><datalist id="tglist">${nm.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></label>
+   <label class="f" for="tg_now">איפה הוא/היא היום<input id="tg_now" placeholder="למשל: הגבהה 6 · 3×10"></label>
+   <label class="f" for="tg_goal">היעד<input id="tg_goal" placeholder="למשל: הגבהה 4 · 3×10"></label></div>
+   ${nm.length?`<div class="row small"><span class="muted">מהתוכנית:</span>${nm.slice(0,12).map(n=>`<button class="chip" type="button" data-tgpick="${esc(n)}">${esc(n)}</button>`).join('')}</div>`:''}
+   <div class="row"><button class="btn primary" data-act="tgSave" data-write>שמירה</button><button class="btn ghost" data-act="tgCancel">ביטול</button></div>`:''}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-tgpick]');if(!b)return;const n=b.dataset.tgpick;$('#tg_n').value=n;const l=tgLast(n);if(l)$('#tg_now').value=l;$('#tg_goal').focus()});
+document.addEventListener('change',e=>{if(e.target.id!=='tg_n')return;const l=tgLast(e.target.value);if(l&&!$('#tg_now').value)$('#tg_now').value=l});
+
 function tAssess(c){
   const rec=recTests(c);
   const list=S.assess.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const used=[...new Set([...rec,...list.flatMap(a=>Object.keys(a.values||{}))])].filter(k=>TESTS[k]);
-  const recHtml=`<div class="card"><div class="spread"><div><h2>מבדקים מומלצים</h2><span class="muted small">לפי המטרות: ${(c.goals||[]).map(g=>esc(GOALS[g]||g)).join(', ')||'לא הוגדרו מטרות – מוצגים מבדקי בסיס'}</span></div>${S.newAssess?'':`<button class="btn primary" data-act="newAssess" data-write>+ מבדק חדש</button>`}</div>
-    ${!c.sex?`<div class="banner info small">כדי להשוות לנורמות לגיל (קום-שב, כוח אחיזה) צריך למלא מין ושנת לידה בתיק המתאמן.</div>`:''}
+  const TG=c.targets||[];
+  const recHtml=targetsHtml(c,list)+`<div class="card"><div class="spread"><div><h2>מבדקים מומלצים</h2><span class="muted small">לפי המטרות: ${(c.goals||[]).map(g=>esc(GOALS[g]||g)).join(', ')||'לא הוגדרו מטרות – מוצגים מבדקי בסיס'}</span></div>${S.newAssess?'':`<button class="btn primary" data-act="newAssess" data-write>+ מבדק חדש</button>`}</div>
+    ${!c.sex?`<div class="banner info small">כדי להשוות לנורמות לגיל (קום-שב, כוח אחיזה) צריך למלא מין בתיק המתאמן.</div>`:''}
     ${S.newAssess?`<div class="form-grid"><label class="f" for="a_date">תאריך<input id="a_date" type="date" value="${today()}"></label>
       ${used.map(k=>`<label class="f" for="t_${k}">${esc(TESTS[k].n)} <span class="muted">(${esc(TESTS[k].u)})</span><input id="t_${k}" type="number" step="any" inputmode="decimal" data-test="${k}"></label>`).join('')}
+      ${TG.filter(t=>!t.done).map(t=>`<label class="f">🎯 ${esc(t.n)} <span class="muted">(יעד: ${esc(t.goal||'')})</span><input data-tg="${esc(t.n)}" placeholder="${esc(tgLast(t.n)||'מה הצליח היום')}"></label>`).join('')}
       <label class="f" for="a_more">מבדק נוסף<select id="a_more"><option value="">בחירה…</option>${Object.keys(TESTS).filter(k=>!used.includes(k)).map(k=>`<option value="${k}">${esc(TESTS[k].n)}</option>`).join('')}</select></label></div>
       <label class="f" for="a_notes">הערות<textarea id="a_notes"></textarea></label>
       <div class="row"><button class="btn primary" data-act="saveAssess" data-write>שמירת המבדק</button><button class="btn ghost" data-act="cancelAssess">ביטול</button></div>`:''}</div>`;
-  if(!list.length) return recHtml+`<div class="card empty"><strong>עוד לא נערך מבדק</strong><span>מבדק פתיחה נותן נקודת ייחוס. אחרי כל מבדק תקופתי (כל 3 חודשים) רואים כאן את השינוי.</span></div>`;
+  if(!list.length) return recHtml+`<div class="card empty"><strong>עוד לא נערך מבדק</strong><span>מבדק פתיחה נותן נקודת ייחוס. אחרי כל מבדק תקופתי (כל חודשיים) רואים כאן את השינוי.</span></div>`;
   const cols=list.slice(0,6);
   const rows=used.filter(k=>list.some(a=>num((a.values||{})[k])!=null)).map(k=>{const t=TESTS[k];
     const cells=cols.map((a,i)=>{const v=num((a.values||{})[k]);if(v==null) return '<td class="muted">—</td>';
@@ -1640,9 +1660,10 @@ function tAssess(c){
     const latest=list.map(a=>num((a.values||{})[k])).find(x=>x!=null);
     const fl=t.flag&&latest!=null?t.flag(latest,c):null;
     return `<tr class="clickrow" tabindex="0" data-atest="${k}"><td><b>${esc(t.n)}</b><div class="muted small">${esc(t.u)}</div></td>${cells}<td>${fl?`<span class="chip bad">${esc(fl)}</span>`:''}</td></tr>`}).join('');
+  const tgRows=[...new Set(list.flatMap(a=>Object.keys(a.tg||{})))].map(n=>`<tr><td><b>🎯 ${esc(n)}</b></td>${cols.map(a=>`<td>${(a.tg||{})[n]?esc(a.tg[n]):'<span class="muted">—</span>'}</td>`).join('')}<td></td></tr>`).join('');
   if(!S.assTest||!used.includes(S.assTest)) S.assTest=used.find(k=>list.filter(a=>num((a.values||{})[k])!=null).length>=2)||used[0];
   const pts=list.slice().reverse().filter(a=>num((a.values||{})[S.assTest])!=null).map(a=>({x:a.date,y:num(a.values[S.assTest])}));
-  return recHtml+`<div class="card"><h2>תוצאות מבדקים</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>מבדק</th>${cols.map(a=>`<th>${fmt(a.date)}</th>`).join('')}<th>הערה</th></tr></thead><tbody>${rows}</tbody></table></div>
+  return recHtml+`<div class="card"><h2>תוצאות מבדקים</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>מבדק</th>${cols.map(a=>`<th>${fmt(a.date)}</th>`).join('')}<th>הערה</th></tr></thead><tbody>${tgRows}${rows}</tbody></table></div>
    ${list[0].notes?`<div class="muted small">הערות למבדק האחרון: ${esc(list[0].notes)}</div>`:''}</div>
    <div class="card"><h3>מגמה: ${esc(TESTS[S.assTest]?.n||'')}</h3>${lineChart(pts,{unit:TESTS[S.assTest]?.u||''})}<span class="muted small">לחצו על שורה בטבלה כדי להחליף מבדק.</span></div>`;
 }
@@ -1656,13 +1677,10 @@ function tProfile(c){
    <label class="f" for="p_name">שם מלא<input id="p_name" value="${v('name')}"></label>
    <label class="f" for="p_phone">טלפון (לשליחה בווטסאפ)<input id="p_phone" inputmode="tel" dir="ltr" value="${v('phone')}" placeholder="05X-XXXXXXX"></label>
    <label class="f" for="p_sex">מין<select id="p_sex"><option value="">—</option><option value="F"${c.sex==='F'?' selected':''}>אישה</option><option value="M"${c.sex==='M'?' selected':''}>גבר</option></select></label>
-   <label class="f" for="p_by">שנת לידה<input id="p_by" type="number" inputmode="numeric" value="${v('birthYear')}"></label>
    <label class="f" for="p_coach">מאמן אחראי<select id="p_coach"><option value="">—</option>${S.coaches.map(k=>`<option value="${k.id}"${k.id===c.coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
-   <label class="f" for="p_eff">רמת מאמץ קבועה (1–10)<input id="p_eff" type="number" inputmode="numeric" min="1" max="10" value="${esc(num(c.effort)??7)}"><span class="muted small">7 = בערך 3 חזרות במאגר. אפשר לשנות לכל תרגיל באימון.</span></label>
    <label class="f" for="p_freq">אימונים בשבוע<select id="p_freq">${[1,2].map(n=>`<option${Math.min(2,Number(c.freq||1))===n?' selected':''}>${n}</option>`).join('')}</select></label>
    <label class="f" for="p_type">סוג אימון<select id="p_type" data-typesel="p">${Object.entries(TTYPES).filter(([k])=>k!=='group'||ttype(c)==='group').map(([k,v])=>`<option value="${k}"${ttype(c)===k?' selected':''}>${v.replace('אימון ','')}</option>`).join('')}</select></label>
    <label class="f" for="p_partner" id="p_pairwrap"${ttype(c)==='pair'?'':' hidden'}>בזוג עם<select id="p_partner"><option value="">עדיין לא נקבע</option>${partnerOpts.map(x=>`<option value="${x.id}"${x.id===c.partnerId?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
-   <label class="f" for="p_group" id="p_groupwrap"${ttype(c)==='group'?'':' hidden'}>שם הקבוצה / שעה<input id="p_group" value="${esc(c.groupName||'')}" placeholder="למשל: קבוצת שלישי 9:00"></label>
    <label class="f" for="p_start">תאריך התחלה<input id="p_start" type="date" value="${v('startDate')}"></label>
    <label class="f" for="p_status">סטטוס<select id="p_status">${[['active','פעיל'],['paused','בהקפאה'],['archived','ארכיון']].map(o=>`<option value="${o[0]}"${(c.status||'active')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></label>
   </div></div>
@@ -1673,7 +1691,7 @@ function tProfile(c){
    <span class="muted small">תחומי מיקוד (קובעים אילו מבדקים מומלצים):</span>
    <div class="row" id="p_goals">${Object.entries(GOALS).map(([k,n])=>`<button class="chip" type="button" aria-pressed="${(c.goals||[]).includes(k)}" data-goal="${k}">${n}</button>`).join('')}</div></div>
   <div class="card"><h2>היסטוריה רפואית</h2><div class="grid2">
-   <label class="f" for="p_limits">מגבלות והתוויות נגד <span class="muted">(מוצג בראש התיק לכל מאמן)</span><textarea id="p_limits" placeholder="למשל: אין להרים ידיים מעל גובה הכתף בצד ימין">${v('limits')}</textarea></label>
+   <label class="f" for="p_limits">מגבלות והתוויות נגד<textarea id="p_limits" placeholder="למשל: אין להרים ידיים מעל גובה הכתף בצד ימין">${v('limits')}</textarea></label>
    <label class="f" for="p_cond">מצבים רפואיים ואבחנות<textarea id="p_cond">${v('conditions')}</textarea></label>
    <label class="f" for="p_surg">ניתוחים ופציעות עבר<textarea id="p_surg">${v('surgeries')}</textarea></label>
    <label class="f" for="p_meds">תרופות רלוונטיות<textarea id="p_meds" placeholder="למשל: חוסמי בטא – לשים לב לדופק">${v('meds')}</textarea></label>
@@ -1761,11 +1779,11 @@ async function act(name,el){
     break;}
   case 'saveProfile': {
     const goals=[...document.querySelectorAll('#p_goals [data-goal]')].filter(b=>b.getAttribute('aria-pressed')==='true').map(b=>b.dataset.goal);
-    const by=num($('#p_by').value); const ttyp=$('#p_type').value; const newP=ttyp==='pair'?$('#p_partner').value:'', oldP=c.partnerId||'';
-    const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,groupName:ttyp==='group'?$('#p_group').value.trim():'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
+    const by=$('#p_by')?num($('#p_by').value):(c.birthYear??null); const ttyp=$('#p_type').value; const newP=ttyp==='pair'?$('#p_partner').value:'', oldP=c.partnerId||'';
+    const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,groupName:c.groupName||'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
       goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),
       limits:$('#p_limits').value.trim(),conditions:$('#p_cond').value.trim(),surgeries:$('#p_surg').value.trim(),meds:$('#p_meds').value.trim(),history:$('#p_hist').value.trim(),
-      emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},effort:Math.min(10,Math.max(1,num($('#p_eff').value)??7)),phone:$('#p_phone').value.trim(),updatedAt:Date.now()});
+      emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},phone:$('#p_phone').value.trim(),updatedAt:Date.now()});
     if(ok&&newP!==oldP){
       if(oldP) await updClient(oldP,{partnerId:''});
       if(newP) await updClient(newP,{partnerId:c.id});
@@ -1876,10 +1894,11 @@ async function act(name,el){
   case 'newAssess': S.newAssess=true; render(); break;
   case 'cancelAssess': S.newAssess=false; render(); break;
   case 'saveAssess': {
-    const values={}; document.querySelectorAll('[data-test]').forEach(i=>{const v=num(i.value); if(v!=null) values[i.dataset.test]=v;});
-    if(!Object.keys(values).length){toast('לא הוזנו תוצאות');return}
+    const values={},tg={}; document.querySelectorAll('[data-test]').forEach(i=>{const v=num(i.value); if(v!=null) values[i.dataset.test]=v;});
+    document.querySelectorAll('[data-tg]').forEach(i=>{const v=i.value.trim(); if(v) tg[i.dataset.tg]=v;});
+    if(!Object.keys(values).length&&!Object.keys(tg).length){toast('לא הוזנו תוצאות');return}
     const date=$('#a_date').value||today(); const ref=S.db.collection('assessments').doc();
-    const ok=await saveDoc('assessments/'+ref.id,{clientId:c.id,date,values,notes:$('#a_notes').value.trim(),coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',createdAt:Date.now()});
+    const ok=await saveDoc('assessments/'+ref.id,{clientId:c.id,date,values,tg,notes:$('#a_notes').value.trim(),coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',createdAt:Date.now()});
     if(ok){ if(!c.lastAssessmentDate||date>c.lastAssessmentDate) updClient(c.id,{lastAssessmentDate:date}); S.newAssess=false; toast('המבדק נשמר'); render(); }
     break;}
   case 'noteEdit': S.noteEdit=S.clientId; render(); {const t=$('#noteTxt');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}} break;
@@ -1888,6 +1907,13 @@ async function act(name,el){
   case 'noteClear': {const id=S.clientId; const cl=clientById(id); if(cl)cl.handoff=null; render(); await updClient(id,{handoff:null}); toast('ההערה הוסרה'); break;}
   case 'logout': logout(); break;
   case 'forceNew': {if(ctx){ctx.forceNew=true; render();} break;}
+  case 'goGoals': S.tab='profile'; render(); setTimeout(()=>{const g=$('#p_gshort');if(g){g.scrollIntoView({block:'center'});g.focus()}},60); break;
+  case 'tgAdd': S.tgAdd=true; render(); setTimeout(()=>{const x=$('#tg_n');if(x)x.focus()},50); break;
+  case 'tgCancel': S.tgAdd=false; render(); break;
+  case 'tgSave': {const n=$('#tg_n').value.trim(),goal=$('#tg_goal').value.trim();if(!n||!goal){toast('צריך תרגיל ויעד');return}
+    const T=[...(c.targets||[]),{n,now:$('#tg_now').value.trim(),goal,set:today()}];if(await updClient(c.id,{targets:T})){c.targets=T;S.tgAdd=false;toast('תרגיל המטרה נשמר');render()}break;}
+  case 'tgDel': {const T=(c.targets||[]).filter((x,i)=>i!==+el.dataset.i);if(await updClient(c.id,{targets:T})){c.targets=T;render()}break;}
+  case 'tgDone': {const T=(c.targets||[]).map((x,i)=>i===+el.dataset.i?{...x,done:today()}:x);if(await updClient(c.id,{targets:T})){c.targets=T;toast('כל הכבוד! אפשר לקבוע יעד חדש');render()}break;}
   case 'goAssess': S.tab='assess'; S.moreOpen=true; render(); break;
   case 'saveTpl': {const d=ctx&&ctx.edit&&ctx.edit.doc; const ex=(d&&d.exercises||[]).filter(e=>e.name); if(!ex.length){toast('אין תרגילים לשמור');break}
     const nm=(prompt('שם לתבנית (למשל: מניעת נפילות – שלב ב׳)')||'').trim(); if(!nm) break;
@@ -1911,7 +1937,7 @@ async function act(name,el){
   case 'cueEdit': S.cueEdit=el.dataset.name; render(); break;
   case 'cueDel': {const m={...(S.cues||{})}; delete m[el.dataset.name]; S.cues=m; await saveDoc('settings/cues',m); render(); break;}
   case 'goPortal': S.tab='portal'; render(); window.scrollTo(0,0); break;
-  case 'goHistory': S.tab='history'; S.moreOpen=true; render(); window.scrollTo(0,0); break;
+  case 'goHistory': S.tab='prev'; render(); window.scrollTo(0,0); break;
   case 'pickMe': S.loginPick=el.dataset.id; S.loginErr=''; render(); afterLoginFocus(); break;
   case 'loginBack': S.loginPick=null; S.loginErr=''; render(); break;
   case 'doLogin': await doLogin(); break;
