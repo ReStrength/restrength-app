@@ -1428,7 +1428,7 @@ function vClient(){
 function noteHtml(c){
   const h=c.handoff&&c.handoff.text?c.handoff:null;
   if(S.noteEdit===c.id) return `<div class="hnote"><div style="flex:1 1 100%"><b>📝 הערה למאמן המחליף / לאימון הבא</b><textarea id="noteTxt" placeholder="למשל: התלונן על כתף ימין, לוותר היום על לחיצה מעל הראש">${esc(h?h.text:'')}</textarea></div><div class="row"><button class="btn primary sm" data-act="noteSave" data-write>שמירה</button><button class="btn ghost sm" data-act="noteCancel">ביטול</button></div></div>`;
-  if(!h) return `<div class="addnote"><button class="btn ghost sm" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button></div>`;
+  if(!h) return '';
   const by=h.by?coachName(h.by):''; const at=h.at?new Date(h.at).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
   return `<div class="hnote" role="note"><div class="ht"><b>📝 הערה:</b> ${esc(h.text)}<span class="hm">${by&&by!=='—'?esc(by)+' · ':''}${at}</span></div><div class="row"><button class="btn ghost sm" data-act="noteEdit" data-write>עריכה</button><button class="btn ghost sm" data-act="noteClear" data-write>✓ טופל – הסרה</button></div></div>`;
 }
