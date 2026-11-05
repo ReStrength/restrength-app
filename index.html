@@ -1309,7 +1309,7 @@ function logout(){if(window.FB){window.FB.signOut();return} closeClient(); S.meI
 /* ----- המתאמנים של היום: לפי הימים שבהם המתאמן הגיע בשבועות האחרונים ----- */
 const WDN=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 function isoDay(s){const d=new Date(String(s)+'T12:00:00');return isNaN(d)?null:d}
-function comesToday(c){const wd=new Date().getDay();if((c.days||[]).includes(wd))return true;const ds=[...(c.recentDays||[]),c.lastSessionDate].filter(Boolean);
+function comesToday(c){const wd=new Date().getDay();const ds=[...(c.recentDays||[]),c.lastSessionDate].filter(Boolean);
   return ds.some(x=>{const d=isoDay(x);return d&&d.getDay()===wd&&daysSince(x)<=35})}
 function todayHtml(act){
   const td=today(),list=act.filter(c=>c.lastSessionDate===td||comesToday(c)).sort((a,b)=>(a.lastSessionDate===td)-(b.lastSessionDate===td)||String(a.name).localeCompare(String(b.name),'he'));
@@ -1398,7 +1398,6 @@ function vClient(){
   const head=`<div class="chead"><div style="min-width:0"><button class="btn ghost sm" data-act="backCoach">→ המתאמנים של ${esc(coachName(c.coachId)!=='—'?coachName(c.coachId):'ללא מאמן')}</button><h1>${esc(c.name)}</h1>
     <div class="row" style="margin:6px 0"><button class="btn ghost sm" data-act="openReport">📄 דוח התקדמות</button><button class="btn sm" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button></div>
     <div class="meta"><span>תאריך התחלה: <b>${c.startDate?fmt(c.startDate):'יירשם אוטומטית באימון הראשון'}</b></span></div>
-    <div class="wdays"><span class="muted small">ימי אימון קבועים:</span>${['א','ב','ג','ד','ה','ו'].map((n,w)=>`<button class="wd" aria-pressed="${(c.days||[]).includes(w)}" data-wday="${w}" data-write>${n}</button>`).join('')}</div>
     ${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span><button class="btn ghost sm" data-act="goAssess">למבדקים</button></div>`:''}
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
