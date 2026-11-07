@@ -276,7 +276,7 @@ function rpKey(){return 'rs_rp_'+SID}
 function rpBlank(l){return {label:l,ex:[1,1,2,2,3,3].map(function(ss){return {n:'',ss:String(ss),sets:2,min:8,max:10,kg:'',res:[],st:0}})}}
 function fixT(x){if(+x.min!==+x.max){var t=Math.min(15,Math.floor((+x.min+ +x.max)/2));x.min=x.max=t}return x}
 function rpFromSeed(sd){return {seedV:sd.v,n:0,w:(sd.w||[]).map(function(w){if(w.run)return {label:w.label||'ריצה',run:{kind:w.run.kind||'long',km:+w.run.km||3,p1:w.run.p1||'',p2:w.run.p2||w.run.p1||'',res:{}}};
-  return {label:w.label||'',ex:(w.ex||[]).map(function(x){var o={sets:+x.sets||3,min:+x.min||8,max:Math.min(15,+x.max||12)};return {n:x.n||'',ss:String(x.ss||''),sets:o.sets,min:o.min,max:o.max,o:o,kg:x.kg||'',sec:!!x.sec,res:[],st:0}})}}).map(function(w){if(w.run)w.run.o={km:w.run.km,p1:w.run.p1,p2:w.run.p2};return w})}}
+  return {label:w.label||'',ex:(w.ex||[]).map(function(x){var o={sets:+x.sets||3,min:+x.min||8,max:Math.min(15,+x.max||12)};return {n:x.n||'',ss:String(x.ss||''),sets:o.sets,min:o.min,max:o.max,o:o,kg:x.kg||'',sec:!!x.sec,cue:x.cue||'',how:x.how||'',res:[],st:0}})}}).map(function(w){if(w.run)w.run.o={km:w.run.km,p1:w.run.p1,p2:w.run.p2};return w})}}
 /* המאמן עדכן את התוכנית: שומרים את ההתקדמות בתרגילים ובריצות שלא השתנו */
 function rpMerge(old,nw){['wk','planAt','goals','deload','n'].forEach(function(k){if(old[k]!=null)nw[k]=old[k]});
   nw.w.forEach(function(W){var O=(old.w||[]).filter(function(x){return String(x.label)===String(W.label)})[0];if(!O)return;W.doneAt=O.doneAt;
@@ -351,6 +351,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
     if(x.tp||x.rom)h+='<div class="note" style="margin:6px 0">'+(x.tp?'⏱ טמפו: '+(x.tp>1?TP2:TP1):'')+(x.tp&&x.rom?'<br>':'')+(x.rom?'📏 '+ROM:'')+'</div>';
     if(x.msg)h+='<div class="prevl">🔁 '+esc(x.msg)+'</div>';
     if(WK()){h+='<div class="row" style="display:flex;gap:8px;margin-top:8px"><button class="btn '+(x.ok?'done':'alt')+'" style="flex:2;min-height:56px;font-size:19px" data-rok="'+k+'">'+(x.ok?'✓ הצלחתי הכל':'✓ הצלחתי הכל')+'</button><button class="btn '+(x.fail?'done':'alt')+'" style="flex:1;min-height:56px;font-size:16px" data-rno="'+k+'">לא הכל</button></div>';
+      h+=exExtra(x,k);
       if(!x.fail){h+='</div>';return}h+='<div class="sub" style="margin:8px 4px 0">כמה עשית בכל סט?</div>'}
     h+='<div class="sets">'+(RP.deload&&WK()?'<div class="sub">שבוע קל: '+dlSets(x)+' סטים</div>':'');for(var j=0;j<(WK()?dlSets(x):(+x.sets||1));j++){var r=x.res[j]||{};h+='<div class="setr"><span>סט '+(j+1)+'</span><label>'+(x.sec?'שניות':'חזרות')+'<input inputmode="numeric" data-rr="'+k+'.'+j+'.reps" value="'+esc(r.reps==null?'':r.reps)+'"></label><label>ק"ג<input inputmode="decimal" data-rr="'+k+'.'+j+'.kg" value="'+esc(r.kg==null?(x.kg||''):r.kg)+'" placeholder="'+esc(x.kg||'גוף')+'"></label></div>'}
     h+='</div>'+(WK()?'':'<button class="btn alt" data-rdel="'+i+'" style="min-height:44px;font-size:16px;margin-top:6px">🗑 למחוק תרגיל</button>')+'</div>'});
@@ -394,6 +395,16 @@ function rpStepWk(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==
   else if(miss&&work>1){x.kg=String(Math.round((work-1)*2)/2);m='היה קשה מדי: מורידים קילו אחד, '+x.kg+' ק"ג';x.st=0}
   else{m='אותו יעד, לשאוף לחזרה אחת יותר בכל סט';x.st=(x.st||0)+1}
   return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
+/* בכל תרגיל: איך מתקדמים, כאב בתרגיל בלחיצה אחת, וצילום הביצוע למאמן */
+var KPO=[[0,'0 · בלי'],[2,'1-3 · קל'],[4,'4-5 · בינוני'],[7,'6+ · חזק']];
+function exExtra(x,k){var h='';
+  if(x.how||x.cue)h+='<div class="note" style="margin:8px 0 0;font-size:17px">'+(x.cue?'💡 '+esc(x.cue):'')+(x.cue&&x.how?'<br>':'')+(x.how?'📈 <b>איך מתקדמים:</b> '+esc(x.how):'')+'</div>';
+  h+='<div class="sub" style="margin:10px 4px 4px;font-weight:700">כאב בתרגיל (0-10)</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+KPO.map(function(o){var on=x.kp!=null&&x.kp!==''&&+x.kp===o[0];return '<button class="btn '+(on?'done':'alt')+'" data-kp="'+k+'.'+o[0]+'" style="flex:1;min-width:70px;min-height:46px;font-size:15px;margin:0;padding:4px">'+o[1]+'</button>'}).join('')+'</div>';
+  h+='<button class="btn alt" data-exvid="'+k+'" style="min-height:48px;font-size:17px;margin-top:8px">🎥 לצלם את הביצוע ל'+esc((PLAN&&PLAN.coach)||'מאמן')+'</button>';
+  return h}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-kp],[data-exvid]');if(!b||!RP)return;
+  if(b.hasAttribute('data-kp')){var p=b.getAttribute('data-kp').split('.'),x=RP.w[+p[0]].ex[+p[1]],v=+p[2];x.kp=(x.kp!==''&&x.kp!=null&&+x.kp===v)?'':v;rpSave();var sy=window.scrollY;render();window.scrollTo(0,sy);return}
+  var q=b.getAttribute('data-exvid').split('.'),y=RP.w[+q[0]].ex[+q[1]];window.PICKEX=y&&y.n||'';var pk=$('pick');pk.value='';pk.setAttribute('accept','video/*,image/*');pk.click()},true);
 function rpFinish(){var W=RP.w[RT];
   if(WK()&&W.ex)W.ex.forEach(function(x){if(x.ok)x.res=Array.from({length:dlSets(x)},function(){return {reps:String(x.max),kg:x.kg||''}});else if(!x.fail)x.res=[]});
   var has=W.run?(W.run.res&&+W.run.res.km&&W.run.res.time):W.ex.some(function(x){return (x.res||[]).some(function(r){return r&&r.reps!==''&&r.reps!=null})});
@@ -405,11 +416,15 @@ function rpFinish(){var W=RP.w[RT];
 function rpFinish2(pain,ptx){var W0=RP.w[RT],wk=WK(),W=wk?JSON.parse(JSON.stringify(W0)):W0,log=[],ch=[];
   if(wk&&RP.deload){W.ex&&W.ex.forEach(function(x){x.st=x.st||0});}
   if(W.run){var rr=runStep(W);if(!rr){toast('כותבים כמה ק"מ רצת ואת הזמן הכולל.');return}log.push(rr.log);ch.push([rr.log.n,rr.m]);W.run.msg=rr.m;W.run.res={}}
-  else W.ex.forEach(function(x){if(!x.n)return;var r=wk?rpStepWk(x):rpStep(x);if(!r)return;log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets});ch.push([x.n,r.m]);x.msg=r.m;x.res=[]});
+  else W.ex.forEach(function(x,i){if(!x.n)return;var kp=(x.kp===''||x.kp==null)?null:+x.kp,o=W0.ex[i];var r=wk?rpStepWk(x):rpStep(x);if(!r)return;
+    if(kp!=null&&kp>=4&&o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc;
+      if(kp>=6){var wkg=parseFloat(o.kg)||0;if(wkg>1){x.kg=String(Math.round((wkg-1)*2)/2);r.m='כאב חזק בתרגיל: מורידים קילו, '+x.kg+' ק"ג. אם עדיין כואב: טווח קצר יותר'}else r.m='כאב חזק בתרגיל: אותו יעד בטווח קצר יותר, ולדווח לי'}
+      else r.m='כאב בינוני בתרגיל: נשארים על אותו יעד עד שהכאב יורד ל-3 ומטה'}
+    log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets,kp:kp});ch.push([x.n,r.m]);x.msg=r.m;x.res=[];x.kp=''});
   if(!log.length){toast('עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.');return}
   if(wk&&pain>=7){ch=ch.map(function(c){return [c[0],'בגלל הכאב לא מעלים, נשארים על אותו יעד']});W.ex&&W.ex.forEach(function(x,i){var o=W0.ex[i];if(o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc}});if(W.run)W.run=JSON.parse(JSON.stringify(W0.run))}
   if(wk){W0.doneAt=Date.now();if(RP.deload){ch=ch.map(function(c){return [c[0],'שבוע קל, בלי העלאות. ממשיכים להתקדם בשבוע הבא']})}else{W.pend=null;var up=ch.filter(function(c){return !/^אותו|^נשארים|^לשאוף|^כמעט|^בגלל/.test(c[1])});W0.pend={ex:W.ex,run:W.run,sum:W.run?(up.length?up[0][1].replace(/^[^:]*! /,'').replace('בשבוע הבא ','').replace(/^מוסיפים/,'מוסיפים'):'אותו יעד'):(up.length?'עולים ב'+up.map(function(c){return c[0]}).join(', ')+'. בשאר אותו יעד':'אותו יעד, לשאוף לעוד חזרה')}}
-    if(W0.run)W0.run.res={};else W0.ex.forEach(function(x){x.res=[];x.ok=false;x.fail=false})}
+    if(W0.run)W0.run.res={};else W0.ex.forEach(function(x){x.res=[];x.ok=false;x.fail=false;x.kp=''})}
   RP.n=(RP.n||0)+1;rpSave();
   var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log,pain:pain,note:ptx}).catch(function(){});
   if(pain>0)sendRep({kind:'pain',r:PC.rid?PC.rid():String(Date.now()+1),pain:pain,text:'אחרי אימון '+(W.label||'')+(ptx?': '+ptx:'')}).catch(function(){});
@@ -500,8 +515,8 @@ function askText(){sheet('<h3>הודעה למאמן</h3><textarea id="tx" placeh
   $('txc').onclick=unsheet;$('txs').onclick=function(){var v=$('tx').value.trim();if(!v)return;this.disabled=true;sendRep({kind:'text',r:PC.rid(),text:v}).then(function(){unsheet();toast('נשלח למאמן ✓')},function(){$('txs').disabled=false;toast('לא נשלח. בדקו אינטרנט ונסו שוב.')})}}
 function shrink(f){return new Promise(function(res){if(!/^image\//.test(f.type)||/gif/.test(f.type)){res(f);return}var u=URL.createObjectURL(f),im=new Image();im.onload=function(){var s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){res(b||f)},'image/jpeg',0.82)};im.onerror=function(){res(f)};im.src=u})}
 $('pick').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;if(f.size>300*1048576){toast('הסרטון ארוך מדי. נסו סרטון קצר יותר (עד דקה-שתיים).');return}
-  sheet('<h3>'+(/^video/.test(f.type)?'🎥 סרטון':'📷 תמונה')+' למאמן</h3><textarea id="mn" style="min-height:90px" placeholder="על מה זה? למשל: ככה אני עושה את הסקוואט (לא חובה)"></textarea><button class="btn done" id="ms">שליחה</button><button class="btn alt" id="mc">ביטול</button>');
-  $('mc').onclick=unsheet;
+  sheet('<h3>'+(/^video/.test(f.type)?'🎥 סרטון':'📷 תמונה')+' למאמן</h3><textarea id="mn" style="min-height:90px" placeholder="על מה זה? למשל: ככה אני עושה את הסקוואט (לא חובה)">'+esc(window.PICKEX?'תרגיל: '+window.PICKEX+'. ':'')+'</textarea><button class="btn done" id="ms">שליחה</button><button class="btn alt" id="mc">ביטול</button>');
+  window.PICKEX='';$('mc').onclick=unsheet;
   $('ms').onclick=function(){var note=$('mn').value.trim();sheet('<h3>שולח…</h3><div class="pbar"><i id="up"></i></div><p class="sub center">רגע אחד, לא לסגור את הדף.</p>');var r=PC.rid();
     shrink(f).then(function(blob){return PC.putBlob(K,blob,function(pi,ct){return fetch(BASE+'pa/rm?s='+SID+'&r='+r+'&i='+pi,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/octet-stream','X-RS-W':W},body:ct}).then(function(x){if(!x.ok)throw new Error(x.status)})},function(p){var u=$('up');if(u)u.style.width=Math.round(p*100)+'%'}).then(function(n){return sendRep({kind:'media',r:r,n:n,mt:blob.type||f.type,note:note})})}).then(function(){unsheet();toast('נשלח למאמן ✓ תודה!')},function(){unsheet();toast('לא נשלח. בדקו אינטרנט ונסו שוב.')})}});
 function play(key){var x=key[0]==='h'?PLAN.home[+key.slice(1)]:PLAN.next[+key.slice(1).split('_')[0]].ex[+key.split('_')[1]];var box=$('md_'+key);if(!x||!x.m||!box)return;
