@@ -118,7 +118,7 @@ textarea{width:100%;min-height:140px;font:inherit;font-size:21px;border:2px soli
 </style>
 </head>
 <body>
-<div class="band"><img src="logo.png" alt="כוח מחודש"><div class="fz"><button data-fz="-1" aria-label="הקטנת כתב">א-</button><button data-fz="1" aria-label="הגדלת כתב">א+</button></div></div>
+<div class="band"><img src="logo.png" alt="כוח מחודש"></div>
 <main id="app"><p class="center sub" style="margin-top:40px">טוען את התוכנית שלך…</p></main>
 <div class="sheet" id="sheet" hidden><div class="box" id="sbox"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -161,8 +161,8 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function lsg(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lss(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function ltr(x){return '<b dir="ltr">'+esc(x)+'</b>'}
-var FZ=+(lsg('rs_fz')||1);function setFz(v){FZ=Math.max(1,Math.min(1.6,Math.round(v*10)/10));document.documentElement.style.setProperty('--fz',FZ);lss('rs_fz',FZ)}setFz(FZ);
-document.querySelector('.fz').addEventListener('click',function(e){var b=e.target.closest('[data-fz]');if(b)setFz(FZ+0.1*(+b.getAttribute('data-fz')))});
+var FZ=1;function setFz(v){FZ=Math.max(1,Math.min(1.6,Math.round(v*10)/10));document.documentElement.style.setProperty('--fz',FZ);lss('rs_fz',FZ)}setFz(FZ);
+
 function toast(m){var t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},3400)}
 function sheet(h){$('sbox').innerHTML=h;$('sheet').hidden=false}
 function unsheet(){$('sheet').hidden=true;$('sbox').innerHTML=''}
@@ -181,9 +181,31 @@ if(TTS){HEV=heVoice();try{window.speechSynthesis.onvoiceschanged=function(){HEV=
 try{if(navigator.audioSession)navigator.audioSession.type='ambient'}catch(e){}
 var GAUD=null,GPRE=null;
 /* טקסט ברור להקראה: טווחים, כפול, ק"ג וחצאים נקראים במילים */
-function ttsClean(t){return String(t).replace(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/g,'$1 עד $2').replace(/(\d)\s*[×xX]\s*(\d)/g,'$1 פעמים $2').replace(/×/g,' פעמים ').replace(/ק"ג|ק״ג|\bקג\b/g,'קילו').replace(/(\d+)\.5\b/g,'$1 וחצי').replace(/[()\[\]*_#\/\\|•]/g,' ').replace(/\s+/g,' ').trim()}
+/* מספרים במילים בעברית תקינה, לפי מין שם העצם שאחריהם */
+var HNF=['אפס','אחת','שתיים','שלוש','ארבע','חמש','שש','שבע','שמונה','תשע','עשר'],HNM=['אפס','אחד','שניים','שלושה','ארבעה','חמישה','שישה','שבעה','שמונה','תשעה','עשרה'];
+var HNT=['','','עשרים','שלושים','ארבעים','חמישים','שישים','שבעים','שמונים','תשעים'];
+function heN(n,m){n=+n;if(n<=10)return (m?HNM:HNF)[n];
+  if(n<20){var u=n-10;return m?(u===2?'שנים':HNM[u])+' עשר':(u===2?'שתים':HNF[u])+' עשרה'}
+  if(n<100){var t=HNT[Math.floor(n/10)],r=n%10;return r?t+' ו'+(m?HNM:HNF)[r]:t}
+  if(n<1000){var h=Math.floor(n/100),rr=n%100,hs=h===1?'מאה':h===2?'מאתיים':HNF[h]+' מאות';return rr?hs+(rr<20||rr%10===0?' ו':' ')+heN(rr,m):hs}
+  return String(n)}
+/* "שתיים/שניים" לפני שם עצם נהיה "שתי/שני" */
+function heNb(n,m){n=+n;if(n===2)return m?'שני':'שתי';return heN(n,m)}
+var HMASC=/^(סטים|סט|ימים|יום|שבועות|שבוע|חודשים|חודש|קילו|קילוגרם|ס"מ|סנטימטר|סנטימטרים|מטר|מטרים|צעדים|צעד|סיבובים|סיבוב|צדדים|צד|כיווצים|כיווץ|מחזורים|מחזור|תרגילים)$/;
+var HFEM=/^(חזרות|חזרה|פעמים|פעם|שניות|שנייה|שניה|דקות|דקה|נשימות|נשימה|שעות|שעה|מעלות|מעלה|מדרגות|מדרגה|קומות|קומה|הליכות)$/;
+function heNums(t){t=String(t);
+  /* 1 + שם עצם: "סט אחד", "חזרה אחת" */
+  t=t.replace(/(^|[^\d.])1\s+(סטים|סט)(?=[\s.,:;!?]|$)/g,'$1סט אחד').replace(/(^|[^\d.])1\s+(חזרות|חזרה)(?=[\s.,:;!?]|$)/g,'$1חזרה אחת').replace(/(^|[^\d.])1\s+(פעמים|פעם)(?=[\s.,:;!?]|$)/g,'$1פעם אחת').replace(/(^|[^\d.])1\s+(דקות|דקה)(?=[\s.,:;!?]|$)/g,'$1דקה אחת').replace(/(^|[^\d.])2\s+פעמים(?=[\s.,:;!?]|$)/g,'$1פעמיים');
+  /* טווח: "8 עד 10 חזרות" */
+  t=t.replace(/(\d+)\s+עד\s+(\d+)(\s+וחצי)?\s+([^\s.,:;!?]+)/g,function(a,x,y,h,w){var m=HMASC.test(w);if(!m&&!HFEM.test(w))return a;return heN(x,m)+' עד '+heNb(y,m)+(h||'')+' '+w});
+  /* מספר + שם עצם */
+  t=t.replace(/(\d+)(\s+וחצי)?\s+([^\s.,:;!?]+)/g,function(a,x,h,w){var m=HMASC.test(w);if(!m&&!HFEM.test(w))return a;return (h?heN(x,m):heNb(x,m))+(h||'')+' '+w});
+  /* "4 מתוך 10" ושאר מספרים בודדים: ספירה רגילה (נקבה) */
+  t=t.replace(/\d+/g,function(x){return heN(x,0)});
+  return t}
+function ttsClean(t){t=String(t).replace(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/g,'$1 עד $2').replace(/(\d)\s*[×xX]\s*(\d)/g,'$1 פעמים $2').replace(/×/g,' פעמים ').replace(/ק"ג|ק״ג|\bקג\b/g,'קילו').replace(/(\d+)\.5\b/g,'$1 וחצי').replace(/(\d+)\.(\d+)/g,function(a,x,y){return heN(x,0)+' נקודה '+heN(y,0)}).replace(/[()\[\]*_#\/\\|•]/g,' ').replace(/\s+/g,' ').trim();return heNums(t)}
 function ttsChunks(t){var out=[],cur='';String(t).replace(/\s+/g,' ').replace(/([.:,!?])\s/g,'$1\u0001').split('\u0001').forEach(function(p){if(cur&&(cur+' '+p).length>180){out.push(cur);cur=p}else cur=cur?cur+' '+p:p;while(cur.length>190){var i=cur.lastIndexOf(' ',180);if(i<40)i=180;out.push(cur.slice(0,i));cur=cur.slice(i).trim()}});if(cur)out.push(cur);return out}
-function ttsUrl(x){return (window.TTSB||BASE)+'tts?v=g9&q='+encodeURIComponent(x)}
+function ttsUrl(x){return (window.TTSB||BASE)+'tts?v=b3&q='+encodeURIComponent(x)}
 /* הקראה מהשרת שלנו (קול עברי ברור), עובדת גם בדפדפן שנפתח מתוך ווטסאפ */
 function gsay(text,btn,onfail){var ch=ttsChunks(text),i=0,a=GPRE||new Audio();GPRE=null;if(GAUD&&GAUD!==a)try{GAUD.pause()}catch(e){}GAUD=a;SAYING=btn;btn.classList.add('on');a.muted=false;
   function end(){if(SAYING===btn){SAYING=null;btn.classList.remove('on')}}
@@ -220,7 +242,7 @@ function remind(hm){var p=hm.split(':'),d=new Date();d.setDate(d.getDate()+(d.ge
   var bl=new Blob([ics],{type:'text/calendar'}),u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='tizkoret.ics';document.body.appendChild(a);a.click();a.remove();
   sheet('<h3>⏰ כמעט סיימנו</h3><p class="sub center" style="font-size:20px">בחלון שנפתח לוחצים <b>"הוסף"</b> או <b>"שמירה"</b>.<br>מעכשיו הטלפון יזכיר כל יום ב-'+hm+'.</p><button class="btn done" id="rok">הבנתי</button>');$('rok').onclick=unsheet}
 var FACES=[[0,'😀','בלי כאב'],[2,'🙂','קצת כאב'],[4,'😐','כאב בינוני'],[6,'😣','כואב'],[8,'😫','כואב מאוד']];
-function exSpeech(x,i){var t=['תרגיל '+(i+1)+'. '+x.n+'.'];var u=x.unit==='sec'?' שניות':' חזרות';if(x.sets)t.push(x.sets+' סטים, '+(x.reps?String(x.reps).replace('-',' עד ')+u:'')+'.');if(x.kg)t.push('משקל '+x.kg+' קילו.');if(x.tempo)t.push('קצב: '+x.tempo+'.');if(x.note)t.push('דגשים: '+x.note+'.');t.push('לא עובדים עד כאב. אם כואב, עוצרים.');return t.join(' ')}
+function exSpeech(x,i){var ORD=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני','תשיעי','עשירי'],t=['תרגיל '+(ORD[i]||('מספר '+(i+1)))+'. '+x.n+'.'];var u=x.unit==='sec'?' שניות':' חזרות';if(x.sets)t.push(x.sets+' סטים'+(x.reps?' של '+String(x.reps).replace('-',' עד ')+u:'')+'.');if(x.kg)t.push('משקל '+x.kg+' קילו.');if(x.tempo)t.push('קצב: '+String(x.tempo).replace(/[-–]/g,', ')+'.');if(x.note)t.push('דגשים: '+x.note+'.');t.push('לא עובדים עד כאב. אם כואב, עוצרים.');return t.join(' ')}
 try{if(location.hash==='#demo'){}else if(location.hash.length>5)localStorage.setItem('rs_th',location.hash);else{var _sh=localStorage.getItem('rs_th');if(_sh)history.replaceState(null,'',location.pathname+_sh)}}catch(e){}
 if(!/iphone|ipad|ipod/i.test(navigator.userAgent)){try{var ml=document.createElement('link');ml.rel='manifest';ml.href='tm.webmanifest';document.head.appendChild(ml)}catch(e){}}
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__BIP=e;var a=document.querySelector('.a2hs');if(a)a.innerHTML=a2hsInner(false)});
@@ -236,7 +258,7 @@ Promise.all([PC.key(raw),PC.wOf(raw)]).then(function(a){K=a[0];W=a[1];return pos
 }
 function loadReps(){post('reps',{s:SID,w:W}).then(function(r){return Promise.all((r.reps||[]).map(function(x){return PC.decJ(K,x.blob).then(function(o){o.t=x.t*1000;return o},function(){return null})}))}).then(function(L){REPS=L.filter(Boolean).sort(function(a,b){return a.t-b.t});paintHist();paintDone()},function(){})}
 
-function dose(x){var p=[];if(x.sets)p.push(ltr(x.sets)+' סטים');if(x.reps)p.push(ltr(x.reps)+(x.unit==='sec'?' שניות':' חזרות'));if(x.kg)p.push(ltr(x.kg)+' ק"ג');return p.join(' × ').replace(' × '+ltr(x.kg),' · '+ltr(x.kg))}
+function dose(x){var p=[];if(x.sets)p.push(+x.sets===1?'סט אחד':ltr(x.sets)+' סטים');if(x.reps)p.push(ltr(x.reps)+(x.unit==='sec'?' שניות':' חזרות'));if(x.kg)p.push(ltr(x.kg)+' ק"ג');return p.join(' של ').replace(' של '+ltr(x.kg),' · '+ltr(x.kg))}
 function exCard(x,key,i,logging,si){
   var h='<div class="card ex"><div class="t">'+(x.ss?'<span class="ssl">'+esc(x.ss)+'</span>':'<span class="num">'+(i+1)+'</span>')+'<span>'+esc(x.n)+'</span></div>';
   var d=dose(x);if(d)h+='<div class="dose">'+d+'</div>';
@@ -322,7 +344,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
     if(WK()){if(x.ss!==lastSS){if(lastSS!==null)h+='</div>';h+='<div class="card ssg"><div class="ssh">'+(x.ss?'סופר סט '+esc(x.ss):'תרגיל')+'</div>'}}
     else if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
     h+='<div class="'+(WK()?'ssx ex rex':'card ex rex')+'"><div class="t"><span class="num">'+(i+1)+'</span>'+(WK()?'<b style="font-size:20px;flex:1">'+esc(x.n)+'</b>':'<input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל">')+'</div>'+
-     (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+dlSets(x)+' סטים × '+x.max+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג':'')+'</div><label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
+     (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+dlSets(x)+' סטים של '+x.max+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג':'')+'</div><label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
      '<label>סטים<select data-rp="'+k+'.sets">'+[1,2,3,4,5].map(function(v){return '<option'+(v===+x.sets?' selected':'')+'>'+v+'</option>'}).join('')+'</select></label>'+
      '<label>'+(x.sec?'שניות':'חזרות')+'<span class="rng"><input inputmode="numeric" data-rp="'+k+'.min" value="'+esc(x.min)+'">–<input inputmode="numeric" data-rp="'+k+'.max" value="'+esc(x.max)+'"></span></label>'+
      '<label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>');
