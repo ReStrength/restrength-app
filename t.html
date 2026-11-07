@@ -414,7 +414,7 @@ document.addEventListener('input',function(e){var t=e.target,a=t.getAttribute&&(
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-why]');if(!b||!RP)return;var p=b.getAttribute('data-why').split('.'),x=RP.w[+p[0]].ex[+p[1]];x.why=x.why===p[2]?'':p[2];rpSave();var sy=window.scrollY;render();window.scrollTo(0,sy)},true);
 var KPO=[[0,'0 · בלי'],[2,'1-3 · קל'],[4,'4-5 · בינוני'],[7,'6+ · חזק']];
 function exExtra(x,k){var h='',S0=sx(x.n);x.cue=S0.cue||x.cue||'';x.how=S0.how||x.how||'';var leg=S0.leg==null?true:!!+S0.leg,mk='s'+k.replace('.','_');
-  if(S0.m)h+='<div class="media" id="md_'+mk+'"><button class="play" data-play="'+mk+'">▶ לראות איך עושים</button></div>';
+  if(S0.m)h+='<div class="media" id="md_'+mk+'" style="margin-top:6px"><button class="btn alt" data-play="'+mk+'" style="min-height:42px;font-size:15px;margin:0">🎬 סרטון הדגמה (אם צריך להיזכר)</button></div>';
   if(x.how||x.cue)h+='<div class="note" style="margin:8px 0 0;font-size:17px">'+(x.cue?'💡 '+esc(x.cue):'')+(x.cue&&x.how?'<br>':'')+(x.how?'📈 <b>איך מתקדמים:</b> '+esc(x.how):'')+'</div>';
   if(!leg)return h;
   h+='<div class="sub" style="margin:10px 4px 4px;font-weight:700">כאב בתרגיל (0-10)</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+KPO.map(function(o){var on=x.kp!=null&&x.kp!==''&&+x.kp===o[0];return '<button class="btn '+(on?'done':'alt')+'" data-kp="'+k+'.'+o[0]+'" style="flex:1;min-width:70px;min-height:46px;font-size:15px;margin:0;padding:4px">'+o[1]+'</button>'}).join('')+'</div>';
