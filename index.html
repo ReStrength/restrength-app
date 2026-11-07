@@ -579,7 +579,7 @@ const wDS=s=>({id:s.id,exists:s.exists(),data:()=>s.data()});
 const wQS=s=>({docs:s.docs.map(wDS),size:s.size,empty:s.empty});
 const clean=d=>JSON.parse(JSON.stringify(d));
 function wD(ref){return {id:ref.id,path:ref.path,
-  set:d=>setDoc(ref,clean(d)),update:d=>updateDoc(ref,clean(d)),delete:()=>deleteDoc(ref),
+  set:(d,o)=>o?setDoc(ref,clean(d),o):setDoc(ref,clean(d)),update:d=>updateDoc(ref,clean(d)),delete:()=>deleteDoc(ref),
   get:async()=>wDS(await getDoc(ref)),onSnapshot:(n,e)=>onSnapshot(ref,s=>n(wDS(s)),e)}}
 function wQ(q,isColl){return {where:(f,op,v)=>wQ(query(q,where(f,op,v)),false),
   doc:id=>wD(id?doc(q,id):doc(q)),get:async()=>wQS(await getDocs(q)),onSnapshot:(n,e)=>onSnapshot(q,s=>n(wQS(s)),e)}}
