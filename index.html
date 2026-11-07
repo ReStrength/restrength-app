@@ -1104,14 +1104,18 @@ function vManager(){
   if(!S.loaded.k) return `<div class="empty"><strong>טוען…</strong></div>`;
   const act=activeClients();
   const gap=c=>daysSince(c.lastSessionDate||c.startDate);
-  const absent=act.filter(c=>gap(c)>=14).sort((a,b)=>gap(b)-gap(a));
+  /* ליווי מרחוק וקבוצה לא נספרים כאן; מי שעוד אין לו אימון מתועד מופיע ברשימה נפרדת */
+  const inStudio=act.filter(c=>c.trainingType!=='remote'&&c.trainingType!=='group'&&!c.remote);
+  const absent=inStudio.filter(c=>c.lastSessionDate&&gap(c)>=14).sort((a,b)=>gap(b)-gap(a));
+  const noLog=inStudio.filter(c=>!c.lastSessionDate&&daysSince(c.startDate||'')>=7);
   const rows=absent.map(c=>{const g=gap(c);return `<tr class="clickrow" tabindex="0" data-open="${c.id}"><td><b>${esc(c.name)}</b></td><td>${esc(coachName(c.coachId))}</td><td>${c.lastSessionDate?fmt(c.lastSessionDate):'עדיין לא התאמן'}</td><td>${g===Infinity?'—':`<span class="chip ${g>=28?'bad':'warn'}">${g} ימים</span>`}</td></tr>`}).join('');
   const coaches=S.coaches.filter(k=>k.active!==false).map(k=>{const cs=act.filter(c=>c.coachId===k.id);
-    return `<tr class="clickrow" tabindex="0" data-mgrcoach="${k.id}"><td><b>${esc(k.name)}</b></td><td>${cs.length}</td><td>${cs.filter(c=>daysSince(c.lastSessionDate)<=7).length}</td><td>${cs.filter(c=>gap(c)>=14).length||'—'}</td><td>${cs.filter(c=>c.handoff&&c.handoff.text).length||'—'}</td></tr>`}).join('');
+    return `<tr class="clickrow" tabindex="0" data-mgrcoach="${k.id}"><td><b>${esc(k.name)}</b></td><td>${cs.length}</td><td>${cs.filter(c=>daysSince(c.lastSessionDate)<=7).length}</td><td>${cs.filter(c=>absent.includes(c)).length||'—'}</td><td>${cs.filter(c=>c.handoff&&c.handoff.text).length||'—'}</td></tr>`}).join('');
   return `<div class="mgr"><h1>ניהול</h1>
-   <div class="card"><div class="spread"><h2>לא התאמנו שבועיים ומעלה</h2><span class="muted small">${absent.length} מתוך ${act.length} מתאמנים פעילים</span></div>
+   <div class="card"><div class="spread"><h2>לא התאמנו שבועיים ומעלה</h2><span class="muted small">${absent.length} מתוך ${inStudio.length} מתאמנים בסטודיו</span></div>
    <span class="muted small">לשיחת "מתגעגעים אליך" לפני שהם עוזבים. לחיצה על שורה פותחת את התיק.</span>
-   ${absent.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>מתאמן</th><th>מאמן</th><th>אימון אחרון</th><th>לא התאמן</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty"><strong>כולם התאמנו בשבועיים האחרונים 👏</strong></div>`}</div>
+   ${absent.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>מתאמן</th><th>מאמן</th><th>אימון אחרון</th><th>לא התאמן</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty"><strong>כולם התאמנו בשבועיים האחרונים 👏</strong></div>`}
+   ${noLog.length?`<details style="margin-top:10px"><summary class="muted">עוד אין אימון מתועד במערכת: ${noLog.length} מתאמנים (כדאי שהמאמן יתעד את האימון הבא)</summary><div class="row" style="margin-top:6px;flex-wrap:wrap">${noLog.map(c=>`<button class="btn ghost sm" data-open="${c.id}">${esc(c.name)} · ${esc(coachName(c.coachId))}</button>`).join('')}</div></details>`:''}</div>
    <div class="card"><h2>לפי מאמן</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>מאמן</th><th>מתאמנים פעילים</th><th>תועדו ב־7 ימים</th><th>לא התאמנו 14+</th><th>הערות פתוחות</th></tr></thead><tbody>${coaches}</tbody></table></div></div></div>`;
 }
 
