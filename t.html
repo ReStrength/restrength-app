@@ -274,6 +274,7 @@ function exCard(x,key,i,logging,si){
 var RP=null,RT=0;
 function rpKey(){return 'rs_rp_'+SID}
 function rpBlank(l){return {label:l,ex:[1,1,2,2,3,3].map(function(ss){return {n:'',ss:String(ss),sets:2,min:8,max:10,kg:'',res:[],st:0}})}}
+function RNG(){return !!(PLAN&&PLAN.seed&&PLAN.seed.rng)}
 function fixT(x){if(+x.min!==+x.max){var t=Math.min(15,Math.floor((+x.min+ +x.max)/2));x.min=x.max=t}return x}
 function rpFromSeed(sd){return {seedV:sd.v,n:0,w:(sd.w||[]).map(function(w){if(w.run)return {label:w.label||'ריצה',run:{kind:w.run.kind||'long',km:+w.run.km||3,p1:w.run.p1||'',p2:w.run.p2||w.run.p1||'',res:{}}};
   return {label:w.label||'',ex:(w.ex||[]).map(function(x){var o={sets:+x.sets||3,min:+x.min||8,max:Math.min(15,+x.max||12)};return {n:x.n||'',ss:String(x.ss||''),sets:o.sets,min:o.min,max:o.max,o:o,kg:x.kg||'',sec:!!x.sec,cue:x.cue||'',how:x.how||'',res:[],st:0}})}}).map(function(w){if(w.run)w.run.o={km:w.run.km,p1:w.run.p1,p2:w.run.p2};return w})}}
@@ -285,7 +286,7 @@ function rpMerge(old,nw){['wk','planAt','goals','deload','n'].forEach(function(k
   return nw}
 function rpLoad(){if(RP)return;try{RP=JSON.parse(lsg(rpKey())||'null')}catch(e){RP=null}
   if(PLAN.seed&&(!RP||RP.seedV!==PLAN.seed.v)){RP=RP&&RP.seedV?rpMerge(RP,rpFromSeed(PLAN.seed)):rpFromSeed(PLAN.seed);rpSave()}
-  if(PLAN.seed&&RP.w)RP.w.forEach(function(W){(W.ex||[]).forEach(fixT)});
+  if(PLAN.seed&&RP.w&&!RNG())RP.w.forEach(function(W){(W.ex||[]).forEach(fixT)});
   if(!RP){var N=(PLAN.next||[]).filter(function(s){return (s.ex||[]).length});
     RP={w:N.length?N.map(function(s){return {label:s.label||'',ex:s.ex.map(function(x){var r=String(x.reps||'').match(/(\d+)\D+(\d+)/);return {n:x.n,ss:x.ss||'',sets:+x.sets||2,min:r?+r[1]:(+x.reps||8),max:r?+r[2]:(+x.reps||10),kg:x.kg||'',sec:x.unit==='sec',res:[],st:0}})}}):[rpBlank('A'),rpBlank('B')],n:0};rpSave()}
   RT=Math.min(+(lsg('rs_rpt_'+SID)||0),RP.w.length-1)}
@@ -348,15 +349,20 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
     if(WK()){var NOSS=!W.ex.some(function(e){return e.ss});if(x.ss!==lastSS||NOSS){if(lastSS!==null)h+='</div>';h+='<div class="card ssg"><div class="ssh">'+(x.ss?'סופר סט '+esc(x.ss):'תרגיל')+'</div>'}}
     else if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
     h+='<div class="'+(WK()?'ssx ex rex':'card ex rex')+'"><div class="t"><span class="num">'+(i+1)+'</span>'+(WK()?'<b style="font-size:20px;flex:1">'+esc(x.n)+'</b>':'<input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל">')+'</div>'+
-     (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+dlSets(x)+' סטים של '+x.max+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג':'')+'</div><label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
+     (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+(+dlSets(x)===1?'סט אחד':dlSets(x)+' סטים')+' של '+(RNG()&&+x.min<+x.max?'<span dir="ltr">'+x.min+'–'+x.max+'</span>':x.max)+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג':'')+'</div><label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
      '<label>סטים<select data-rp="'+k+'.sets">'+[1,2,3,4,5].map(function(v){return '<option'+(v===+x.sets?' selected':'')+'>'+v+'</option>'}).join('')+'</select></label>'+
      '<label>'+(x.sec?'שניות':'חזרות')+'<span class="rng"><input inputmode="numeric" data-rp="'+k+'.min" value="'+esc(x.min)+'">–<input inputmode="numeric" data-rp="'+k+'.max" value="'+esc(x.max)+'"></span></label>'+
      '<label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>');
     if(x.tp||x.rom)h+='<div class="note" style="margin:6px 0">'+(x.tp?'⏱ טמפו: '+(x.tp>1?TP2:TP1):'')+(x.tp&&x.rom?'<br>':'')+(x.rom?'📏 '+ROM:'')+'</div>';
     if(x.msg)h+='<div class="prevl">🔁 '+esc(x.msg)+'</div>';
-    if(WK()){h+='<div class="row" style="display:flex;gap:8px;margin-top:8px"><button class="btn '+(x.ok?'done':'alt')+'" style="flex:2;min-height:56px;font-size:19px" data-rok="'+k+'">'+(x.ok?'✓ הצלחתי הכל':'✓ הצלחתי הכל')+'</button><button class="btn '+(x.fail?'done':'alt')+'" style="flex:1;min-height:56px;font-size:16px" data-rno="'+k+'">לא הכל</button></div>';
+    if(WK()){h+='<div class="row" style="display:flex;gap:8px;margin-top:8px"><button class="btn '+(x.ok?'done':'alt')+'" style="flex:2;min-height:56px;font-size:19px" data-rok="'+k+'">'+(RNG()?'✓ הצליח הכל':'✓ הצלחתי הכל')+'</button><button class="btn '+(x.fail?'done':'alt')+'" style="flex:1;min-height:56px;font-size:16px" data-rno="'+k+'">'+(RNG()?'לא הצליח הכל':'לא הכל')+'</button></div>';
       h+=exExtra(x,k);
-      if(!x.fail){h+='</div>';return}h+='<div class="sub" style="margin:8px 4px 0">כמה עשית בכל סט?</div>'}
+      if(!x.fail){h+='</div>';return}
+      if(RNG()){var WHY=[['hard','קשה מדי'],['pain','כאב'],['tired','עייפות'],['tech','טכניקה'],['oth','אחר']];
+        h+='<div class="note" style="margin:8px 0 0"><label class="sub" style="font-weight:700;display:block">כמה חזרות הצליח בסט הכי קשה?</label><input inputmode="numeric" data-fr="'+k+'" value="'+esc(x.fr||'')+'" style="width:100%;font-size:20px;padding:10px;border:2px solid var(--line);border-radius:10px;margin:4px 0 10px;text-align:center" placeholder="למשל 6">'+
+          '<div class="sub" style="font-weight:700;margin-bottom:4px">למה?</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+WHY.map(function(o){return '<button class="btn '+(x.why===o[0]?'done':'alt')+'" data-why="'+k+'.'+o[0]+'" style="flex:1;min-width:80px;min-height:44px;font-size:15px;margin:0;padding:4px">'+o[1]+'</button>'}).join('')+'</div>'+
+          '<input data-fn="'+k+'" value="'+esc(x.fnote||'')+'" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px;margin-top:10px" placeholder="הערה (לא חובה): מה קרה, איפה כאב"></div></div>';return}
+      h+='<div class="sub" style="margin:8px 4px 0">כמה עשית בכל סט?</div>'}
     h+='<div class="sets">'+(RP.deload&&WK()?'<div class="sub">שבוע קל: '+dlSets(x)+' סטים</div>':'');for(var j=0;j<(WK()?dlSets(x):(+x.sets||1));j++){var r=x.res[j]||{};h+='<div class="setr"><span>סט '+(j+1)+'</span><label>'+(x.sec?'שניות':'חזרות')+'<input inputmode="numeric" data-rr="'+k+'.'+j+'.reps" value="'+esc(r.reps==null?'':r.reps)+'"></label><label>ק"ג<input inputmode="decimal" data-rr="'+k+'.'+j+'.kg" value="'+esc(r.kg==null?(x.kg||''):r.kg)+'" placeholder="'+esc(x.kg||'גוף')+'"></label></div>'}
     h+='</div>'+(WK()?'':'<button class="btn alt" data-rdel="'+i+'" style="min-height:44px;font-size:16px;margin-top:6px">🗑 למחוק תרגיל</button>')+'</div>'});
   if(!WK())h+='<button class="btn alt" data-radd="1">+ תרגיל</button>';
@@ -404,6 +410,8 @@ function rpStepWk(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==
   return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
 /* בכל תרגיל: איך מתקדמים, כאב בתרגיל בלחיצה אחת, וצילום הביצוע למאמן */
 function sx(n){var o=null;((PLAN&&PLAN.seed&&PLAN.seed.w)||[]).forEach(function(w){(w.ex||[]).forEach(function(e){if(!o&&e.n===n)o=e})});return o||{}}
+document.addEventListener('input',function(e){var t=e.target,a=t.getAttribute&&(t.getAttribute('data-fr')||t.getAttribute('data-fn'));if(!a||!RP)return;var p=a.split('.'),x=RP.w[+p[0]].ex[+p[1]];if(t.hasAttribute('data-fr'))x.fr=t.value.replace(/[^\d]/g,'');else x.fnote=t.value;rpSave()},true);
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-why]');if(!b||!RP)return;var p=b.getAttribute('data-why').split('.'),x=RP.w[+p[0]].ex[+p[1]];x.why=x.why===p[2]?'':p[2];rpSave();var sy=window.scrollY;render();window.scrollTo(0,sy)},true);
 var KPO=[[0,'0 · בלי'],[2,'1-3 · קל'],[4,'4-5 · בינוני'],[7,'6+ · חזק']];
 function exExtra(x,k){var h='',S0=sx(x.n);x.cue=S0.cue||x.cue||'';x.how=S0.how||x.how||'';var leg=S0.leg==null?true:!!+S0.leg,mk='s'+k.replace('.','_');
   if(S0.m)h+='<div class="media" id="md_'+mk+'"><button class="play" data-play="'+mk+'">▶ לראות איך עושים</button></div>';
@@ -416,7 +424,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   if(b.hasAttribute('data-kp')){var p=b.getAttribute('data-kp').split('.'),x=RP.w[+p[0]].ex[+p[1]],v=+p[2];x.kp=(x.kp!==''&&x.kp!=null&&+x.kp===v)?'':v;rpSave();var sy=window.scrollY;render();window.scrollTo(0,sy);return}
   var q=b.getAttribute('data-exvid').split('.'),y=RP.w[+q[0]].ex[+q[1]];window.PICKEX=y&&y.n||'';var pk=$('pick');pk.value='';pk.setAttribute('accept','video/*,image/*');pk.click()},true);
 function rpFinish(){var W=RP.w[RT];
-  if(WK()&&W.ex)W.ex.forEach(function(x){if(x.ok)x.res=Array.from({length:dlSets(x)},function(){return {reps:String(x.max),kg:x.kg||''}});else if(!x.fail)x.res=[]});
+  if(WK()&&W.ex)W.ex.forEach(function(x){if(x.ok)x.res=Array.from({length:dlSets(x)},function(){return {reps:String(x.max),kg:x.kg||''}});else if(x.fail&&RNG())x.res=(x.fr!==''&&x.fr!=null&&!isNaN(+x.fr))?Array.from({length:dlSets(x)},function(){return {reps:String(+x.fr),kg:x.kg||''}}):[];else if(!x.fail)x.res=[]});
   var has=W.run?(W.run.res&&+W.run.res.km&&W.run.res.time):W.ex.some(function(x){return (x.res||[]).some(function(r){return r&&r.reps!==''&&r.reps!=null})});
   if(!has){toast(W.run?'כותבים כמה ק"מ רצת ואת הזמן הכולל.':(WK()?'מסמנים ✓ בכל תרגיל שהצלחת, או "לא הכל" וכותבים כמה עשית.':'עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.'));return}
   var pv=null;sheet('<h3>היו כאבים באימון?</h3><div class="pchips" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+[[0,'👍 בלי כאבים'],[3,'😐 כאב קל'],[7,'😣 כאב חזק']].map(function(o){return '<button class="btn alt" style="flex:1;min-width:110px" data-pv="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>'+
@@ -426,11 +434,11 @@ function rpFinish(){var W=RP.w[RT];
 function rpFinish2(pain,ptx){var W0=RP.w[RT],wk=WK(),W=wk?JSON.parse(JSON.stringify(W0)):W0,log=[],ch=[];
   if(wk&&RP.deload){W.ex&&W.ex.forEach(function(x){x.st=x.st||0});}
   if(W.run){var rr=runStep(W);if(!rr){toast('כותבים כמה ק"מ רצת ואת הזמן הכולל.');return}log.push(rr.log);ch.push([rr.log.n,rr.m]);W.run.msg=rr.m;W.run.res={}}
-  else W.ex.forEach(function(x,i){if(!x.n||sx(x.n).info)return;var kp=(x.kp===''||x.kp==null)?null:+x.kp,o=W0.ex[i];var r=wk?rpStepWk(x):rpStep(x);if(!r)return;
+  else W.ex.forEach(function(x,i){if(!x.n||sx(x.n).info)return;var kp=(x.kp===''||x.kp==null)?(x.fail&&x.why==='pain'?4:null):+x.kp,o=W0.ex[i];var r=wk?rpStepWk(x):rpStep(x);if(!r)return;
     if(kp!=null&&kp>=4&&o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc;
       if(kp>=6){var wkg=parseFloat(o.kg)||0;if(wkg>INC(x)){x.kg=String(Math.round((wkg-INC(x))*2)/2);r.m='כאב חזק בתרגיל: מורידים קילו, '+x.kg+' ק"ג. אם עדיין כואב: טווח קצר יותר'}else r.m='כאב חזק בתרגיל: אותו יעד בטווח קצר יותר, ולדווח לי'}
       else r.m='כאב בינוני בתרגיל: נשארים על אותו יעד עד שהכאב יורד ל-3 ומטה'}
-    log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets,kp:kp});ch.push([x.n,r.m]);x.msg=r.m;x.res=[];x.kp=''});
+    log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets,kp:(x.kp===''||x.kp==null)?null:+x.kp,ok:!!x.ok,why:x.fail?(x.why||''):'',note:x.fail?(x.fnote||''):''});ch.push([x.n,r.m]);x.msg=r.m;x.res=[];x.kp='';x.fr='';x.why='';x.fnote=''});
   if(!log.length){toast('עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.');return}
   if(wk&&pain>=7){ch=ch.map(function(c){return [c[0],'בגלל הכאב לא מעלים, נשארים על אותו יעד']});W.ex&&W.ex.forEach(function(x,i){var o=W0.ex[i];if(o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc}});if(W.run)W.run=JSON.parse(JSON.stringify(W0.run))}
   if(wk){W0.doneAt=Date.now();if(RP.deload){ch=ch.map(function(c){return [c[0],'שבוע קל, בלי העלאות. ממשיכים להתקדם בשבוע הבא']})}else{W.pend=null;var up=ch.filter(function(c){return !/^אותו|^נשארים|^לשאוף|^כמעט|^בגלל/.test(c[1])});W0.pend={ex:W.ex,run:W.run,sum:W.run?(up.length?up[0][1].replace(/^[^:]*! /,'').replace('בשבוע הבא ','').replace(/^מוסיפים/,'מוסיפים'):'אותו יעד'):(up.length?'עולים ב'+up.map(function(c){return c[0]}).join(', ')+'. בשאר אותו יעד':'אותו יעד, לשאוף לעוד חזרה')}}
