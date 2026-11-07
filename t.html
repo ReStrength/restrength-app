@@ -400,8 +400,8 @@ function rpStepWk(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==
         else if((x.tp||1)<2){x.tp=2;m='טמפו איטי יותר: '+TP2}
         else{m='הגעת לשיא בתרגיל הזה 💪 שומרים, ואפשר לעבור לגרסה קשה יותר שלו'}}
       else if(x.cyc%10===0&&(+x.sets||3)<4){x.sets=(+x.sets||3)+1;m='מוסיפים סט אחד: '+x.sets+' סטים'}
-      else if(work>0&&INC(x)>=2.5&&+x.max<12){x.min=Math.min(+x.min+1,14);x.max=+x.max+1;m='מוסיפים חזרה: '+x.max+' חזרות (במשקל הזה עד 12, ואז עולים ב-'+INC(x)+' ק"ג)'}
-      else if(work>0&&INC(x)>=2.5){x.kg=String(Math.round((work+INC(x))*2)/2);x.min=x.max=8;m='עולים ב-'+INC(x)+' ק"ג: '+x.kg+' ק"ג, וחוזרים ל-8 חזרות'}
+      else if(work>0&&INC(x)>=2.5&&+x.max<12){if(!RNG())x.min=Math.min(+x.min+1,14);x.max=+x.max+1;m='מוסיפים חזרה: '+x.max+' חזרות (במשקל הזה עד 12, ואז עולים ב-'+INC(x)+' ק"ג)'}
+      else if(work>0&&INC(x)>=2.5){x.kg=String(Math.round((work+INC(x))*2)/2);var S1=sx(x.n);if(RNG()&&S1.min){x.min=+S1.min;x.max=+S1.max}else x.min=x.max=8;m='עולים ב-'+INC(x)+' ק"ג: '+x.kg+' ק"ג, וחוזרים ל-'+(+x.min===+x.max?x.max:x.min+'-'+x.max)+' חזרות'}
       else if(work>0&&(FOC()==='str'?true:FOC()==='end'?(x.cyc%3===0||+x.max>=15):(x.cyc%2===1||+x.max>=15))){x.kg=String(Math.round((work+INC(x))*2)/2);m='מוסיפים '+(INC(x)===1?'קילו אחד':INC(x)+' ק"ג')+': '+x.kg+' ק"ג, אותן חזרות'}
       else{x.min=Math.min(+x.min+1,14);x.max=Math.min(+x.max+1,15);m='מוסיפים חזרה: '+x.min+'–'+x.max+' חזרות'}}
     x.st=0}
