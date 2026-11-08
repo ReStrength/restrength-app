@@ -1733,7 +1733,7 @@ function exNorm(raw){const s=String(raw||'').trim();if(!s||libFind(s))return nul
 function curPlanEx(c){const ss=(S.P&&S.P.clientId===c.id?S.P.sessions:[])||[];const p=ss.filter(x=>x.status==='planned').sort((a,b)=>(b.seq||0)-(a.seq||0))[0]||ss.filter(x=>x.status==='done').sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];return (p&&p.exercises||[]).filter(e=>e.name)}
 function suggestGoals(c){const ex=curPlanEx(c),age=ageOf(c),o=[];const g=k=>ex.filter(e=>(e.group||(libFind(e.name)||[])[2])===k);
   const top=k=>g(k).filter(e=>e.unit==='kg'&&num(e.targetKg)>0).sort((a,b)=>num(b.targetKg)-num(a.targetKg))[0];
-  const step=kg=>Math.max(kg+2,Math.round(kg*1.25*2)/2);
+  const step=kg=>{const t=kg*1.25,inc=kg>=10?2.5:1;return Math.max(kg+inc,Math.round(t/inc)*inc)};
   const lo=top('lower'),up=top('upper');
   if(g('lower').length) o.push('לקום מכיסא 10 פעמים ברצף בלי עזרת הידיים');
   if(lo) o.push(`להגיע ל־${step(num(lo.targetKg))} ק"ג ב${lo.name} (היום ${num(lo.targetKg)} ק"ג)`);
