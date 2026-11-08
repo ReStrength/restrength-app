@@ -1126,6 +1126,7 @@ function newClientForm(coachId){
     <div class="form-grid">
     <label class="f" for="n_coach">מאמן אחראי<select id="n_coach"><option value="">—</option>${S.coaches.filter(k=>k.active!==false).map(k=>`<option value="${k.id}"${k.id===coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
     <label class="f" for="n_start">תאריך התחלה<input id="n_start" type="date" value="${today()}"></label></div>
+    <label class="row" style="gap:8px;align-items:center;margin:6px 0 10px;font-weight:600"><input type="checkbox" id="n_intro" ${S.newIntro?'checked':''} style="width:22px;height:22px"> ⭐ מגיע/ה למפגש היכרות – התוכנית תיבנה מעצמה לפי התסריט</label>
     <div class="row"><button class="btn primary" data-act="createClient" data-write>יצירה ובניית התוכנית</button><button class="btn ghost" data-act="cancelNew">ביטול</button></div></div>`;
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ntype],[data-nfreq]');if(!b)return;
@@ -1431,9 +1432,9 @@ function abHtml(k){
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
   const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
-      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}"`:`data-open="${c.id}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
+      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}"`:`data-open="${c.id}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
   return `<div class="abbox"><div class="abh"><h2>🗓️ מי מגיע ${off?'מחר':'היום'} (מארבוקס)</h2>${tabs}</div>${body}</div>`}
-document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-abnew]');if(!a)return;e.preventDefault();e.stopPropagation();const nm=a.dataset.abnew.trim();const cid=(S.coaches.find(k=>{try{return abCoachMatch(k,a.dataset.abc)}catch(_){return false}})||{}).id||S.meId;closeClient();S.view='coaches';S.coachView=cid;S.showNew=true;render();setTimeout(()=>{const i=$('#n_name');if(i){i.value=nm;i.focus()}window.scrollTo(0,0)},0)},true);
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-abnew]');if(!a)return;e.preventDefault();e.stopPropagation();const nm=a.dataset.abnew.trim();S.newIntro=!!a.dataset.abintro;const cid=(S.coaches.find(k=>{try{return abCoachMatch(k,a.dataset.abc)}catch(_){return false}})||{}).id||S.meId;closeClient();S.view='coaches';S.coachView=cid;S.showNew=true;render();setTimeout(()=>{const i=$('#n_name');if(i){i.value=nm;i.focus()}window.scrollTo(0,0)},0)},true);
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-openc]');if(a){e.preventDefault();e.stopPropagation();openClient(a.dataset.openc);return}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-abday]');if(!b)return;S.abDay=+b.dataset.abday;render()});
 function vCoaches(){
@@ -1603,7 +1604,11 @@ function paneHtml(ctx,c,pane,pair){
    <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
    <li><b>עבודת כוח:</b> סופר סטים 2×8, טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
    <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
-   <li><b>⭐ חובה:</b> תיעוד בארבוקס מיד בסיום – לא הולכים בלי לרשום!</li></ol></details>`:'';
+   <li><b>⭐ חובה:</b> תיעוד בארבוקס מיד בסיום – לא הולכים בלי לרשום! (שקד קוראת את זה ומשתמשת בזה בשיחת ההמשך)</li></ol>
+   <div style="margin-top:10px"><b>📲 התיעוד לארבוקס</b> <span class="muted small">(ממלאים כאן, מעתיקים, ובארבוקס: שם המתעניין ← "הערות כלליות" ← ➕ ← מדביקים ← שמירה)</span>
+   <textarea id="introDoc" rows="7" style="width:100%;margin-top:6px" data-introdoc>${esc(c.introDoc||`מפגש היכרות עם ${String(c.name||'').split(' ')[0]}${ageOf(c)?` (${ageOf(c)})`:''}:\n🎯 מה הכי חשוב ${c.sex==='F'?'לה':c.sex==='M'?'לו':'לו/לה'} ולמה: \n🔍 מה ראינו באימון: \n📝 ההמלצה שלי: `)}</textarea>
+   <div class="muted small">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
+   <div class="row" style="margin-top:6px"><button class="btn primary sm" data-act="introCopy">📋 העתקה לארבוקס</button></div></div></details>`:'';
   return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button></div>
    <label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label><div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
@@ -2006,7 +2011,8 @@ async function act(name,el){
   case 'createClient': {
     const name=$('#n_name').value.trim(); if(!name){toast('צריך להזין שם');return}
     const ttyp=$('#n_type').value; if(!ttyp){toast('בחרו: אימון אישי או זוגי');return}
-    const fq=Number($('#n_freq').value); if(!fq){toast('בחרו כמה פעמים בשבוע');return}
+    const isIntro=!!($('#n_intro')||{}).checked;
+    const fq=Number($('#n_freq').value)||(isIntro?1:0); if(!fq){toast('בחרו כמה פעמים בשבוע');return}
     let partner=ttyp==='pair'?$('#n_partner').value:''; const pname=ttyp==='pair'&&partner==='__new'?$('#n_pname').value.trim():'';
     if(partner==='__new'&&!pname){toast('צריך להזין את שם בן/בת הזוג');return}
     const coachId=$('#n_coach').value,startDate=$('#n_start').value||today();
@@ -2014,7 +2020,15 @@ async function act(name,el){
     const base={coachId,freq:fq,trainingType:ttyp,remote:ttyp==='remote',groupName:'',startDate,status:'active',goals:[],createdAt:Date.now(),hasPlan:false,pendingApproval:false};
     const ok=await saveDoc('clients/'+ref.id,{...base,name,partnerId:partner});
     if(ok){ if(pref) await saveDoc('clients/'+pref.id,{...base,name:pname,partnerId:ref.id}); else if(partner) await updClient(partner,{partnerId:ref.id,trainingType:'pair'});
-      S.showNew=false; openClient(ref.id,'session'); toast(ttyp==='pair'?'הזוג נוצר. בונים את האימון הראשון, ואותה תוכנית תופיע לשניהם':'המתאמן נוצר. בונים את האימון הראשון'); }
+      if(isIntro){const t=allTemplates().find(x=>x.id==='intro');const T0=Date.now();
+        if(ttyp==='pair'){const pk='pair:'+[ref.id,partner].sort().join(':');const mem=[ref.id,partner];
+          const exs=tplExercises('intro').map(e=>{const ne=gNewEx(e);mem.forEach(m=>ne.m[m]={kg:'',sets:Array.from({length:Number(e.targetSets)||2},()=>''),pain:'',adapt:''});return ne});
+          await saveDoc('sessions/'+S.db.collection('sessions').doc().id,{clientId:gid(pk),group:true,groupName:pk,label:'1',seq:1,status:'planned',approved:true,intro:true,date:'',notes:'',warmup:t.warm,createdAt:T0,exercises:exs,members:mem});
+          for(const m of mem) await updClient(m,{hasPlan:true,warmup:t.warm,intro:true});}
+        else{const doc=blankPlan(ref.id,'1','ss');doc.exercises=tplExercises('intro');doc.warmup=t.warm;doc.intro=true;
+          await saveDoc('sessions/'+S.db.collection('sessions').doc().id,doc);await updClient(ref.id,{hasPlan:true,warmup:t.warm,intro:true});}}
+      S.newIntro=false; S.showNew=false; if(isIntro&&ttyp==='pair'){openGroup('pair:'+[ref.id,partner].sort().join(':'));toast('הזוג נוצר, ותוכנית מפגש ההיכרות כבר מוכנה');break}
+      openClient(ref.id,'session'); if(isIntro){toast('התיק נוצר, ותוכנית מפגש ההיכרות כבר מוכנה לפי התסריט');break} toast(ttyp==='pair'?'הזוג נוצר. בונים את האימון הראשון, ואותה תוכנית תופיע לשניהם':'המתאמן נוצר. בונים את האימון הראשון'); }
     break;}
   case 'saveProfile': {
     const goals=[...document.querySelectorAll('#p_goals [data-goal]')].filter(b=>b.getAttribute('aria-pressed')==='true').map(b=>b.dataset.goal);
@@ -2184,6 +2198,8 @@ async function act(name,el){
   case 'printReport': try{window.print()}catch(e){toast('ההדפסה לא זמינה בתצוגה הזו')} break;
   case 'nameTo': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const old=ex.name; const n=el.dataset.name; const note=el.dataset.note||''; if(note&&!String(ex.tempo||'').includes(note))ex.tempo=note+(ex.tempo?'\n'+ex.tempo:''); ex.name=n; const l=libFind(n); if(l){ex.unit=l[1];ex.group=l[2];}
     saveEdit(ctx,0); toast(`עודכן ל: ${n}`); render(); break;}
+  case 'introCopy': {const t=$('#introDoc'); if(!t) break; const cl=clientById(S.clientId); if(cl){cl.introDoc=t.value; updClient(cl.id,{introDoc:t.value});}
+    try{await navigator.clipboard.writeText(t.value);toast('הועתק ✓ עכשיו מדביקים בארבוקס ב"הערות כלליות"')}catch(e){t.select();document.execCommand('copy');toast('הועתק ✓')} break;}
   case 'cmOpen': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; S.cmEx=S.cmEx===ex.id?null:ex.id; S.painEx=null; S.effEx=null; render(); break;}
   case 'cmAdd': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const cl=clientById(ctx.clientId); if(!cl) break;
     tpPickFile(async f=>{ if(f.size>300*1048576){toast('הקובץ גדול מדי (עד 300MB)');return}
