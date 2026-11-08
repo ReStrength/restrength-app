@@ -418,7 +418,15 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .sheet .rng input[data-f="repMax"]{text-align:left!important}
 .plan-next{display:flex;justify-content:center;padding:18px 0 6px}
 .sheet .rng .rngsep{font-size:18px;color:var(--muted);padding:0 6px}
-.sheet .rng input[data-f="repMin"],.sheet .rng input[data-f="repMax"]{text-align:center!important;width:36px!important}
+.sheet .rng input[data-f="repMin"],.sheet .rng input[data-f="repMax"]{width:30px!important;padding:4px 0!important;-moz-appearance:textfield;appearance:textfield}
+.sheet .rng input::-webkit-outer-spin-button,.sheet .rng input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sheet .rng{gap:0!important}.sheet .rng .rngsep{padding:0 3px!important}
+.sheet td.rngc{width:84px}
+.painrow td{background:#fff6f6;text-align:start;padding:10px 12px}
+.painrow .ptip{font-size:15px;line-height:1.5;color:var(--ink)}
+.painrow .plvl{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:14px;color:var(--muted)}
+.painrow .plvl input{width:64px;text-align:center;font-weight:700}
+.btn.painon{background:#fff0f0;color:#c92a2a;border-color:#e03131}
 .btn.big{font-size:20px;padding:14px 34px;border-radius:12px}
 .weekchip{font-family:var(--f-display);font-size:24px}
 .weekchip{font-size:36px!important;line-height:1.1}
@@ -1197,17 +1205,15 @@ function vGroup(){
       return `<tr><td class="gname"><b>${esc(c.name)}</b>${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
        <td class="gkg" data-l="משקל"><input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
        ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
-       <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" dir="ltr" placeholder="0–10" min="0" max="10" data-gm="pain" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.pain)}" data-st="${num(mm.pain)>=4?'low':''}"></td>
-       <td class="res eff" data-l="מאמץ"><input type="number" inputmode="numeric" min="1" max="10" data-gm="rpe" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.rpe??'')}" placeholder="${effDflt(c.id)}"></td>
        <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="למשל: מדרגה נמוכה"></td></tr>`}).join('');
     return `${sep}<div class="gex card ${tg.ss?'ssr':''}" data-gex="${i}">
      <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}
       <label>סטים<input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></label>
       <label>${sec?'שניות':'חזרות'}<span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${esc(ex.repMax)}"></span></label>
       <input class="gt" data-gf="tempo" data-ei="${i}" value="${esc(ex.tempo)}" placeholder="טמפו, מנח, דגשים">
-      <span class="gacts"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
-     ${cueHtml(ex.name)}
-     <div class="tbl-wrap"><table class="gtable">${Q?`<thead><tr><th>משתתף</th><th>משקל</th><th>${sec?'שניות':'חזרות'}</th><th>איך היה?</th><th>הערה</th></tr></thead>`:`<thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>כאב</th><th>מאמץ</th><th>התאמה אישית</th></tr></thead>`}<tbody>${rows}</tbody></table></div></div>`}).join('');
+      <span class="gacts"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" title="הצעה לשינוי מנח כשיש כאב">🤕 כאב</button><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
+     ${S.gPain===i?`<div class="banner bad" style="margin:6px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום בעמודה "התאמה אישית" מה שונה.</span></span></div>`:''}${cueHtml(ex.name)}
+     <div class="tbl-wrap"><table class="gtable">${Q?`<thead><tr><th>משתתף</th><th>משקל</th><th>${sec?'שניות':'חזרות'}</th><th>איך היה?</th><th>הערה</th></tr></thead>`:`<thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>התאמה אישית</th></tr></thead>`}<tbody>${rows}</tbody></table></div></div>`}).join('');
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq||1)>(d.seq||1));
   const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">שבוע ${s.seq}${s.status==='done'?' ✓':''}</button>`).join('');
   let rot='';
@@ -1260,6 +1266,7 @@ async function gAct(name,el){
   case 'gUp': case 'gDown': {const j=name==='gUp'?i-1:i+1; if(j<0||j>=d.exercises.length) break; [d.exercises[i],d.exercises[j]]=[d.exercises[j],d.exercises[i]]; gSave(0); render(); break;}
   case 'gDel': {if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='למחוק?';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='✕'}},3000);break} d.exercises.splice(i,1); gSave(0); render(); break;}
   case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
+  case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
   case 'gApply': {const mm=d.exercises[i].m[el.dataset.cid]; mm.kg=mm.skg; gSave(0); render(); break;}
   case 'gComplete': {
@@ -1490,13 +1497,13 @@ function progTable(ctx,doc){
   const exs=doc.exercises||[]; const tags=groupTags(exs);
   const nSets=Math.min(6,Math.max(2,...exs.map(e=>Number(e.targetSets)||0)));
   const showSugg=doc.status==='planned';
-  const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th><th colspan="${nSets+2}" class="grp-res">תוצאות</th><th></th></tr>
-   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>כאב</th><th title="רמת מאמץ 1–10. לא חובה: ריק = הקבוע של המתאמן">מאמץ</th><th>סדר</th></tr></thead>`;
+  const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th><th colspan="${nSets}" class="grp-res">תוצאות</th><th></th></tr>
+   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
-    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+8}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>k==='kg'?kgChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
+    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>k==='kg'?kgChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
-    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+8}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
+    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
      <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
@@ -1504,9 +1511,7 @@ function progTable(ctx,doc){
      <td class="kg" data-l="משקל עבודה (בלי המוט)"><input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג"></td>
      <td class="notes"><textarea data-f="tempo" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="טמפו, מנח, ציוד">${esc(ex.tempo)}</textarea></td>
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><span class="stp"><button type="button" data-step="1" tabindex="-1" aria-label="חזרה נוספת">+</button><button type="button" data-step="-1" tabindex="-1" aria-label="חזרה פחות">−</button></span><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"></td>`:'<td class="res off"></td>'}).join('')}
-     <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" dir="ltr" placeholder="0–10" min="0" max="10" data-f="pain" value="${esc(ex.pain)}" data-st="${num(ex.pain)>=4?'low':''}" aria-label="כאב 0–10"></td>
-     <td class="res eff" data-l="מאמץ"><input type="number" inputmode="numeric" min="1" max="10" data-f="rpe" value="${esc(ex.rpe??'')}" placeholder="${effDflt(ctx.clientId)}" data-st="${num(ex.rpe)>=9?'low':''}" aria-label="רמת מאמץ 1–10"></td>
-     <td class="acts"><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" title="החלפה לתרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄 חלופה</button><button class="btn ghost sm" data-act="exUp" title="הזזת התרגיל למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" title="הזזת התרגיל למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="exDel" title="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${sg}`}).join('');
+     <td class="acts"><button class="btn ghost sm${num(ex.pain)||S.painEx===ex.id?' painon':''}" data-act="painOpen" data-i="${i}" title="דיווח כאב והצעה לשינוי מנח" aria-label="כאב">🤕 כאב${num(ex.pain)?' '+ex.pain:''}</button><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" title="החלפה לתרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄 חלופה</button><button class="btn ghost sm" data-act="exUp" title="הזזת התרגיל למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" title="הזזת התרגיל למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button><button class="btn ghost sm" data-act="exDel" title="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${S.painEx!=null&&S.painEx===ex.id?painRow(ex,i,nSets):''}${sg}`}).join('');
   return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
 }
 function pastWeeks(ctx,c,label,curId,limit,title){
@@ -1622,8 +1627,24 @@ const PATS=[['single',/בולגרי|מכרע|לאנג|סטפ אפ|סינגל ל�
 function patOf(n){n=String(n||'');const p=PATS.find(x=>x[1].test(n));return p?p[0]:null}
 function subsFor(name){const p=patOf(name); if(!p){const l=libFind(name);return l?LIB.filter(x=>x[2]===l[2]&&x[0]!==name).slice(0,8).map(x=>x[0]):[]}
   return LIB.filter(x=>x[0]!==name&&patOf(x[0])===p).map(x=>x[0]).slice(0,10)}
+function painTip(n){n=String(n||'');
+  const T=[[/סקוואט|קום-שב|ישיבה וקימה|קימה|בוקס/,'לפתוח עוד את רוחב הפיסוק ולהפנות את כפות הרגליים מעט יותר החוצה. אם עדיין כואב: להקטין את עומק הירידה (ספסל או קופסה גבוהים יותר) ולהאט את הירידה.'],
+   [/דדליפט|הינג|רומני|סווינג/,'להקטין את הטווח (להתחיל מהגבהה), לכופף מעט יותר את הברכיים ולהחזיק את המשקל צמוד לגוף. לנשוף בעלייה.'],
+   [/לאנג|מכרע|בולגרי|סטפ|מדרגה/,'לשנות את אורך הצעד (קצר או ארוך יותר), להחזיק תמיכה ביד ולהקטין את עומק הירידה. בסטפ אפ: מדרגה נמוכה יותר.'],
+   [/היפ|גלוט|ברידג|פשיטת ירך/,'לשנות את מיקום כפות הרגליים (קרוב או רחוק יותר מהישבן), לעצור לפני סוף הטווח ולא לקשת את הגב התחתון.'],
+   [/לחיצת כתפיים|מעל הראש|הרחקת|פייס/,'לעבור לאחיזה ניטרלית (כפות פונות זו לזו), ללחוץ מעט לפנים ולא ישר מעל הראש, ולהקטין את הטווח.'],
+   [/לחיצת חזה|שכיבות סמיכה|פליי|לחיצה/,'לצמצם את רוחב האחיזה ולקרב את המרפקים לגוף (כ־45°), להקטין את עומק הירידה. עם משקולות יד: אחיזה ניטרלית.'],
+   [/חתירה|משיכה|פולי|צ.ין|TRX/,'לשנות אחיזה (ניטרלית או צרה יותר), להקטין את הטווח בסוף התנועה ולמשוך לכיוון החזה, לא מאחורי הראש.'],
+   [/כפיפת מרפקים|פשיטת מרפקים|סקאל/,'לעבור לאחיזת פטיש או לכבל, ולהקטין את הטווח.'],
+   [/בטן|פלאנק|קראנץ|דד באג|בירד|טאק|הרמת רגליים|פאלוף|וודצ/,'להקטין את המנוף (ברכיים כפופות, ידיים קרובות לגוף או פלאנק על ספסל) ולנשוף בזמן המאמץ.'],
+   [/קאף|תאומים/,'להקטין את הטווח ולהחזיק תמיכה ביד.'],
+   [/פארמר|קארי|הליכה/,'להוריד משקל ולקצר את המרחק.']];
+  const t=T.find(x=>x[0].test(n));
+  return (t?t[1]:'לנסות מנח מעט שונה: להקטין את טווח התנועה, לשנות אחיזה או זווית, להאט את הקצב.')+' אם הכאב נשאר מעל 3 – להוריד משקל או לעבור לתרגיל חלופי (🔄 חלופה).'}
+function painRow(ex,i,nSets){return `<tr class="painrow" data-ex="${i}"><td colspan="${nSets+6}"><div class="ptip"><b>🤕 כאב ב${esc(ex.name||'תרגיל')}? קודם כל לנסות לשנות מנח, בלי להחליף תרגיל:</b><br>${painTip(ex.name)}</div>
+  <label class="plvl">רמת כאב (לא חובה) <input type="number" inputmode="numeric" dir="ltr" min="0" max="10" placeholder="0–10" data-f="pain" value="${esc(ex.pain)}" aria-label="רמת כאב 0–10"></label> <button class="btn ghost sm" data-act="painOpen" data-i="${i}">סגירה</button></td></tr>`}
 function swapRow(ex,i,nSets){const subs=subsFor(ex.name);
-  return `<tr class="swaprow" data-ex="${i}"><td colspan="${nSets+8}"><b>תרגילים חלופיים ל${esc(ex.name)}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></td></tr>`}
+  return `<tr class="swaprow" data-ex="${i}"><td colspan="${nSets+6}"><b>תרגילים חלופיים ל${esc(ex.name)}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></td></tr>`}
 
 /* ----- progress report ----- */
 function vReport(c){
@@ -2003,6 +2024,7 @@ async function act(name,el){
   case 'openReport': S.report=S.clientId; render(); window.scrollTo(0,0); break;
   case 'closeReport': S.report=null; render(); break;
   case 'printReport': try{window.print()}catch(e){toast('ההדפסה לא זמינה בתצוגה הזו')} break;
+  case 'painOpen': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; S.painEx=S.painEx===ex.id?null:ex.id; render(); break;}
   case 'swapOpen': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; S.swapEx=S.swapEx===ex.id?null:ex.id; render(); break;}
   case 'swapClose': S.swapEx=null; render(); break;
   case 'swapTo': {const ex=ctx.edit.doc.exercises[Number(el.closest('[data-ex]').dataset.ex)]; const n=el.dataset.name; const l=libFind(n); const old=ex.name;
