@@ -1463,7 +1463,7 @@ function vClient(){
   const head=`<div class="chead"><div style="min-width:0"><button class="btn ghost sm" data-act="backCoach">→ המתאמנים של ${esc(coachName(c.coachId)!=='—'?coachName(c.coachId):'ללא מאמן')}</button><h1>${esc(c.name)}</h1>
     <div class="meta"><span>תאריך התחלה: <b>${c.startDate?fmt(c.startDate):'יירשם אוטומטית באימון הראשון'}</b></span></div>
     ${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span></div>`:''}
-    ${!(c.goalsShort||c.goalText||c.goalsLong)?`<div class="row" style="margin-top:6px"><button type="button" class="chip info" style="cursor:pointer;border:0;font:inherit" data-act="goGoals" title="מעבר לכתיבת המטרות">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])} ←</button></div>`:''}
+    ${!(c.goalsShort||c.goalText||c.goalsLong)?`<div class="row" style="margin-top:6px"><button type="button" class="chip info" style="cursor:pointer;border:0;font:inherit" data-act="goalSug" title="הצעה למטרות לפי התוכנית והגיל">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])} ←</button></div>${S.goalSug===c.id?goalSugHtml(c):''}`:''}
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
   const safety=(c.limits?`<div class="safety"><b>⚠ מגבלות והתוויות נגד:</b><span>${esc(c.limits)}</span></div>`:'')+(c.conditions?`<div class="safety med"><b>🩺 מצבים רפואיים ואבחנות:</b><span>${esc(c.conditions)}</span></div>`:'');
@@ -1729,6 +1729,26 @@ function exNorm(raw){const s=String(raw||'').trim();if(!s||libFind(s))return nul
   if(/^(בנץ'?|bench)\s*פרס|bench ?press/i.test(s))return {n:'לחיצת חזה עם מוט אולימפי',note:''};
   if(/^(שולדר|OHP|מיליטרי)/i.test(s))return {n:'לחיצת כתפיים בעמידה עם מוט אולימפי',note:''};
   const r=exNorm0(s);return r&&libFind(r.n)?r:null}
+/* הצעת מטרות לפי התוכנית והגיל – המאמן מסמן ומאשר */
+function curPlanEx(c){const ss=(S.P&&S.P.clientId===c.id?S.P.sessions:[])||[];const p=ss.filter(x=>x.status==='planned').sort((a,b)=>(b.seq||0)-(a.seq||0))[0]||ss.filter(x=>x.status==='done').sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];return (p&&p.exercises||[]).filter(e=>e.name)}
+function suggestGoals(c){const ex=curPlanEx(c),age=ageOf(c),o=[];const g=k=>ex.filter(e=>(e.group||(libFind(e.name)||[])[2])===k);
+  const top=k=>g(k).filter(e=>e.unit==='kg'&&num(e.targetKg)>0).sort((a,b)=>num(b.targetKg)-num(a.targetKg))[0];
+  const step=kg=>Math.max(kg+2,Math.round(kg*1.25*2)/2);
+  const lo=top('lower'),up=top('upper');
+  if(g('lower').length) o.push('לקום מכיסא 10 פעמים ברצף בלי עזרת הידיים');
+  if(lo) o.push(`להגיע ל־${step(num(lo.targetKg))} ק"ג ב${lo.name} (היום ${num(lo.targetKg)} ק"ג)`);
+  if(up) o.push(`להגיע ל־${step(num(up.targetKg))} ק"ג ב${up.name} (היום ${num(up.targetKg)} ק"ג)`);
+  if(g('balance').length||(age&&age>=70)) o.push('לעמוד על רגל אחת 10 שניות בכל צד בלי להיתמך');
+  if(g('core').length) o.push('להחזיק פלאנק 30 שניות בלי כאב בגב');
+  o.push('לעלות 2 קומות במדרגות בלי לעצור ובלי להיתמך במעקה');
+  o.push('להגיע באופן קבוע: לפחות 3 אימונים בכל חודש');
+  return [...new Set(o)].slice(0,6)}
+function goalSugHtml(c){const L=suggestGoals(c);const d=new Date();d.setMonth(d.getMonth()+3);const iso=d.toISOString().slice(0,10);
+  return `<div class="card" style="margin-top:8px;border:2px solid var(--accent-soft,#ffd6d6)"><b>🎯 הצעה למטרות ל${esc(String(c.name).split(' ')[0])}</b> <span class="muted small">לפי התוכנית${ageOf(c)?' והגיל':''}. מסמנים מה מתאים, אפשר לערוך, ובוחרים תאריך יעד.</span>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${L.map((t,j)=>`<label class="row" style="gap:8px;align-items:center"><input type="checkbox" data-gs="${j}" ${j<3?'checked':''} style="width:22px;height:22px"><input type="text" data-gst="${j}" value="${esc(t)}" style="flex:1"></label>`).join('')}
+  <label class="row" style="gap:8px;align-items:center"><input type="checkbox" data-gs="x" style="width:22px;height:22px"><input type="text" data-gst="x" placeholder="מטרה אחרת (למשל: לטייל עם הנכדים)" style="flex:1"></label></div>
+  <div class="row" style="margin-top:10px;align-items:center;gap:10px"><label class="small">תאריך יעד <input type="date" id="gsDate" value="${iso}"></label>
+  <button class="btn primary sm" data-act="goalSave" data-write>שמירת המטרות</button><button class="btn ghost sm" data-act="goGoals">לכתוב בעצמי</button><button class="btn ghost sm" data-act="goalSug">לא עכשיו</button></div></div>`}
 /* תמונה / סרטון למאמן לתרגיל מסוים (למשל זווית הספסל) – נשמר מוצפן, רק לצוות */
 function cmList(c,n){return ((c&&c.coachMedia)||{})[n]||[]}
 function cmBtn(ctx,ex,i){const c=ctx&&clientById(ctx.clientId);if(!c||!ex.name)return '';const L=cmList(c,ex.name);return `<button type="button" class="linkbtn tiny" data-act="cmOpen" data-i="${i}" title="תמונה או סרטון למאמן: איך הושבנו, זווית, גובה">📷 ${L.length?`תמונות למאמן (${L.length})`:'תמונה/סרטון למאמן'}</button>`}
@@ -2103,6 +2123,11 @@ async function act(name,el){
   case 'noteClear': {const id=S.clientId; const cl=clientById(id); if(cl)cl.handoff=null; render(); await updClient(id,{handoff:null}); toast('ההערה הוסרה'); break;}
   case 'logout': logout(); break;
   case 'forceNew': {if(ctx){ctx.forceNew=true; render();} break;}
+  case 'goalSug': S.goalSug=S.goalSug===S.clientId?null:S.clientId; render(); break;
+  case 'goalSave': {const cl=clientById(S.clientId); if(!cl) break; const sel=[...document.querySelectorAll('[data-gs]')].filter(x=>x.checked).map(x=>{const t=document.querySelector(`[data-gst="${x.dataset.gs}"]`);return t?t.value.trim():''}).filter(Boolean);
+    if(!sel.length){toast('לסמן לפחות מטרה אחת');break}
+    const dt=($('#gsDate')||{}).value||''; const txt=sel.map(t=>'• '+t).join('\n')+(dt?`\nתאריך יעד: ${fmt(dt)}`:'');
+    if(await updClient(cl.id,{goalsShort:txt,goalDate:dt})){cl.goalsShort=txt;cl.goalDate=dt;S.goalSug=null;toast('המטרות נשמרו ✓');render()} break;}
   case 'goGoals': S.tab='profile'; render(); setTimeout(()=>{const g=$('#p_gshort');if(g){g.scrollIntoView({block:'center'});g.focus()}},60); break;
   case 'tgAdd': S.tgAdd=true; render(); setTimeout(()=>{const x=$('#tg_n');if(x)x.focus()},50); break;
   case 'tgCancel': S.tgAdd=false; render(); break;
