@@ -1442,6 +1442,7 @@ function vCoaches(){
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
+     ${k.id!=='none'&&k.id===S.meId?gcalCard(k):''}
      ${k.id!=='none'&&k.id===S.meId?tpInbox():''}
      ${k.id!=='none'?abHtml(k):''}
      ${k.id!=='none'?todayHtml(act):''}
@@ -1749,6 +1750,14 @@ function goalSugHtml(c){const L=suggestGoals(c);const d=new Date();d.setMonth(d.
   <label class="row" style="gap:8px;align-items:center"><input type="checkbox" data-gs="x" style="width:22px;height:22px"><input type="text" data-gst="x" placeholder="מטרה אחרת (למשל: לטייל עם הנכדים)" style="flex:1"></label></div>
   <div class="row" style="margin-top:10px;align-items:center;gap:10px"><label class="small">תאריך יעד <input type="date" id="gsDate" value="${iso}"></label>
   <button class="btn primary sm" data-act="goalSave" data-write>שמירת המטרות</button><button class="btn ghost sm" data-act="goGoals">לכתוב בעצמי</button><button class="btn ghost sm" data-act="goalSug">לא עכשיו</button></div></div>`}
+/* יומן גוגל: שאלה חד־פעמית למאמן – האם לסנכרן את האימונים מארבוקס ליומן הגוגל שלו */
+const GCAL_HOOK='https://hook.eu1.make.com/3bbnj8rdvlniv758up3qacz2jrsckcvu';
+function gcalCard(k){if(!S.canWrite||k.gcal||S.gcalLater)return '';const em=esc((S.user&&S.user.email)||'');const st=S.gcalStep||'';
+  const head=`<div class="card" style="border:2px solid #cfe0ff"><b>📅 האימונים שלך מארבוקס – גם ביומן גוגל שלך?</b><p class="muted small" style="margin:4px 0 10px">כל אימון שנקבע לך בארבוקס יופיע לבד ביומן גוגל שלך, ואימון חדש יתווסף תוך כרבע שעה. רק את האימונים שלך – אף אחד אחר לא רואה את היומן שלך.</p>`;
+  if(st==='new')return head+`<label class="f">המייל של הגוגל שלך (gmail)<input id="gcEmail" type="email" dir="ltr" value="${em}" placeholder="name@gmail.com"></label><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="gcalSave" data-mode="new">יצירת יומן ושיתוף איתי</button><button class="btn ghost sm" data-act="gcalStep" data-st="">חזרה</button></div></div>`;
+  if(st==='existing')return head+`<ol class="small" style="margin:0 0 8px;padding-inline-start:18px;line-height:1.7"><li>במחשב, פותחים את יומן גוגל ← ליד היומן של האימונים לוחצים על ⋮ ← <b>הגדרות ושיתוף</b>.</li><li>ב"שיתוף עם אנשים ספציפיים" מוסיפים את <b dir="ltr">strengthismedicine@gmail.com</b> עם הרשאה <b>ביצוע שינויים באירועים</b>.</li><li>באותו עמוד, למטה ב"שילוב היומן", מעתיקים את <b>מזהה היומן</b> ומדביקים כאן:</li></ol>
+    <input id="gcCal" dir="ltr" placeholder="...@group.calendar.google.com" style="width:100%"><p class="muted small">אימון שכבר כתוב אצלך ביומן באותה שעה – לא ייכתב פעמיים.</p><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="gcalSave" data-mode="existing">חיבור היומן שלי</button><button class="btn ghost sm" data-act="gcalStep" data-st="">חזרה</button></div></div>`;
+  return head+`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary sm" data-act="gcalStep" data-st="new">כן – תפתחו לי יומן חדש</button><button class="btn sm" data-act="gcalStep" data-st="existing">יש לי כבר יומן לאימונים בסטודיו</button><button class="btn ghost sm" data-act="gcalSave" data-mode="none">לא משתמש/ת ביומן גוגל</button><button class="btn ghost sm" data-act="gcalLater">אחר כך</button></div></div>`}
 /* תמונה / סרטון למאמן לתרגיל מסוים (למשל זווית הספסל) – נשמר מוצפן, רק לצוות */
 function cmList(c,n){return ((c&&c.coachMedia)||{})[n]||[]}
 function cmBtn(ctx,ex,i){const c=ctx&&clientById(ctx.clientId);if(!c||!ex.name)return '';const L=cmList(c,ex.name);return `<button type="button" class="linkbtn tiny" data-act="cmOpen" data-i="${i}" title="תמונה או סרטון למאמן: איך הושבנו, זווית, גובה">📷 ${L.length?`תמונות למאמן (${L.length})`:'תמונה/סרטון למאמן'}</button>`}
@@ -2123,6 +2132,16 @@ async function act(name,el){
   case 'noteClear': {const id=S.clientId; const cl=clientById(id); if(cl)cl.handoff=null; render(); await updClient(id,{handoff:null}); toast('ההערה הוסרה'); break;}
   case 'logout': logout(); break;
   case 'forceNew': {if(ctx){ctx.forceNew=true; render();} break;}
+  case 'gcalStep': S.gcalStep=el.dataset.st; render(); break;
+  case 'gcalLater': S.gcalLater=true; render(); break;
+  case 'gcalSave': {const mode=el.dataset.mode; const k=S.coaches.find(x=>x.id===S.meId); if(!k) break;
+    const email=mode==='new'?(($('#gcEmail')||{}).value||'').trim():''; const calId=mode==='existing'?(($('#gcCal')||{}).value||'').trim():'';
+    if(mode==='new'&&!/@/.test(email)){toast('צריך מייל של גוגל');break}
+    if(mode==='existing'&&!/@/.test(calId)){toast('צריך להדביק את מזהה היומן');break}
+    const first=String(k.name||'').trim().split(/\s+/)[0];
+    if(mode!=='none'){try{const r=await fetch(GCAL_HOOK,{method:'POST',body:new URLSearchParams({coach:first,email,mode,calId})});if(!r.ok)throw 0}catch(e){toast(mode==='existing'?'לא הצלחנו לחבר. בדקו שהיומן שותף עם strengthismedicine@gmail.com עם "ביצוע שינויים", ונסו שוב':'משהו השתבש. נסו שוב');break}}
+    await saveDoc('coaches/'+k.id,{gcal:{mode,email,calId,at:Date.now()}},{merge:true}); k.gcal={mode}; S.gcalStep='';
+    toast(mode==='none'?'בסדר, לא נשאל שוב':mode==='new'?'נוצר יומן "כוח מחודש – '+first+'" ונשלחה הזמנה למייל שלך ✓':'היומן חובר ✓ האימונים יתחילו להופיע תוך כרבע שעה'); render(); break;}
   case 'goalSug': S.goalSug=S.goalSug===S.clientId?null:S.clientId; render(); break;
   case 'goalSave': {const cl=clientById(S.clientId); if(!cl) break; const sel=[...document.querySelectorAll('[data-gs]')].filter(x=>x.checked).map(x=>{const t=document.querySelector(`[data-gst="${x.dataset.gs}"]`);return t?t.value.trim():''}).filter(Boolean);
     if(!sel.length){toast('לסמן לפחות מטרה אחת');break}
