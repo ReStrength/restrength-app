@@ -355,7 +355,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .sheet,.sheet tbody{display:block}
  .sheet thead{display:none}
  .sheet tr{display:block}
- .sheet tr[data-ex]:not(.progrow):not(.swaprow){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;margin:10px 6px;overflow:hidden;background:var(--surface)}
+ .sheet tr[data-ex]:not(.progrow):not(.swaprow):not(.painrow){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;margin:10px 6px;overflow:hidden;background:var(--surface)}
  .sheet tr[data-ex] td{border:0;border-top:1px solid var(--line);display:block;width:auto!important;min-width:0!important}
  .sheet tr[data-ex] td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--muted);padding-top:4px}
  .sheet td.name,.sheet td.notes{grid-column:1/-1}
@@ -364,6 +364,10 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .sheet td.res input{min-height:64px;font-size:26px}
  .sheet input,.sheet select{min-height:52px}
  .sheet tr.progrow td,.sheet tr.gsep td,.sheet tr.swaprow td{display:block;border:0}
+ .sheet tr.painrow{display:block;margin:-6px 6px 10px;border:1px solid #ffc9c9;border-radius:0 0 12px 12px}
+ .sheet tr.painrow td{display:block;border:0;width:auto!important}
+ .cmitem{width:100%}
+ .morebox{display:flex;flex-wrap:wrap}
  .sheet .prevline{white-space:normal}
  .chead h1{font-size:28px}
 }
