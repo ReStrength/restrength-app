@@ -479,7 +479,9 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 }
 
 /* תא כאב בולט */
-.sheet td.res.pain,.gtable td.res.pain{width:96px;background:#fff6f6}
+.sheet td.res.pain,.gtable td.res.pain{width:112px;min-width:112px;background:#fff6f6;padding:4px}
+.sheet td.res.pain input,.gtable td.res.pain input{width:100%;padding:0 2px;-moz-appearance:textfield;appearance:textfield}
+.sheet td.res.pain input::-webkit-outer-spin-button,.sheet td.res.pain input::-webkit-inner-spin-button,.gtable td.res.pain input::-webkit-outer-spin-button,.gtable td.res.pain input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .sheet td.res.pain input,.gtable td.res.pain input{font-size:30px;font-weight:800;min-height:58px;text-align:center;border:2px solid #ffa8a8;border-radius:10px;background:#fff;color:#2b2b2b}
 .sheet td.res.pain input::placeholder,.gtable td.res.pain input::placeholder{font-size:15px;font-weight:600;color:#c9a3a3}
 .sheet td.res.pain input[data-st=low],.gtable td.res.pain input[data-st=low]{color:#c92a2a;border-color:#e03131;background:#fff0f0}
@@ -818,6 +820,7 @@ let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3400)}
 
 /* ---------- progression engine (double progression) ---------- */
+function barHint(n){n=String(n||'');const b=/סמית/.test(n)?['מוט הסמית',7]:/סייפטי|safety/i.test(n)?['מוט הסייפטי בר',17.5]:/טראפ|trap/i.test(n)?['הטראפ בר',20]:/מוט/.test(n)?['המוט האולימפי',20]:null;return b?`המשקל = פלטות בלבד (${b[0]} ${b[1]} ק"ג לא נספר)`:''}
 function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
 function stepFor(group,kg){ const st=S.settings||{}; return num(st.step)??1; }
 function exStats(ex){
@@ -1198,7 +1201,7 @@ function vGroup(){
        <td class="res eff" data-l="מאמץ"><input type="number" inputmode="numeric" min="1" max="10" data-gm="rpe" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.rpe??'')}" placeholder="${effDflt(c.id)}"></td>
        <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="למשל: מדרגה נמוכה"></td></tr>`}).join('');
     return `${sep}<div class="gex card ${tg.ss?'ssr':''}" data-gex="${i}">
-     <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">
+     <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}
       <label>סטים<input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></label>
       <label>${sec?'שניות':'חזרות'}<span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${esc(ex.repMax)}"></span></label>
       <input class="gt" data-gf="tempo" data-ei="${i}" value="${esc(ex.tempo)}" placeholder="טמפו, מנח, דגשים">
@@ -1488,17 +1491,17 @@ function progTable(ctx,doc){
   const nSets=Math.min(6,Math.max(2,...exs.map(e=>Number(e.targetSets)||0)));
   const showSugg=doc.status==='planned';
   const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th><th colspan="${nSets+2}" class="grp-res">תוצאות</th><th></th></tr>
-   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>משקל עבודה</th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>כאב</th><th title="רמת מאמץ 1–10. לא חובה: ריק = הקבוע של המתאמן">מאמץ</th><th>סדר</th></tr></thead>`;
+   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>כאב</th><th title="רמת מאמץ 1–10. לא חובה: ריק = הקבוע של המתאמן">מאמץ</th><th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
     const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+8}"><div class="progline"><b>התקדמות:</b>${PROGS.map(([k])=>k==='kg'?kgChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}${ex.rec===k?' ★':''}</button>`).join('')}<button class="pchip" aria-pressed="${!(ex.prog||[]).length}" data-act="prog" data-k="none" data-write>ללא שינוי</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">${ex.rec?'★ רעיון: ':'רעיון: '}${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+8}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
-     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
+     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
      <td class="rngc" data-l="חזרות"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${esc(ex.repMax)}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</td>
-     <td class="kg" data-l="משקל עבודה"><input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג"></td>
+     <td class="kg" data-l="משקל עבודה (בלי המוט)"><input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג"></td>
      <td class="notes"><textarea data-f="tempo" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="טמפו, מנח, ציוד">${esc(ex.tempo)}</textarea></td>
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><span class="stp"><button type="button" data-step="1" tabindex="-1" aria-label="חזרה נוספת">+</button><button type="button" data-step="-1" tabindex="-1" aria-label="חזרה פחות">−</button></span><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"></td>`:'<td class="res off"></td>'}).join('')}
      <td class="res pain" data-l="כאב"><input type="number" inputmode="numeric" dir="ltr" placeholder="0–10" min="0" max="10" data-f="pain" value="${esc(ex.pain)}" data-st="${num(ex.pain)>=4?'low':''}" aria-label="כאב 0–10"></td>
@@ -1510,7 +1513,7 @@ function pastWeeks(ctx,c,label,curId,limit,title){
   let done=doneSessions(ctx).filter(d=>String(d.label)===String(label)&&d.id!==curId); if(limit) done=done.slice(0,limit);
   if(!done.length) return '';
   return `<div class="past">${title===''?'':`<h3 class="muted">${title||'שבועות קודמים'}</h3>`}${done.map(d=>{const exs=d.exercises||[];const tags=groupTags(exs);return `<div class="pastweek"><div class="spread"><b>${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}${d.selfLog?'🏠 אימון לבד (מהדף האישי)':'שבוע '+d.seq} · ${fmt(d.date)}${d.coach?` · ${esc(d.coach)}`:''}</b><button class="btn ghost sm" data-act="openSess" data-pane-id="${d.id}" data-id="${d.id}">עריכה</button></div>
-   <div class="sheet-wrap"><table class="sheet ro"><thead><tr><th>תרגיל</th><th>סטים×חזרות</th><th>משקל עבודה</th><th>הערות / טמפו</th><th>תוצאות</th><th>כאב</th></tr></thead><tbody>
+   <div class="sheet-wrap"><table class="sheet ro"><thead><tr><th>תרגיל</th><th>סטים×חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th><th>תוצאות</th><th>כאב</th></tr></thead><tbody>
    ${exs.map((e,i)=>{const st=exStats(e);return `${tags[i].first?`<tr class="gsep"><td colspan="6">${tags[i].ss?`סופר סט ${tags[i].n}`:`תרגיל ${tags[i].n}`}</td></tr>`:''}<tr class="${tags[i].ss?'ssr':''} ${tags[i].first?'gfirst':''}"><td class="nm">${esc(e.name)}${(e.prog||[]).length?`<div class="prevline">התקדמות: ${e.prog.map(k=>(PROGS.find(p=>p[0]===k)||[,k])[1]).join(' + ')}</div>`:''}${e.note?`<div class="prevline">${esc(e.note)}</div>`:''}</td><td dir="ltr">${e.targetSets}×${e.repMin}-${e.repMax}</td><td>${num(e.targetKg)!=null?e.targetKg+' ק"ג':'—'}</td><td class="nt">${esc(e.tempo||'')}</td><td dir="ltr" class="rs">${st.reps.join(', ')||'—'}</td><td>${num(e.pain)>=4?`<span class="chip bad">${e.pain}</span>`:(e.pain||'—')}</td></tr>`}).join('')}
    </tbody></table></div>${d.warmup?`<div class="small muted">חימום: ${esc(d.warmup)}</div>`:''}${d.notes?`<div class="small muted">הערות: ${esc(d.notes)}</div>`:''}</div>`}).join('')}</div>`;
 }
@@ -1565,7 +1568,7 @@ function paneHtml(ctx,c,pane,pair){
     const pe=last?(last.exercises||[]).filter(e=>num(e.pain)>=4):[];
     if(pe.length) painHtml=`<div class="banner bad painbanner"><span><b>⚠ דווח כאב באימון הקודם (${fmt(last.date)}):</b> ${pe.map(e=>`${esc(e.name)} – ${e.pain}/10`).join(' · ')}. לשקול התאמה, טווח תנועה קטן יותר או החלפת תרגיל.</span></div>`;}
   const weekChip=`<div class="weekchip">${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}שבוע ${d.seq}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>`;
-  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}<label class="f warmup">חימום <span class="muted small">(נשמר קבוע)</span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button></div>
+  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button></div>
    <label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label><div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (שבוע ${nextPlanned.seq})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
 function tSession(c){
