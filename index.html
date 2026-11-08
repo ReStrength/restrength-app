@@ -1123,7 +1123,9 @@ function vManager(){
 function gid(name){let h=0;for(const ch of String(name))h=(h*31+ch.charCodeAt(0))>>>0;return 'g_'+h.toString(36)}
 function isPairKey(n){return String(n||'').startsWith('pair:')}
 function pairKey(c){return c&&c.partnerId?'pair:'+[c.id,c.partnerId].sort().join(':'):''}
-function gTitle(n){if(!isPairKey(n))return n;return String(n).split(':').slice(1).map(id=>(clientById(id)||{}).name||'').filter(Boolean).join(' ו')}
+function gTitle(n){if(!isPairKey(n))return n;const ns=String(n).split(':').slice(1).map(id=>(clientById(id)||{}).name||'').filter(Boolean);
+  if(ns.length===2){const a=ns[0].trim().split(/\s+/),b=ns[1].trim().split(/\s+/);if(a.length>1&&b.length>1&&a[a.length-1]===b[b.length-1])return a.slice(0,-1).join(' ')+' ו'+b.slice(0,-1).join(' ')+' '+a[a.length-1]}
+  return ns.join(' ו')}
 function pairsOfCoach(coachId){const seen={},o=[];S.clients.filter(c=>ttype(c)==='pair'&&c.partnerId&&(c.status||'active')==='active'&&c.coachId===coachId).forEach(c=>{const k=pairKey(c);if(!seen[k]&&clientById(c.partnerId)){seen[k]=1;o.push(k)}});return o}
 function groupMembers(name){if(isPairKey(name))return String(name).split(':').slice(1).map(id=>clientById(id)).filter(Boolean);return S.clients.filter(c=>ttype(c)==='group'&&(c.groupName||'קבוצה')===name&&(c.status||'active')==='active').sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'))}
 function groupsOfCoach(coachId){const m={};S.clients.filter(c=>ttype(c)==='group'&&c.coachId===coachId&&(c.status||'active')==='active').forEach(c=>{const n=c.groupName||'קבוצה';m[n]=(m[n]||0)+1});return Object.entries(m)}
