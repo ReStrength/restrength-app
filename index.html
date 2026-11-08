@@ -54,8 +54,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .nav button{border:0;background:transparent;color:var(--band-muted);font:inherit;font-weight:600;padding:7px 12px;border-radius:8px;cursor:pointer}
 .nav button[aria-current="true"]{background:var(--accent);color:#fff}
 .nav button:hover{color:var(--band-ink)}
-.top-side{margin-inline-start:auto;display:grid;grid-template-columns:auto auto;align-items:center;justify-items:end;gap:8px 10px}
-.top-side .who{grid-column:1 / -1;margin-top:18px}
+.top-side{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.top-side .who{margin-top:2px}
+.top-side .save-state:empty{display:none}
 .save-state{font-size:12px;color:var(--band-muted);min-width:64px}
 .wrap{max-width:1480px;margin:0 auto;padding-block:22px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
 h1,h2,h3{margin:0;text-wrap:balance}
@@ -432,7 +433,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
  .brand img{height:52px!important}
  .brand .wm{display:none!important}
  .top-side{align-self:center}
- .top-side{display:flex!important;order:2;margin-inline-start:auto;gap:8px}
+ .top-side{display:flex!important;flex-direction:row;align-items:center;order:2;margin-inline-start:auto;gap:8px}
  .top-side .zoom{display:none}
  .top-side .who{margin-top:0!important;font-size:15px}
  .navcol{order:3;width:100%;gap:8px}
@@ -1436,18 +1437,19 @@ function vClient(){
   const head=`<div class="chead"><div style="min-width:0"><button class="btn ghost sm" data-act="backCoach">→ המתאמנים של ${esc(coachName(c.coachId)!=='—'?coachName(c.coachId):'ללא מאמן')}</button><h1>${esc(c.name)}</h1>
     <div class="meta"><span>תאריך התחלה: <b>${c.startDate?fmt(c.startDate):'יירשם אוטומטית באימון הראשון'}</b></span></div>
     ${periodicDue(c)?`<div class="row" style="margin-top:6px"><span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span></div>`:''}
-    ${!(c.goalsShort||c.goalText||c.goalsLong)?`<div class="row" style="margin-top:6px"><span class="chip info">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])}</span><button class="btn ghost sm" data-act="goGoals">לכתוב פעם אחת</button></div>`:''}
+    ${!(c.goalsShort||c.goalText||c.goalsLong)?`<div class="row" style="margin-top:6px"><button type="button" class="chip info" style="cursor:pointer;border:0;font:inherit" data-act="goGoals" title="מעבר לכתיבת המטרות">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])} ←</button></div>`:''}
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
   const safety=(c.limits?`<div class="safety"><b>⚠ מגבלות והתוויות נגד:</b><span>${esc(c.limits)}</span></div>`:'')+(c.conditions?`<div class="safety med"><b>🩺 מצבים רפואיים ואבחנות:</b><span>${esc(c.conditions)}</span></div>`:'');
-  const main=[['session','תוכנית אימונים'],['prev','היסטוריית אימונים'],['portal',`📱 דף למתאמן${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['profile','תיק מתאמן']], more=[['progress','גרפי התקדמות'],['assess','מבדקים']];
+  const main=[['session','תוכנית אימונים'],['prev','היסטוריית אימונים'],['profile','תיק מתאמן']], more=[['portal',`📱 דף למתאמן${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['progress','גרפי התקדמות'],['assess','מבדקים']];
+  const moreBadge=S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:'';
   const open=S.moreOpen||more.some(t=>t[0]===S.tab);
   const tb=t=>`<button class="tab" role="tab" aria-selected="${S.tab===t[0]}" data-tab="${t[0]}">${t[1]}</button>`;
   let addDayHtml='';
   if(S.P&&S.P.edit&&S.tab==='session'){const ls={};S.P.sessions.forEach(x=>{const l=String(x.label);if(!ls[l]||x.status==='planned'||(ls[l].status!=='planned'&&(x.date||'')>(ls[l].date||'')))ls[l]=x});const lb=Object.keys(ls).sort();
     if(lb.length<2) addDayHtml=S.P.addOpen?`<span class="row small np-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lb.map(l=>`<button class="btn sm" data-act="addDay" data-src="${ls[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;}
   const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>`):'';
-  const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}</button>${open?`<span class="morebox">${more.map(tb).join('')}<button class="tab" data-act="openReport">📄 דוח התקדמות</button><button class="tab" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button></span>`:''}<span class="tabs-side">${addDayHtml}${np}</span></div>`;
+  const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}${open?'':moreBadge}</button>${open?`<span class="morebox">${more.map(tb).join('')}<button class="tab" data-act="openReport">📄 דוח התקדמות</button><button class="tab" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button>${c.remote||(c.handoff&&c.handoff.text)?'':`<button class="tab" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button>`}</span>`:''}<span class="tabs-side">${addDayHtml}${np}</span></div>`;
   const body=S.tab==='portal'?tPortal(c):S.tab==='session'?tSession(c):(S.tab==='prev'||S.tab==='history')?tPrev(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
   const pk=ttype(c)==='pair'?pairKey(c):'';
   const gBanner=pk&&partnerOf(c)?`<div class="banner info"><span><b>👥 אימון זוגי עם ${esc(partnerOf(c).name)}:</b> התוכנית המשותפת והסדר שבו מתחלפים נמצאים במסך הזוג. התוצאות נשמרות גם כאן.</span><button class="btn primary sm" data-group="${esc(pk)}">לאימון הזוגי</button></div>`:ttype(c)==='group'?`<div class="banner info"><span><b>👥 ${esc(c.groupName||'קבוצה')}:</b> התוכנית והתוצאות של האימון הקבוצתי מנוהלות במסך הקבוצה, ונשמרות גם כאן בהיסטוריה.</span><button class="btn primary sm" data-group="${esc(c.groupName||'קבוצה')}">לאימון הקבוצה</button></div>`:'';
@@ -1456,7 +1458,7 @@ function vClient(){
 function noteHtml(c){
   const h=c.handoff&&c.handoff.text?c.handoff:null;
   if(S.noteEdit===c.id) return `<div class="hnote"><div style="flex:1 1 100%"><b>📝 הערה למאמן המחליף / לאימון הבא</b><textarea id="noteTxt" placeholder="למשל: התלונן על כתף ימין, לוותר היום על לחיצה מעל הראש">${esc(h?h.text:'')}</textarea></div><div class="row"><button class="btn primary sm" data-act="noteSave" data-write>שמירה</button><button class="btn ghost sm" data-act="noteCancel">ביטול</button></div></div>`;
-  if(!h) return c.remote?'':`<div class="addnote"><button class="btn ghost sm" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button></div>`;
+  if(!h) return '';
   const by=h.by?coachName(h.by):''; const at=h.at?new Date(h.at).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
   return `<div class="hnote" role="note"><div class="ht"><b>📝 הערה:</b> ${esc(h.text)}<span class="hm">${by&&by!=='—'?esc(by)+' · ':''}${at}</span></div><div class="row"><button class="btn ghost sm" data-act="noteEdit" data-write>עריכה</button><button class="btn ghost sm" data-act="noteClear" data-write>✓ טופל – הסרה</button></div></div>`;
 }
