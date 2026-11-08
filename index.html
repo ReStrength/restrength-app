@@ -2206,7 +2206,7 @@ async function tpBuild(c){
   const home=(c.homeEx||[]).filter(x=>x.n).map(x=>({n:x.n,unit:x.unit||'bw',sets:x.sets||'',reps:x.reps||'',kg:x.kg||'',note:x.note||'',m:x.m||null}));
   return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,remote:!!c.remote,seed:c.remote&&c.remoteSeed?rtSeedOut(c):null,u:Date.now()};
 }
-function tpKeep(c){const k={};Object.values(c.coachMedia||{}).forEach(L=>(L||[]).forEach(m=>{if(m&&m.k)k[m.k]=m.n}));Object.values(c.exVideos||{}).forEach(m=>{if(m&&m.k)k[m.k]=m.n});(c.homeEx||[]).forEach(x=>{if(x.m&&x.m.k)k[x.m.k]=x.m.n});return k}
+function tpKeep(c){const k={...(S.cmKeep||{})};Object.values(c.coachMedia||{}).forEach(L=>(L||[]).forEach(m=>{if(m&&m.k)k[m.k]=m.n}));Object.values(c.exVideos||{}).forEach(m=>{if(m&&m.k)k[m.k]=m.n});(c.homeEx||[]).forEach(x=>{if(x.m&&x.m.k)k[x.m.k]=x.m.n});return k}
 async function tpPublish(cid,quiet){
   let c=clientById(cid); if(!c) return false;
   if(S.tpBusy[cid]==='pub') return false; S.tpBusy[cid]='pub'; if(!quiet) scheduleRender();
@@ -2222,9 +2222,10 @@ async function tpPublish(cid,quiet){
   finally{ S.tpBusy[cid]=null; scheduleRender(); }
 }
 async function tpUpMedia(c,file,prog){
-  const x=await tpCtx(c); const sk=PC.id(9);
+  const x=await tpCtx(c); const sk=PC.id(9); S.cmKeep=S.cmKeep||{}; S.cmKeep[sk]=999;
   let blob=file; if(/^image\//.test(file.type)&&!/gif/.test(file.type)) blob=await new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,1600/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>res(b||file),'image/jpeg',0.82)};im.onerror=()=>res(file);im.src=u});
   const n=await PC.putBlob(x.k,blob,(pi,ct)=>tpApi(x.s+'/m/'+sk+'/'+pi,ct,true),prog);
+  S.cmKeep[sk]=n;
   return {k:sk,n,t:blob.type||file.type||'video/mp4'};
 }
 async function tpLoad(c,force){
