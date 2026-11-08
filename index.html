@@ -1521,7 +1521,7 @@ function progTable(ctx,doc){
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
-     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${ex.name&&!libFind(ex.name)?`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`:''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${cmBtn(ctx,ex,i)}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
+     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${cmBtn(ctx,ex,i)}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
      <td class="rngc" data-l="חזרות"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${esc(ex.repMax)}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</td>
      <td class="kg" data-l="משקל עבודה (בלי המוט)"><input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג"></td>
@@ -1657,6 +1657,78 @@ function painTip(n){n=String(n||'');
    [/פארמר|קארי|הליכה/,'להוריד משקל ולקצר את המרחק.']];
   const t=T.find(x=>x[0].test(n));
   return (t?t[1]:'לנסות מנח מעט שונה: להקטין את טווח התנועה, לשנות אחיזה או זווית, להאט את הקצב.')+' אם הכאב נשאר מעל 3 – להוריד משקל או לעבור לתרגיל חלופי (🔄 חלופה).'}
+function exNorm0(raw){
+  const o=String(raw||'').replace(/\s+/g,' ').trim(); const s=o.replace(/[׳']/g,"'");
+  const has=r=>r.test(s);
+  if(/^(חימום|לתת|להתחיל|מתיח|תרגול|עבודה|תחנות|תרגיל טווח|יונה|ג'פרסון|קימור|כפיפת אגן|כפיפות אגן|החזקה ברוטציה|מתיחה)/.test(s)) return null; // warm-ups / drills stay as written
+  const SM=has(/S\.?M|סמית/), DM=has(/DM|דמבל|דאמבל|דמפל|משקול/), SSB=has(/SSB|סייפטי/i), TRAP=has(/טראפ/), KB=has(/קטלבל/), BAR=has(/מוט|כלוב|בנץ|BENCH/i)&&!SM, CABLE=has(/פולי|כבל|קרוס/), BAND=has(/גומי/), TRX=has(/TRX/i), RINGS=has(/טבעות|טעבות/);
+  const ONE=has(/יד אחת|יד יד|ביד אחת/), LEG1=has(/רגל אחת|רגל רגל|רגל 1/);
+  const sit=has(/ישיבה|בישיבה|בשייבה/), stand=has(/עמידה|בעמידה/);
+  let n=null;
+  if(has(/רומני|RDL|גוד מורנינג|בוקר טוב/i)) n=has(/גוד|בוקר/)?"גוד מורנינג":SM?"דדליפט רומני בסמית משין":DM?"דדליפט רומני עם דאמבלים":BAR?"דדליפט רומני עם מוט אולימפי":"דדליפט רומני";
+  else if(has(/DL|דדליפט|דדלפט/i)&&!has(/כפיפת מרפקים/)) n=TRAP?"טראפ בר דדליפט":KB?"דדליפט עם קטלבל":SM?"דדליפט בסמית משין":BAR||has(/^DL\s*-?\s*מוט/)?"דדליפט עם מוט אולימפי":"דדליפט";
+  else if(has(/בולגרי|לאנ בולגרי/)) n=SSB?"סקוואט בולגרי עם סייפטי בר":SM?"סקוואט בולגרי בסמית משין":DM?"סקוואט בולגרי עם דאמבלים":"סקוואט בולגרי";
+  else if(has(/מכרע|לנצ|לאנצ|לנצ,/)) n=SSB?"מכרע סטטי עם סייפטי בר":SM?"מכרע סטטי בסמית משין":DM?"מכרע סטטי עם דאמבלים":"מכרע סטטי";
+  else if(has(/לאנג/)) n=DM?"רברס לאנג' עם דאמבלים":"לאנג'";
+  else if(has(/גובלט/)) n="גובלט סקוואט";
+  else if(has(/סקו?ו?ו?אט|סקווט|סקוט/)) { const box=has(/בוקס|BOX|ספסל|ספה|קופס|ארגז|BENCH|הגבלה/i); n=SSB?(box?"בוקס סקוואט עם סייפטי בר":"סקוואט עם סייפטי בר"):SM?"סקוואט בסמית משין":has(/TRX/i)?"סקוואט כנגד TRX":BAR?"סקוואט עם מוט אולימפי":DM?"גובלט סקוואט":box?"בוקס סקוואט":"סקוואט"; }
+  else if(has(/^סייפטי בר/)) n="סקוואט עם סייפטי בר";
+  else if(has(/קימה מכיסא|ישיבה קימה|ישיבה וקימה/)) n="בוקס סקוואט";
+  else if(has(/היפ ?ט?ר?א?סט|היפטר|היפ טרסט/)) n=LEG1?"היפ תראסט רגל אחת":has(/B ?stance|בי סטנס|עמידת B/i)?"היפ תראסט B סטאנס":BAR?"היפ תראסט עם מוט אולימפי":DM?"היפ תראסט עם דאמבל":"היפ תראסט";
+  else if(has(/גלוט|ברידג|גשר|הרמות? אגן/)) n=LEG1?"גלוט ברידג' רגל אחת":"גלוט ברידג'";
+  else if(has(/STEP ?DOWN|סטייפ דאון|סטפ דאון/i)) n="סטפ דאון";
+  else if(has(/STEP ?UP|סטפ אפ|עליה במדרגה|עליה על מדרגה|עליית מדרגה|עליחה על מדרגה|עלייה על מדרגה|עליות קופסא/i)) n=DM?"סטפ אפ עם דאמבלים":"סטפ אפ";
+  else if(has(/טיבאליס|^DF$/)) n="הרמות טיבאליס";
+  else if(has(/תאומים|עקבים|קאף|פלנטר|כפיפה כפית|^PF/)&&!has(/סקוואט|סקווט|הגבהה לעקבים/)) n=SM?"קאף רייז בסמית משין":DM?"קאף רייז עם דאמבלים":"קאף רייז";
+  else if(has(/שכיבות סמיכה/)) n=has(/ברכיים/)?"שכיבות סמיכה על הברכיים":(SM||has(/הגבהה|שיפוע/))?"שכיבות סמיכה בסמית משין":"שכיבות סמיכה";
+  else if(has(/לחיצ(ת|ות) חזה|בנץ ?פרס|לחיצות חזה/)) { const inc=has(/שיפוע/); n=SM?(inc?"לחיצת חזה בשיפוע חיובי בסמית משין":"לחיצת חזה בסמית משין"):DM?(inc?"לחיצת חזה בשיפוע חיובי עם דאמבלים":"לחיצת חזה עם דאמבלים"):BAR?"לחיצת חזה עם מוט אולימפי":CABLE?"לחיצת חזה בכבלים":inc?"לחיצת חזה בשיפוע חיובי":"לחיצת חזה"; }
+  else if(has(/פרפר|פליי/)) n=DM?"פליי עם דאמבלים":CABLE?"פליי בכבלים":"פליי";
+  else if(has(/פוש פול פרס/)) n="פוש פול פרס בכבל";
+  else if(has(/לחיצ(ת|ות) כת(ף|פיים)|כתפיים בישיבה/)) n=ONE?"לחיצת כתפיים ביד אחת":SM?"לחיצת כתפיים בסמית משין":DM?(sit?"לחיצת כתפיים בישיבה עם דאמבלים":"לחיצת כתפיים עם דאמבלים"):BAR?"לחיצת כתפיים בעמידה עם מוט אולימפי":"לחיצת כתפיים";
+  else if(has(/הרחקה אופקית|הרחקות כתף אופקית/)) n=BAND?"הרחקה אופקית עם גומייה":DM?"הרחקה אופקית עם דאמבלים":"הרחקה אופקית";
+  else if(has(/הרחק(ת|ות) כת(ף|פיים)|כתפיים הרחקות|הרחקות כתפיים/)) n=CABLE?"הרחקת כתפיים לצד בכבל":BAND?"הרחקת כתפיים עם גומייה":"הרחקת כתפיים לצד עם דאמבלים";
+  else if(has(/הרחק(ת|ות) ירך/)) n="הרחקת ירך עם גומייה";
+  else if(has(/פייס ?פול|face pul/i)) n=BAND?"פייס פול עם גומייה":"פייס פול בכבל";
+  else if(has(/סיבוב חיצוני|תנועה חיצונית/)) n=CABLE?"סיבוב חיצוני בכבל":"סיבוב חיצוני עם גומייה";
+  else if(has(/סיבוב פנימי|תנועה פנימית/)) n=CABLE?"סיבוב פנימי בכבל":"סיבוב פנימי עם גומייה";
+  else if(has(/פול ?אובר|פולאובר/)) n="פולאובר בכבל";
+  else if(has(/פאלוף|פאלאוף|פלאוף|פול אוף/)) n="פאלוף פרס בכבל";
+  else if(has(/חוטב|וודצ/)) n=BAND?"וודצ'ופ עם גומייה":"וודצ'ופ בכבל";
+  else if(has(/משיכה מפולי|משיכת פולי|משיכה בפולי|מתח מפולי|מתח בפולי|^פולי עליון|^משיכה מפולי/)) n=ONE?"משיכה מפולי עליון ביד אחת":"משיכה מפולי עליון";
+  else if(has(/^מתח|החזקות מתח/)) n="משיכה מפולי עליון";
+  else if(has(/חתיר/)) n=TRX?"חתירה כנגד TRX":RINGS?"חתירה בטבעות":BAND?"חתירה עם גומייה":CABLE?(sit?"חתירה בפולי תחתון בישיבה":"חתירה בעמידה בפולי אמצעי"):DM?(has(/משקולת /)||ONE?"חתירה ביד אחת עם דאמבל":"חתירה בהטיית גו עם דאמבלים"):"חתירה";
+  else if(has(/כפיפ(ת|ות) מרפק|יד קדמית/)) n=has(/פטיש/)?"כפיפת מרפקים בפטיש":CABLE?"כפיפת מרפקים בכבל":BAND?"כפיפת מרפקים עם גומייה":"כפיפת מרפקים עם דאמבלים";
+  else if(has(/פשיט(ת|ות) מרפק|יד אחורית/)) n=BAND?"פשיטת מרפקים עם גומייה":CABLE?"פשיטת מרפקים בפולי עליון":DM?"סקאל קראשר עם דאמבלים":"פשיטת מרפקים בפולי עליון";
+  else if(has(/כפיפ(ת|ות) בטן|SIT ?UPS|^בטן/i)) n=has(/אלכסונ/)?"כפיפות בטן אלכסוניות":CABLE?"קראנץ' בכבל":"כפיפות בטן";
+  else if(has(/^אלכסונים/)) n="כפיפות בטן אלכסוניות";
+  else if(has(/פלאנק|פלנק/)) n=has(/נגיעות/)?"פלאנק עם נגיעות כתף":has(/מדרגה|קוביה|קובייה|ספסל|גבוה|אמצעי/)?"פלאנק על ספסל":"פלאנק";
+  else if(has(/נגיעות כתפיים/)) n="פלאנק עם נגיעות כתף";
+  else if(has(/דד ?באג|DEAD ?BUG|חרק מת/i)) n="דד באג";
+  else if(has(/סופרמן/)) n="סופרמן";
+  else if(has(/ספסל רומי|כיסא רומי|פשיטת גב|פשיטות גו|כפיפה גבית/)) n="פשיטת ירך בספסל רומי";
+  else if(has(/הליכת חקלאי|הליכות חוואי|הליכה עם (החזקת )?משקולות|פארמר/)) n="פארמר ווק עם דאמבלים";
+  else if(has(/טנדם|בקו ישר|על הפס/)) n=has(/הליכ/)?"הליכת טנדם":"עמידת טנדם";
+  else if(has(/הליכה צידית/)) n="הליכה צידית";
+  else if(has(/עמידה על רגל|שיווי משקל רגל|^שיווי משקל$/)) n=has(/עקב לבוהן/)?"עמידת טנדם":"עמידה על רגל אחת";
+  else if(has(/כפיפ(ת|ות) ירך/)) n="כפיפת ירך בעמידה";
+  else if(has(/פשיט(ת|ות) ברכ(יים|ך)/)) n=BAND?"פשיטת ברך עם גומייה":"פשיטת ברכיים בישיבה";
+  else if(has(/ישיבה סטטית/)) n="ישיבה סטטית על הקיר";
+  else if(has(/קפיצ/)) n="קפיצה ממדרגה";
+  else if(has(/הרמות ברכיים|הרמת ברכיים|הרמת רגליים/)) n="הרמת ברכיים לחזה";
+  else if(has(/קימה מהרצפה/)) n="קימה מהרצפה";
+  else if(has(/^הינג/)) n="הינג' עם מקל";
+  else if(has(/^פרס$/)) n=null;
+  if(!n||n===o) return null;
+  const det=/\d|הגבהה|חור|כלוב|מדרגה|ספסל|בוקס|BOX|קופס|ספה|ארגז|שיפוע|יד אחת|רגל אחת|רגל רגל|תמיכ|בלימה|טמפו|מזרון|ידיים|רחבה|צר|טווח|סופינ|מיד פוזישן|ביחד|משמאל|עקבים|נמוך|גבוה|אמצעי|בישיבה|בעמידה|רצפה|קיר|חצי|half/i.test(o);
+  return {n,note:det?o:''};
+}
+/* מאמן כותב שם חופשי -> מתקנים לשם מהמאגר, ואם לא ברור – שואלים */
+const EX_AMBIG=[[/^(פרס|press|לחיצה)$/i,['לחיצת חזה','לחיצת כתפיים']],[/^(חתירה|row)$/i,['חתירה בעמידה בפולי אמצעי','חתירה בפולי תחתון בישיבה','חתירה כנגד TRX','חתירה ביד אחת עם דאמבל']],[/^(דדליפט|DL)$/i,['טראפ בר דדליפט','דדליפט עם מוט אולימפי','דדליפט רומני עם דאמבלים']],[/^(סקוואט|סקווט)$/,['בוקס סקוואט','גובלט סקוואט','סקוואט בסמית משין','סקוואט עם סייפטי בר']],[/^(לחיצת כתפיים|כתפיים)$/,['לחיצת כתפיים בישיבה עם דאמבלים','לחיצת כתפיים בסמית משין','לחיצת כתפיים ביד אחת']],[/^(לחיצת חזה|חזה)$/,['לחיצת חזה עם דאמבלים','לחיצת חזה בסמית משין','לחיצת חזה עם מוט אולימפי']]];
+function exAmbig(n){n=String(n||'').trim();const a=EX_AMBIG.find(x=>x[0].test(n));return a?a[1]:null}
+function exNorm(raw){const s=String(raw||'').trim();if(!s||libFind(s))return null;
+  if(/^(בנץ'?|bench)\s*פרס|bench ?press/i.test(s))return {n:'לחיצת חזה עם מוט אולימפי',note:''};
+  if(/^(שולדר|OHP|מיליטרי)/i.test(s))return {n:'לחיצת כתפיים בעמידה עם מוט אולימפי',note:''};
+  const r=exNorm0(s);return r&&libFind(r.n)?r:null}
 /* תמונה / סרטון למאמן לתרגיל מסוים (למשל זווית הספסל) – נשמר מוצפן, רק לצוות */
 function cmList(c,n){return ((c&&c.coachMedia)||{})[n]||[]}
 function cmBtn(ctx,ex,i){const c=ctx&&clientById(ctx.clientId);if(!c||!ex.name)return '';const L=cmList(c,ex.name);return `<button type="button" class="linkbtn tiny" data-act="cmOpen" data-i="${i}" title="תמונה או סרטון למאמן: איך הושבנו, זווית, גובה">📷 ${L.length?`תמונות למאמן (${L.length})`:'תמונה/סרטון למאמן'}</button>`}
@@ -2052,6 +2124,8 @@ async function act(name,el){
   case 'openReport': S.report=S.clientId; render(); window.scrollTo(0,0); break;
   case 'closeReport': S.report=null; render(); break;
   case 'printReport': try{window.print()}catch(e){toast('ההדפסה לא זמינה בתצוגה הזו')} break;
+  case 'nameTo': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const old=ex.name; const n=el.dataset.name; const note=el.dataset.note||''; if(note&&!String(ex.tempo||'').includes(note))ex.tempo=note+(ex.tempo?'\n'+ex.tempo:''); ex.name=n; const l=libFind(n); if(l){ex.unit=l[1];ex.group=l[2];}
+    saveEdit(ctx,0); toast(`עודכן ל: ${n}`); render(); break;}
   case 'cmOpen': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; S.cmEx=S.cmEx===ex.id?null:ex.id; S.painEx=null; S.effEx=null; render(); break;}
   case 'cmAdd': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const cl=clientById(ctx.clientId); if(!cl) break;
     tpPickFile(async f=>{ if(f.size>300*1048576){toast('הקובץ גדול מדי (עד 300MB)');return}
@@ -2166,7 +2240,8 @@ function bind(){
     const f=t.dataset.f; const ctx=ctxOf(t); if(!f||!ctx||!ctx.edit) return;
     const card=t.closest('[data-ex]'); if(!card) return; const ex=ctx.edit.doc.exercises[Number(card.dataset.ex)];
     const structural=()=>{saveEdit(ctx,0);S.deferred=true;t.blur();};
-    if(f==='name'){const l=libFind(t.value.trim());ex.name=t.value.trim();if(l){ex.unit=l[1];ex.group=l[2];if(l[1]==='sec'&&ex.repMin===6){ex.repMin=20;ex.repMax=30}structural()}else saveEdit(ctx,0);return}
+    if(f==='name'){let nv=t.value.trim();const fx=exNorm(nv);if(fx){if(fx.note&&!String(ex.tempo||'').includes(fx.note))ex.tempo=fx.note+(ex.tempo?'\n'+ex.tempo:'');toast(`השם תוקן לשם מהמאגר: ${fx.n}`);nv=fx.n;t.value=nv}
+      const l=libFind(nv);ex.name=nv;if(l){ex.unit=l[1];ex.group=l[2];if(l[1]==='sec'&&ex.repMin===6){ex.repMin=20;ex.repMax=30}structural()}else saveEdit(ctx,0);return}
     if(f==='ss'){ex.ss=t.value;structural();return}
     if(f==='unit'){ex.unit=t.value;if(t.value==='sec'&&ex.repMin===6){ex.repMin=20;ex.repMax=30}structural();return}
     if(f==='targetSets'){const n=Math.max(1,Math.min(10,Number(t.value)||1));ex.targetSets=n;while(ex.sets.length<n)ex.sets.push({kg:'',reps:''});while(ex.sets.length>n&&num(ex.sets[ex.sets.length-1].reps)==null)ex.sets.pop();structural();return}
