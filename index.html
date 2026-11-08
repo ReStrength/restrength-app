@@ -828,6 +828,20 @@ let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3400)}
 
 /* ---------- progression engine (double progression) ---------- */
+/* טווח חזרות מתעדכן לבד לפי מה שבוצע בפועל */
+function adjRange(ctx,ex,t){if(!ex||unitOf(ex)==='sec')return;const r=(ex.sets||[]).map(x=>num(x.reps)).filter(x=>x!=null&&x>0);if(!r.length)return;
+  const hi=Math.max(...r),lo=Math.min(...r);let ch=false;
+  if(num(ex.repMax)!=null&&hi>ex.repMax){ex.repMax=hi;ch=true}
+  if(num(ex.repMin)!=null&&lo<ex.repMin){ex.repMin=lo;ch=true}
+  if(!ch)return;saveEdit(ctx,0);const row=t&&t.closest('tr[data-ex]');
+  if(row){const a=row.querySelector('[data-f="repMin"]'),b=row.querySelector('[data-f="repMax"]');if(a)a.value=ex.repMin;if(b)b.value=ex.repMax;}
+  toast(`טווח החזרות עודכן ל־${ex.repMin}–${ex.repMax} לפי מה שבוצע`)}
+/* טמפו / הערה שנכתבו באימון שבוצע עוברים גם לאימון הבא שכבר תוכנן */
+function carryTempo(ctx,d,ex,old){if(!ctx||!ctx.sessions||d.status!=='done')return;
+  const nx=ctx.sessions.filter(x=>x.status==='planned'&&String(x.label)===String(d.label)&&(Number(x.seq)||0)>(Number(d.seq)||0)).sort((a,b)=>a.seq-b.seq)[0];
+  if(!nx)return;const ne=(nx.exercises||[]).find(e=>e.name===ex.name);if(!ne)return;
+  if((ne.tempo||'')!==old&&(ne.tempo||'')!=='')return;
+  ne.tempo=ex.tempo;saveDoc('sessions/'+nx.id,{exercises:nx.exercises},{merge:true,delay:300});}
 function barHint(n){n=String(n||'');const b=/סמית/.test(n)?['מוט הסמית',7]:/סייפטי|safety/i.test(n)?['מוט הסייפטי בר',17.5]:/טראפ|trap/i.test(n)?['הטראפ בר',20]:/מוט/.test(n)?['המוט האולימפי',20]:null;return b?`המשקל = פלטות בלבד (${b[0]} ${b[1]} ק"ג לא נספר)`:''}
 function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
 function stepFor(group,kg){ const st=S.settings||{}; return num(st.step)??1; }
@@ -2102,8 +2116,9 @@ function bind(){
     const card=t.closest('[data-ex]'); if(!card) return; const ex=d.exercises[Number(card.dataset.ex)];
     if(t.dataset.set!=null&&t.classList.contains('si')&&t.value!==''){const card0=t.closest('[data-ex]');const ex0=card0&&d.exercises[Number(card0.dataset.ex)];const mx=Math.max(num(ex0&&ex0.repMax)||10,10);
       if(Number(t.value)*10>mx+5){setTimeout(()=>{const scope=t.closest('[data-pane]')||main;const all=[...scope.querySelectorAll('.si')];const k=all.indexOf(t);if(all[k+1])all[k+1].focus();else t.blur();},0);}}
-    if(t.dataset.set!=null){if(!d.date&&t.value!==''){d.date=today();const di=t.closest('[data-pane]')?.querySelector('[data-f="sess.date"]');if(di)di.value=d.date;} const s=ex.sets[Number(t.dataset.set)]; s[f]=t.value===''?'':Number(t.value); if(f==='reps') t.dataset.st=setState(ex,s); saveEdit(ctx,700); return}
-    if(['name','note','tempo'].includes(f)){ex[f]=t.value;saveEdit(ctx,900);return}
+    if(t.dataset.set!=null){if(!d.date&&t.value!==''){d.date=today();const di=t.closest('[data-pane]')?.querySelector('[data-f="sess.date"]');if(di)di.value=d.date;} const s=ex.sets[Number(t.dataset.set)]; s[f]=t.value===''?'':Number(t.value); if(f==='reps'){t.dataset.st=setState(ex,s); clearTimeout(t._rt); t._rt=setTimeout(()=>adjRange(ctx,ex,t),1300);} saveEdit(ctx,700); return}
+    if(f==='tempo'){const old=ex.tempo||'';ex.tempo=t.value;saveEdit(ctx,900);clearTimeout(t._tt);t._tt=setTimeout(()=>carryTempo(ctx,d,ex,old),1200);return}
+    if(['name','note'].includes(f)){ex[f]=t.value;saveEdit(ctx,900);return}
     if(['targetKg','repMin','repMax','rir','rirTarget','pain','rpe'].includes(f)){ex[f]=t.value===''?'':Number(t.value);if(f==='rpe')t.dataset.st=num(ex.rpe)>=9?'low':'';if(f==='rir')t.dataset.st=num(ex.rir)!=null&&ex.rir<2?'low':'';if(f==='pain')t.dataset.st=num(ex.pain)>=4?'low':'';saveEdit(ctx,700);return}
   });
   main.addEventListener('change',e=>{
