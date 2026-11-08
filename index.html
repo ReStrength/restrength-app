@@ -1453,8 +1453,8 @@ function vCoaches(){
      ${k.id!=='none'?abHtml(k):''}
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&pairsOfCoach(k.id).length?`<div class="cgrid">${pairsOfCoach(k.id).map(pk=>`<button class="ccard gcard pcard" data-group="${esc(pk)}"><span class="cn">👥 ${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · תוכנית אחת לשניהם, ומתחלפים בסופר סטים</span></button>`).join('')}</div>`:''}
-     ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span></button>`).join('')}</div>`:''}
-     ${act.length?`<div class="cgrid">${act.map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
+     ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span><span class="cm">${esc(S.clients.filter(c=>ttype(c)==='group'&&c.coachId===k.id&&(c.groupName||'קבוצה')===n&&(c.status||'active')==='active').map(c=>c.name).join(' · '))}</span></button>`).join('')}</div>`:''}
+     ${act.filter(c=>!(k.id!=='none'&&ttype(c)==='group')).length?`<div class="cgrid">${act.filter(c=>!(k.id!=='none'&&ttype(c)==='group')).map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
      ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`;
   }
   const list=S.coaches.filter(k=>k.active!==false);
