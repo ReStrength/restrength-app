@@ -862,7 +862,9 @@ function delArmed(id){return S.delArm===id&&Date.now()-(S.delArmT||0)<8000}
 function armDel(id){S.delArm=id;S.delArmT=Date.now();render();setTimeout(()=>{if(S.delArm===id){S.delArm=null;render()}},8000)}
 function delLabel(id){return delArmed(id)?'⚠️ לחצו שוב – מחיקה סופית':'🗑️ מחיקת התוכנית'}
 async function delSessionDoc(id){const path='sessions/'+id;DELETED.add(path);const w=writers[path];if(w){clearTimeout(w.timer);w.pending=null;if(w.running){try{await w.running}catch(e){}}w.waiters.splice(0).forEach(r=>r(false))}
-  await S.db.doc(path).delete();setTimeout(async()=>{try{const x=await S.db.doc(path).get();if(x.exists)await S.db.doc(path).delete()}catch(e){}},2500)}
+  await S.db.doc(path).delete();
+  const verify=async(n)=>{try{const x=await S.db.doc(path).get({source:'server'});if(x.exists){await S.db.doc(path).delete();if(n<3)setTimeout(()=>verify(n+1),2500);else toast('⚠️ התוכנית חזרה – כנראה פתוחה במכשיר אחר. סגרו אותה שם ונסו שוב')}else if(n===0)toast('התוכנית נמחקה ✓ (נבדק מול השרת)')}catch(e){}};
+  setTimeout(()=>verify(0),1500);setTimeout(()=>verify(1),6000)}
 function saveDoc(path,data,{merge=false,delay=0}={}){
   if(!S.db||!S.canWrite) return Promise.resolve(false);
   if(DELETED.has(path)) return Promise.resolve(false);
@@ -1075,6 +1077,7 @@ function blankPlan(clientId,label,mode){return {clientId,label:label||'1',seq:1,
 function newExercise(){return {id:uid(),name:'',unit:'kg',group:'other',ss:'',rirTarget:3,tempo:'',targetSets:2,targetKg:'',repMin:6,repMax:10,sets:[{kg:'',reps:''},{kg:'',reps:''}],rir:'',pain:'',note:'',sugg:null}}
 function subSessions(ctx){
   ctx.unsub=S.db.collection('sessions').where('clientId','==',ctx.clientId).onSnapshot(snap=>{
+    try{snap.docChanges().forEach(ch=>{if(ch.type==='removed'&&!snap.metadata.hasPendingWrites){DELETED.add('sessions/'+ch.doc.id);if(ctx.edit&&ctx.edit.id===ch.doc.id)ctx.edit=null}})}catch(e){}
     const all=snap.docs.map(d=>({id:d.id,...d.data()})); ctx.archive=all.filter(x=>x.status==='archive').sort((a,b)=>(a.order||0)-(b.order||0)); ctx.sessions=all.filter(x=>x.status!=='archive');
     if(ctx.edit){const f=ctx.sessions.find(s=>s.id===ctx.edit.id);
       if(f&&!hasPending('sessions/'+ctx.edit.id)&&!editorFocused()) ctx.edit.doc=clone(f);}
@@ -1138,6 +1141,7 @@ addEventListener('popstate',e=>{const nv=e.state&&e.state.rs;if(!nv||!S.db)retur
   NAVH.last=JSON.stringify(nv);NAVH.busy=false});
 function render(){
   const main=$('#main');
+  try{let v=document.getElementById('appver');if(!v){v=document.createElement('div');v.id='appver';v.style.cssText='text-align:center;color:#999;font-size:11px;padding:18px 0 70px';document.body.appendChild(v)}v.textContent='גרסה '+APP_V.slice(6,8)+'.'+APP_V.slice(4,6)+' '+APP_V.slice(8,10)+':'+APP_V.slice(10,12)}catch(e){}
   try{if(S.db&&S.loaded&&S.loaded.k){const nv={v:S.view,cv:S.coachView??null,c:S.view==='client'?S.clientId||null:null,t:S.view==='client'?S.tab||null:null,g:S.view==='group'&&S.G&&S.G.name||null};const k=JSON.stringify(nv);
     localStorage.setItem('rs_nav',k);
     if(!NAVH.busy&&k!==NAVH.last){if(NAVH.last==null)history.replaceState({rs:nv},'');else history.pushState({rs:nv},'');NAVH.last=k}}}catch(e){}
@@ -1298,7 +1302,7 @@ function openGroup(name){
   closeClient(); closeGroup();
   const G={name,id:gid(name),sessions:[],loaded:false,msess:[],edit:null};
   S.G=G; S.view='group';
-  G.unsub=S.db.collection('sessions').where('clientId','==',G.id).onSnapshot(snap=>{G.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));G.loaded=true;scheduleRender()},dbErr);
+  G.unsub=S.db.collection('sessions').where('clientId','==',G.id).onSnapshot(snap=>{try{snap.docChanges().forEach(ch=>{if(ch.type==='removed'){DELETED.add('sessions/'+ch.doc.id);if(G.edit&&G.edit.id===ch.doc.id)G.edit=null}})}catch(e){}G.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));G.loaded=true;scheduleRender()},dbErr);
   const ids=groupMembers(name).map(c=>c.id).slice(0,10);
   if(ids.length) G.unsub2=S.db.collection('sessions').where('clientId','in',ids).onSnapshot(snap=>{G.msess=snap.docs.map(d=>({id:d.id,...d.data()}));scheduleRender()},()=>{});
   render(); window.scrollTo(0,0);
@@ -1428,7 +1432,7 @@ function vGroup(){
   if(PR&&ms.length===2&&!usePT){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,names:exs.filter((e,j)=>tags[j].n===tg.n).map(e=>e.name).filter(Boolean)})});
     if(bl.length>=2){const A=ms[0],B=ms[1],L=bl.length;const lab=b=>(b.ss?'סופר סט ':'תרגיל ')+b.n;
       rot=`<div class="card rotc"><h3>🔄 סדר העבודה בזוג</h3><p class="muted small">כל אחד עושה בלוק אחר, ומתחלפים כששניהם סיימו.</p><table class="rott"><thead><tr><th>סבב</th><th>${esc(A.name)}</th><th>${esc(B.name)}</th></tr></thead><tbody>${bl.map((b,k)=>{const bb=bl[(k+1)%L];return `<tr><td>${k+1}</td><td><b>${lab(b)}</b><small>${esc(b.names.join(' + '))}</small></td><td><b>${lab(bb)}</b><small>${esc(bb.names.join(' + '))}</small></td></tr>`}).join('')}</tbody></table></div>`}}
-  return head+`<div class="labels">${weeks}${S.user&&S.user.role==='admin'&&!G.edit.local?`<button class="btn sm ghost" data-act="gDelPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(G.edit.id)}</button>`:''}</div>${rot}
+  return head+`<div class="labels">${weeks}${S.user&&S.user.role==='admin'&&!G.edit.local&&G.edit.doc.status!=='done'?`<button class="btn sm ghost" data-act="gDelPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(G.edit.id)}</button>`:''}</div>${rot}
    <div class="weekchip">${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
    ${d.afterIntro&&!isDone?`<div class="banner info"><span><b>האימון הראשון אחרי מפגש ההיכרות.</b> אתם מחליטים: תרגילים, סטים, חזרות, משקל וטמפו. מה שמופיע כאן הוא רק מה שהיה במפגש ההיכרות (הטמפו מהמפגש מופיע באפור בתיבת ההערות) – משנים בחופשיות.</span></div>`:''}
    ${PR?'':`<div class="row qmode"><span class="muted small">רישום:</span><button class="chip" data-tone="neutral" aria-pressed="${gQuick(d)}" data-act="gQuick" data-v="1" data-write>⚡ מהיר: קל / בינוני / קשה</button><button class="chip" data-tone="neutral" aria-pressed="${!gQuick(d)}" data-act="gQuick" data-v="0" data-write>מפורט: חזרות בכל סט</button></div>
@@ -1482,8 +1486,10 @@ async function gAct(name,el){
   case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
   case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
-  case 'gDelPlan': {if(!(S.user&&S.user.role==='admin'))break; if(!delArmed(G.edit.id)){armDel(G.edit.id);break}
-    const id=G.edit.id; try{await delSessionDoc(id)}catch(e){onWriteError(e);break} G.sessions=(G.sessions||[]).filter(x=>x.id!==id); G.edit=null; toast('התוכנית נמחקה'); S.G=null; S.view='coaches'; S.coachView=S.meId; render(); window.scrollTo(0,0); break; render(); break;}
+  case 'gDelPlan': {if(!(S.user&&S.user.role==='admin')||!G.edit||G.edit.doc.status==='done')break; if(!delArmed(G.edit.id)){armDel(G.edit.id);break}
+    const d0=G.edit.doc,id=G.edit.id;const ids=[id,...(d0.status==='planned'?(G.sessions||[]).filter(x=>x.id!==id&&x.status==='planned').map(x=>x.id):[])];
+    G.edit=null; try{for(const x of ids) await delSessionDoc(x)}catch(e){onWriteError(e);break}
+    toast(ids.length>1?`נמחקו ${ids.length} תוכניות מתוכננות (היו כפולות)`:'התוכנית נמחקה'); closeGroup(); S.view='coaches'; S.coachView=S.meId; render(); window.scrollTo(0,0); break;}
   case 'gRot': {d.rot=(d.rot||0)+1; gSave(0); render(); break;}
   case 'gSetAdd': case 'gSetDel': {const ex=d.exercises[i]; const n=Number(ex.targetSets)||2; ex.targetSets=Math.max(1,Math.min(6,n+(name==='gSetAdd'?1:-1))); Object.values(ex.m||{}).forEach(mm=>{if(mm.off)return; while(mm.sets.length<ex.targetSets)mm.sets.push(''); while(mm.sets.length>ex.targetSets)mm.sets.pop()}); gEnsureMembers(d); gSave(0); render(); break;}
   case 'gOff': case 'gOn': {const mm=d.exercises[i].m[el.dataset.cid]; mm.off=name==='gOff'; gSave(0); render(); break;}
@@ -1680,7 +1686,7 @@ function vClient(){
   let addDayHtml='';
   if(S.P&&S.P.edit&&S.tab==='session'){const ls={};S.P.sessions.forEach(x=>{const l=String(x.label);if(!ls[l]||x.status==='planned'||(ls[l].status!=='planned'&&(x.date||'')>(ls[l].date||'')))ls[l]=x});const lb=Object.keys(ls).sort();
     if(lb.length<2) addDayHtml=S.P.addOpen?`<span class="row small np-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lb.map(l=>`<button class="btn sm" data-act="addDay" data-src="${ls[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;}
-  const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>${S.user&&S.user.role==='admin'&&S.P.edit&&!S.P.edit.local?`<button class="btn sm ghost" data-act="delPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(S.P.edit.id)}</button>`:''}`):'';
+  const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>${S.user&&S.user.role==='admin'&&S.P.edit&&!S.P.edit.local&&S.P.edit.doc.status!=='done'?`<button class="btn sm ghost" data-act="delPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(S.P.edit.id)}</button>`:''}`):'';
   const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}${open?'':moreBadge}</button>${open?`<span class="morebox">${more.map(tb).join('')}<button class="tab" data-act="openReport">📄 דוח התקדמות</button><button class="tab" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button>${c.remote||(c.handoff&&c.handoff.text)?'':`<button class="tab" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button>`}</span>`:''}</div>`;
   const chipsL=(periodicDue(c)?`<span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span>`:'')+(!(c.goalsShort||c.goalText||c.goalsLong)?`<button type="button" class="chip info" style="cursor:pointer;border:0;font:inherit" data-act="goalSug" title="הצעה למטרות לפי התוכנית והגיל">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])} ←</button>`:'');
   const hl=(chipsL||addDayHtml||np)?`<div class="hline"><span class="row">${chipsL}</span><span class="tabs-side">${addDayHtml}${np}</span></div>${S.goalSug===c.id&&!(c.goalsShort||c.goalText||c.goalsLong)?goalSugHtml(c):''}`:'';
@@ -2274,8 +2280,12 @@ async function act(name,el){
     else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set];}
     applyProg(ex); saveEdit(ctx,0); render(); break;}
   case 'addSS': {const a=ctx.edit.doc.exercises; const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a.push({...newExercise(),ss:k},{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
-  case 'delPlan': {if(!(S.user&&S.user.role==='admin'))break; if(!delArmed(ctx.edit.id)){armDel(ctx.edit.id);break}
-    const id=ctx.edit.id; try{await delSessionDoc(id)}catch(e){onWriteError(e);break} ctx.sessions=(ctx.sessions||[]).filter(x=>x.id!==id); ctx.edit=null; toast('התוכנית נמחקה'); closeClient(); S.view='coaches'; S.coachView=S.meId; S.showNew=false; render(); window.scrollTo(0,0); break; render(); break;}
+  case 'delPlan': {if(!(S.user&&S.user.role==='admin')||!ctx.edit||ctx.edit.doc.status==='done')break; if(!delArmed(ctx.edit.id)){armDel(ctx.edit.id);break}
+    const d0=ctx.edit.doc,id=ctx.edit.id,cid=ctx.clientId;
+    const ids=[id,...(d0.status==='planned'?(ctx.sessions||[]).filter(x=>x.id!==id&&x.status==='planned'&&String(x.label||'1')===String(d0.label||'1')).map(x=>x.id):[])];
+    ctx.edit=null; try{for(const x of ids) await delSessionDoc(x)}catch(e){onWriteError(e);break}
+    ctx.sessions=(ctx.sessions||[]).filter(x=>!ids.includes(x.id)); if(d0.status==='planned')updClient(cid,{hasPlan:false,pendingApproval:false});
+    toast(ids.length>1?`נמחקו ${ids.length} תוכניות מתוכננות (היו כפולות)`:'התוכנית נמחקה'); closeClient(); S.view='coaches'; S.coachView=S.meId; S.showNew=false; render(); window.scrollTo(0,0); break;}
   case 'setDel': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length<=1)break;ex.sets.pop();ex.targetSets=ex.sets.length;saveEdit(ctx,0);render();break;}
   case 'setAdd': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length>=6)break;ex.sets.push({kg:'',reps:''});ex.targetSets=Math.max(Number(ex.targetSets)||0,ex.sets.length);saveEdit(ctx,0);render();break;}
   case 'exUp': case 'exDown': case 'exDel': {
@@ -2749,7 +2759,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261109122431';
+const APP_V='20261109122918';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
