@@ -1396,7 +1396,7 @@ function vGroup(){
     if(bl.length>=2){const A=ms[0],B=ms[1],L=bl.length;const lab=b=>(b.ss?'סופר סט ':'תרגיל ')+b.n;
       rot=`<div class="card rotc"><h3>🔄 סדר העבודה בזוג</h3><p class="muted small">כל אחד עושה בלוק אחר, ומתחלפים כששניהם סיימו.</p><table class="rott"><thead><tr><th>סבב</th><th>${esc(A.name)}</th><th>${esc(B.name)}</th></tr></thead><tbody>${bl.map((b,k)=>{const bb=bl[(k+1)%L];return `<tr><td>${k+1}</td><td><b>${lab(b)}</b><small>${esc(b.names.join(' + '))}</small></td><td><b>${lab(bb)}</b><small>${esc(bb.names.join(' + '))}</small></td></tr>`}).join('')}</tbody></table></div>`}}
   return head+`<div class="labels">${weeks}</div>${rot}
-   <div class="weekchip">שבוע ${d.seq||1}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
+   <div class="weekchip">${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
    ${PR?'':`<div class="row qmode"><span class="muted small">רישום:</span><button class="chip" data-tone="neutral" aria-pressed="${gQuick(d)}" data-act="gQuick" data-v="1" data-write>⚡ מהיר: קל / בינוני / קשה</button><button class="chip" data-tone="neutral" aria-pressed="${!gQuick(d)}" data-act="gQuick" data-v="0" data-write>מפורט: חזרות בכל סט</button></div>
    ${gQuick(d)?`<div class="banner info small"><span>אחרי כל תרגיל לוחצים לכל משתתף <b>קל / בינוני / קשה</b> (או כאב). את המשקל והחזרות לשבוע הבא המערכת מחשבת לבד: <b>קל</b> מוסיף משקל, <b>בינוני</b> מוסיף חזרה ובתקרה (${'12'}, בחד־צדדי 8) מוסיף משקל, <b>קשה פעמיים</b> מוריד. מי שלא סומן לא הגיע.</span></div>`:''}`}
    ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
