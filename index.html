@@ -111,7 +111,7 @@ button.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink
 .kpi b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
 .kpi span{font-size:13px;color:var(--muted)}
 .kpi.bad b{color:var(--bad)} .kpi.warn b{color:var(--warn)} .kpi.up b{color:var(--up)} .kpi.info b{color:var(--info)}
-.tbl-wrap{overflow-x:auto}
+.tbl-wrap{overflow-x:auto;overflow-y:hidden}textarea{resize:none!important}
 table.tbl{width:100%;border-collapse:collapse;font-size:16px;font-variant-numeric:tabular-nums}
 .tbl th{text-align:start;font-size:14px;font-weight:600;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -202,7 +202,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .ex-side textarea{min-height:60px}
 .ex-name{font-family:inherit}
 .add-menu{gap:6px}
-.sheet-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.sheet-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
 .sheet{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:16px}
 .sheet th{background:var(--band);color:#fff;font-weight:600;font-size:15px;padding:10px 8px;white-space:nowrap;text-align:center;border:1px solid #2E2A29}
 .sheet thead tr:first-child th{font-size:16px;letter-spacing:.02em}
@@ -1363,11 +1363,12 @@ function introCard(list){const pair=list.length>1;return `<details class="card" 
    <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
    <li><b>עבודת כוח:</b> סופר סטים 2×8, טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
    <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
-   <li><b>⭐ חובה:</b> ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! כשמסיימים את האימון באפליקציה זה עובר אוטומטית לשקד כמשימה בארבוקס.</li></ol>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
+</ol><div style="margin:12px 0 4px;padding:10px 12px;border:2px solid #e8590c;border-radius:10px;background:#fff4e6;font-size:19px;font-weight:800;line-height:1.5">⭐ חובה: ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד" וזה עובר אוטומטית לשקד כמשימה בארבוקס.</div>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
 </details>`}
-function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש. כשמסיימים את האימון באפליקציה, זה עובר <b>אוטומטית לשקד</b> כמשימה בארבוקס – לא צריך לכתוב בארבוקס.</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
+function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b> – זה עובר אוטומטית לשקד כמשימה בארבוקס. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
    ${list.map(c=>`<div style="margin-top:10px">${pair?`<b>${esc(c.name)}</b>`:''}${sent[c.id]?` <span class="chip up">נשלח לשקד ✓</span>`:''}
-   <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea></div>`).join('')}</div>`}
+   <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea>
+   <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c.id}" data-write>${sent[c.id]?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}${pair?' – '+esc(String(c.name).split(' ')[0]):''}</button></div></div>`).join('')}</div>`}
 const INTRO_HOOK='https://hook.eu1.make.com/t6mxy6fufk4w34z0xnkste5mah910fj1';
 async function introSend(c,d){const t=document.querySelector(`[data-introdoc="${c.id}"]`);const text=(t?t.value:(c.introDoc||'')).trim();
   if(t&&t.value!==c.introDoc){c.introDoc=t.value;updClient(c.id,{introDoc:t.value})}
@@ -2392,6 +2393,10 @@ async function act(name,el){
   case 'printReport': try{window.print()}catch(e){toast('ההדפסה לא זמינה בתצוגה הזו')} break;
   case 'nameTo': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const old=ex.name; const n=el.dataset.name; const note=el.dataset.note||''; if(note&&!String(ex.tempo||'').includes(note))ex.tempo=note+(ex.tempo?'\n'+ex.tempo:''); ex.name=n; const l=libFind(n); if(l){ex.unit=l[1];ex.group=l[2];}
     saveEdit(ctx,0); toast(`עודכן ל: ${n}`); render(); break;}
+  case 'introSendNow': {const isG=S.view==='group'&&S.G&&S.G.edit;const d=isG?S.G.edit.doc:(ctx&&ctx.edit&&ctx.edit.doc);const cl=clientById(el.dataset.cid);if(!d||!cl)break;
+    const t=document.querySelector(`[data-introdoc="${cl.id}"]`);const v=(t?t.value:cl.introDoc||'').trim();if(!v||v===introDocDefault(cl).trim()){toast('קודם ממלאים את התיעוד');break}
+    el.disabled=true;el.textContent='שולח…';const ok=await introSend(cl,d);if(!ok){el.disabled=false;el.textContent='📤 שליחה לשקד';toast('השליחה נכשלה – נסו שוב');break}
+    d.introSent={...(d.introSent||{}),[cl.id]:Date.now()};if(isG)gSave(0);else saveEdit(ctx,0);toast('נשלח לשקד ✓');render();break;}
   case 'introCopy': {const cid=el.dataset.cid||S.clientId;const t=document.querySelector(`[data-introdoc="${cid}"]`); if(!t) break; const cl=clientById(cid); if(cl){cl.introDoc=t.value; updClient(cl.id,{introDoc:t.value});}
     try{await navigator.clipboard.writeText(t.value);toast('הועתק ✓ עכשיו מדביקים בארבוקס ב"הערות כלליות"')}catch(e){t.select();document.execCommand('copy');toast('הועתק ✓')} break;}
   case 'cmOpen': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; S.cmEx=S.cmEx===ex.id?null:ex.id; S.painEx=null; S.effEx=null; render(); break;}
