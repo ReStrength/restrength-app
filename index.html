@@ -1353,7 +1353,7 @@ const INTRO_HOOK='https://hook.eu1.make.com/t6mxy6fufk4w34z0xnkste5mah910fj1';
 async function introSend(c,d){const t=document.querySelector(`[data-introdoc="${c.id}"]`);const text=(t?t.value:(c.introDoc||'')).trim();
   if(t&&t.value!==c.introDoc){c.introDoc=t.value;updClient(c.id,{introDoc:t.value})}
   if(!text||text===introDocDefault(c).trim()) return false;
-  try{await fetch(INTRO_HOOK,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({k:'rs-intro-7f3k',name:c.name||'',phone:c.phone||'',coach:coachName(S.meId),date:d.date||today(),text})});return true}catch(e){return false}}
+  try{const r=await fetch(INTRO_HOOK,{method:'POST',body:new URLSearchParams({k:'rs-intro-7f3k',name:c.name||'',phone:c.phone||'',coach:coachName(S.meId),date:d.date||today(),text})});if(!r.ok)return false;return true}catch(e){return false}}
 function introFill(d){(d.exercises||[]).forEach(ex=>{if(!ex.name)return;const n=Number(ex.targetSets)||2;const r=num(ex.repMin)??num(ex.repMax)??8;const kg=num(ex.targetKg);
   if(!(ex.sets||[]).some(x=>num(x.reps)!=null)) ex.sets=Array.from({length:n},()=>({kg:kg??'',reps:r}))})}
 function vGroup(){
