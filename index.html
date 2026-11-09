@@ -528,7 +528,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .sheet td.acts .btn.sm{font-size:17px;padding:4px 6px}
 }
 @media (max-width:900px){.sheet,.ptab{min-width:860px}.sheet td.name,.ptab td.pname{position:sticky;right:0;z-index:3;background:var(--surface);min-width:140px!important;max-width:160px;box-shadow:-2px 0 4px rgba(0,0,0,.06)}.sheet thead th:first-child,.ptab thead tr:last-child th:first-child{position:sticky;right:0;z-index:4}.sheet-wrap,.tbl-wrap{-webkit-overflow-scrolling:touch}}
-[data-tip]{position:relative}.addset[data-tip]{position:absolute}
+[data-tip]{position:relative}.addset[data-tip]{position:absolute}.addset{display:none!important}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:30}
 .gtable tr.goff td{opacity:.75;background:var(--surface-2)}
 
@@ -858,6 +858,9 @@ function ctxOf(el){const p=el&&el.closest&&el.closest('[data-pane]');return p&&p
 /* ---------- writes: one at a time per document ---------- */
 const writers = {};
 const DELETED=new Set();
+function delArmed(id){return S.delArm===id&&Date.now()-(S.delArmT||0)<8000}
+function armDel(id){S.delArm=id;S.delArmT=Date.now();render();setTimeout(()=>{if(S.delArm===id){S.delArm=null;render()}},8000)}
+function delLabel(id){return delArmed(id)?'⚠️ לחצו שוב – מחיקה סופית':'🗑️ מחיקת התוכנית'}
 async function delSessionDoc(id){const path='sessions/'+id;DELETED.add(path);const w=writers[path];if(w){clearTimeout(w.timer);w.pending=null;if(w.running){try{await w.running}catch(e){}}w.waiters.splice(0).forEach(r=>r(false))}
   await S.db.doc(path).delete();setTimeout(async()=>{try{const x=await S.db.doc(path).get();if(x.exists)await S.db.doc(path).delete()}catch(e){}},2500)}
 function saveDoc(path,data,{merge=false,delay=0}={}){
@@ -997,6 +1000,10 @@ function pushH(ex){if(isSmithPush(ex.name)&&num(ex.height)!=null)return {h:+ex.h
   if(!/סמית/.test(String(ex.name)+' '+String(ex.tempo||'')))return null;m=String(ex.tempo||'').match(re)||String(ex.tempo||'').match(/מס['׳]?\s*(\d)/);return m?{h:+m[1],m:m[0],where:'tempo'}:null}
 function carry(ex){return {name:ex.name,unit:ex.unit,group:ex.group||'other',ss:ex.ss||'',rirTarget:ex.rirTarget??3,tempo:ex.tempo||'',...(ex.height!=null&&ex.height!==''?{height:ex.height}:{})}}
 function buildNext(ctx,d,docId){
+  if(d.intro){const exercises=(d.exercises||[]).filter(e=>e.name).map(ex=>{const cx=carry(ex);const hint=cx.tempo||'';cx.tempo='';
+      return {id:uid(),...cx,tempoHint:hint,targetSets:num(ex.targetSets)||2,targetKg:ex.targetKg??'',repMin:num(ex.repMin)??8,repMax:num(ex.repMax)??8,prog:[],rec:'',
+        sets:Array.from({length:num(ex.targetSets)||2},()=>({kg:'',reps:''})),rir:'',pain:'',note:'',sugg:null}});
+    return {clientId:d.clientId,label:d.label||'1',programNo:d.programNo||1,seq:1,status:'planned',approved:true,date:'',coach:'',notes:'',warmup:d.warmup||'',exercises,basedOn:docId,afterIntro:true,createdAt:Date.now()};}
   const exercises=(d.exercises||[]).filter(e=>e.name).map(ex=>{
     const s=suggest(ex,exHistory(ctx,ex.name,d.date),effDflt(ctx.clientId||d.clientId));
     const base={targetSets:num(ex.targetSets)||2,targetKg:ex.targetKg,repMin:num(ex.repMin)??6,repMax:num(ex.repMax)??10};
@@ -1009,7 +1016,7 @@ function buildNext(ctx,d,docId){
     const ph=pushH(ex); let nm=null,nt=null,nh=null;
     if(ph&&s.type!=='flag'&&s.type!=='down'&&(s.type==='up'||topRep>=base.repMax)){
       if(ph.h>1){const h2=ph.h-1;if(ph.where==='field')nh=h2;else if(ph.where==='name')nm=ex.name.replace(ph.m,ph.m.replace(String(ph.h),String(h2)));else nt=String(ex.tempo||'').replace(ph.m,ph.m.replace(String(ph.h),String(h2)));
-        rec='harder';text=`השלים את הטווח בהגבהה ${ph.h} ← יורדים להגבהה ${h2} בסמית (סופרים מלמטה), וחוזרים לתחתית טווח החזרות`;}
+        rec='harder';text=`השלים את הטווח בהגבהה ${ph.h} ← יורדים להגבהה ${h2} בסמית, וחוזרים לתחתית טווח החזרות`;}
       else {rec='harder';text='השלים את הטווח בהגבהה 1 (הכי נמוכה בסמית) ← השלב הבא: שכיבות סמיכה על הרצפה, בהתחלה פחות חזרות';}
     }
     /* תקוע: למתאמנים מתקדמים אפשר טופ סט + דאון סט */
@@ -1044,7 +1051,7 @@ const T_INTRO='שאיפה בירידה + בלימה 2 שנ׳, נשיפה בעל�
 const INTRO_WARM='חימום דינמי לבחירתך\nשיווי משקל דינמי: הליכת טנדם בבסיס רחב ← בסיס צר ← הליכה לצדדים ← מעברים מעל מוט הסמית׳\nשיווי משקל סטטי: עמידה על רגל אחת ליד עמוד או קיר (המאמן בצד השני, צמוד וידיים קרובות) ← פרטורבציות קלות לכיוונים שונים';
 const TEMPLATES=[
  {id:'intro',name:'מפגש היכרות',desc:'לפי תסריט מפגש היכרות: חימום ושיווי משקל, ואז 3 סופר סטים של 2×8',warm:INTRO_WARM,ex:[
-  ['סקוואט','1',2,8,8,'אם קשה – בוקס סקוואט\n'+T_INTRO],['שכיבות סמיכה בסמית משין','1',2,8,8,'אם קל – יורדים שלב אחד בלבד\n'+T_INTRO,null,7],
+  ['סקוואט','1',2,8,8,'אם קשה – בוקס סקוואט\nלימוד ברייסינג וטמפו של 2 שנ׳ ירידה. קל? נוסיף שנייה עצירה בחלק הקשה'],['שכיבות סמיכה בסמית משין','1',2,8,8,'אם קל – יורדים שלב אחד בלבד\nשאיפה בירידה + 2 שניות ירידה, נשיפה בעלייה (קל? + שנייה עצירה בחלק הקשה)',null,7],
   ["הינג' בדאמבלים",'2',2,8,8,"קודם לימוד הינג' בלי משקל\n"+T_INTRO,'1-2'],['משיכה מפולי עליון','2',2,8,8,'או חתירה בפולי תחתון בישיבה\n'+T_INTRO],
   ['לחיצת כתפיים בישיבה בדאמבלים','3',2,8,8,T_INTRO,'1-2'],['כפיפות בטן אלכסוניות','3',2,8,8,'בשיפוע גבוה בהתחלה']]},
  {id:'falls',name:'מניעת נפילות – שלב א׳',desc:'קימה, מדרגה, שוקיים, הליכה ושיווי משקל',ex:[
@@ -1123,9 +1130,17 @@ function lineChart(pts,{color='var(--accent)',unit=''}={}){
 }
 
 /* ---------- views ---------- */
+const NAVH={last:null,busy:false};
+addEventListener('popstate',e=>{const nv=e.state&&e.state.rs;if(!nv||!S.db)return;NAVH.busy=true;
+  try{if(nv.v==='client'&&nv.c&&clientById(nv.c)){openClient(nv.c,nv.t||'session')}
+   else if(nv.v==='group'&&nv.g){openGroup(nv.g)}
+   else{if(S.G&&typeof closeGroup==='function')closeGroup();if(S.view==='client')closeClient();S.view=nv.v||'coaches';S.coachView=nv.cv??null;S.showNew=false;render();window.scrollTo(0,0)}}catch(err){}
+  NAVH.last=JSON.stringify(nv);NAVH.busy=false});
 function render(){
   const main=$('#main');
-  try{if(S.db&&S.loaded&&S.loaded.k)localStorage.setItem('rs_nav',JSON.stringify({v:S.view,cv:S.coachView??null,c:S.clientId||null,t:S.tab||null,g:S.G&&S.G.name||null}))}catch(e){}
+  try{if(S.db&&S.loaded&&S.loaded.k){const nv={v:S.view,cv:S.coachView??null,c:S.view==='client'?S.clientId||null:null,t:S.view==='client'?S.tab||null:null,g:S.view==='group'&&S.G&&S.G.name||null};const k=JSON.stringify(nv);
+    localStorage.setItem('rs_nav',k);
+    if(!NAVH.busy&&k!==NAVH.last){if(NAVH.last==null)history.replaceState({rs:nv},'');else history.pushState({rs:nv},'');NAVH.last=k}}}catch(e){}
   const cv=S.view==='client'?(client()||{}).coachId:(S.view==='coaches'?S.coachView:S.view==='group'?(groupMembers(S.G?S.G.name:'')[0]||{}).coachId:undefined);const inMine=!!S.meId&&(S.view==='coaches'||S.view==='client'||S.view==='group')&&cv===S.meId;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.nav==='mine'?inMine:(b.dataset.nav==='coaches'?((S.view==='coaches'||S.view==='client'||S.view==='group')&&!inMine):b.dataset.nav===S.view))));
   renderWho();
@@ -1327,7 +1342,7 @@ function pairTable(d,ms,exs,tags){
       const shared=first?`<td class="pname" rowspan="${ms.length}"><span class="nmwrap"><span class="nmview">${esc(ex.name)||'<span class="muted">שם התרגיל</span>'}</span><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל"></span>${barHint(ex.name)&&!isSmithPush(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}</td>
         <td class="narrow" rowspan="${ms.length}"><input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></td>
         <td class="rngc" rowspan="${ms.length}"><span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}"></span>${sec?'<div class="muted small">שניות</div>':''}</td>
-        <td class="pnotes" rowspan="${ms.length}"><textarea data-gf="tempo" data-ei="${i}" rows="2" placeholder="טמפו, מנח, דגשים">${esc(ex.tempo||'')}</textarea></td>`:'';
+        <td class="pnotes" rowspan="${ms.length}"><textarea data-gf="tempo" data-ei="${i}" rows="2" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, דגשים'}">${esc(ex.tempo||'')}</textarea></td>`:'';
       const acts=first?`<td class="acts" rowspan="${ms.length}"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" data-tip="כאב – הצעה לשינוי מנח">🤕</button><span class="mvcol"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" data-tip="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" data-tip="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-tip="מחיקת התרגיל" data-write>✕</button></td>`:'';
       const who=`<td class="pwho p${k}"><b>${esc(String(c.name).split(' ')[0])}</b>${mm.off?'':` <button class="linkbtn tiny poffbtn" data-act="gOff" data-ei="${i}" data-cid="${c.id}" data-tip="להוציא את התרגיל מהתוכנית של ${esc(String(c.name).split(' ')[0])}" data-write>✕</button>`}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!mm.off&&mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>`;
       let rest;
@@ -1413,8 +1428,9 @@ function vGroup(){
   if(PR&&ms.length===2&&!usePT){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,names:exs.filter((e,j)=>tags[j].n===tg.n).map(e=>e.name).filter(Boolean)})});
     if(bl.length>=2){const A=ms[0],B=ms[1],L=bl.length;const lab=b=>(b.ss?'סופר סט ':'תרגיל ')+b.n;
       rot=`<div class="card rotc"><h3>🔄 סדר העבודה בזוג</h3><p class="muted small">כל אחד עושה בלוק אחר, ומתחלפים כששניהם סיימו.</p><table class="rott"><thead><tr><th>סבב</th><th>${esc(A.name)}</th><th>${esc(B.name)}</th></tr></thead><tbody>${bl.map((b,k)=>{const bb=bl[(k+1)%L];return `<tr><td>${k+1}</td><td><b>${lab(b)}</b><small>${esc(b.names.join(' + '))}</small></td><td><b>${lab(bb)}</b><small>${esc(bb.names.join(' + '))}</small></td></tr>`}).join('')}</tbody></table></div>`}}
-  return head+`<div class="labels">${weeks}${S.user&&S.user.role==='admin'&&!G.edit.local?`<button class="btn sm ghost" data-act="gDelPlan" style="color:var(--bad,#c62828)" data-write>🗑️ מחיקת התוכנית</button>`:''}</div>${rot}
+  return head+`<div class="labels">${weeks}${S.user&&S.user.role==='admin'&&!G.edit.local?`<button class="btn sm ghost" data-act="gDelPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(G.edit.id)}</button>`:''}</div>${rot}
    <div class="weekchip">${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>
+   ${d.afterIntro&&!isDone?`<div class="banner info"><span><b>האימון הראשון אחרי מפגש ההיכרות.</b> אתם מחליטים: תרגילים, סטים, חזרות, משקל וטמפו. מה שמופיע כאן הוא רק מה שהיה במפגש ההיכרות (הטמפו מהמפגש מופיע באפור בתיבת ההערות) – משנים בחופשיות.</span></div>`:''}
    ${PR?'':`<div class="row qmode"><span class="muted small">רישום:</span><button class="chip" data-tone="neutral" aria-pressed="${gQuick(d)}" data-act="gQuick" data-v="1" data-write>⚡ מהיר: קל / בינוני / קשה</button><button class="chip" data-tone="neutral" aria-pressed="${!gQuick(d)}" data-act="gQuick" data-v="0" data-write>מפורט: חזרות בכל סט</button></div>
    ${gQuick(d)?`<div class="banner info small"><span>אחרי כל תרגיל לוחצים לכל משתתף <b>קל / בינוני / קשה</b> (או כאב). את המשקל והחזרות לשבוע הבא המערכת מחשבת לבד: <b>קל</b> מוסיף משקל, <b>בינוני</b> מוסיף חזרה ובתקרה (${'12'}, בחד־צדדי 8) מוסיף משקל, <b>קשה פעמיים</b> מוריד. מי שלא סומן לא הגיע.</span></div>`:''}`}
    ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
@@ -1466,7 +1482,7 @@ async function gAct(name,el){
   case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
   case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
-  case 'gDelPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב – מחיקה סופית, בלי שחזור';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
+  case 'gDelPlan': {if(!(S.user&&S.user.role==='admin'))break; if(!delArmed(G.edit.id)){armDel(G.edit.id);break}
     const id=G.edit.id; try{await delSessionDoc(id)}catch(e){onWriteError(e);break} G.sessions=(G.sessions||[]).filter(x=>x.id!==id); G.edit=null; toast('התוכנית נמחקה'); S.G=null; S.view='coaches'; S.coachView=S.meId; render(); window.scrollTo(0,0); break; render(); break;}
   case 'gRot': {d.rot=(d.rot||0)+1; gSave(0); render(); break;}
   case 'gSetAdd': case 'gSetDel': {const ex=d.exercises[i]; const n=Number(ex.targetSets)||2; ex.targetSets=Math.max(1,Math.min(6,n+(name==='gSetAdd'?1:-1))); Object.values(ex.m||{}).forEach(mm=>{if(mm.off)return; while(mm.sets.length<ex.targetSets)mm.sets.push(''); while(mm.sets.length>ex.targetSets)mm.sets.pop()}); gEnsureMembers(d); gSave(0); render(); break;}
@@ -1493,6 +1509,7 @@ async function gAct(name,el){
     const nextP=G.sessions.find(x=>x.status==='planned'&&x.id!==G.edit.id&&(x.seq??1)>(d.seq??1)); if(nextP){G.edit={id:nextP.id,doc:gEnsureMembers(clone(nextP))}; render(); window.scrollTo(0,0); break;}
     const ms=groupMembers(G.name);
     const exs=d.exercises.filter(ex=>ex.name).map(ex=>{const ne=gNewEx({...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:ex.targetKg});
+      if(d.intro){ne.tempoHint=ne.tempo||'';ne.tempo='';ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]};ne.m[c.id]={kg:mm.kg??'',...(mm.height?{height:mm.height}:{}),sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',off:!!mm.off}});return ne;}
       if(gQuick(d)){ne.quickNote=1; ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const p=gProg(ex,mm); ne.m[c.id]={kg:p.kg,r:p.r,sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',feel:'',sugg:p.sugg,okRun:p.okRun,hardRun:p.hardRun}}); return ne;}
       ms.forEach(c=>{const mm=ex.m[c.id]||{sets:[]}; const mex={...ex,targetKg:mm.kg??ex.targetKg,sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),pain:mm.pain,rpe:mm.rpe};
         const s=suggest(mex,exHistory(gMemCtx(c.id),ex.name),effDflt(c.id)); let txt=s.reason;
@@ -1500,7 +1517,7 @@ async function gAct(name,el){
         ne.m[c.id]={kg:mm.kg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:mm.adapt||'',sugg:(s.type==='up'?'★ ':'')+txt,skg:(unitOf(mex)==='kg'&&s.kg!=null)?s.kg:null};});
       return ne;});
     const ref=S.db.collection('sessions').doc();
-    const doc={clientId:G.id,group:true,groupName:G.name,label:'1',seq:d.intro?1:(d.seq??1)+1,quick:d.quick,status:'planned',date:'',notes:'',warmup:d.warmup||'',createdAt:Date.now(),basedOn:G.edit.id,exercises:exs};
+    const doc={clientId:G.id,group:true,groupName:G.name,label:'1',seq:d.intro?1:(d.seq??1)+1,...(d.intro?{afterIntro:true}:{}),quick:d.quick,status:'planned',date:'',notes:'',warmup:d.warmup||'',createdAt:Date.now(),basedOn:G.edit.id,exercises:exs};
     G.edit={id:ref.id,doc:gEnsureMembers(doc),local:true}; await saveDoc('sessions/'+ref.id,doc); render(); window.scrollTo(0,0); break;}
   }
 }
@@ -1631,14 +1648,14 @@ function vCoaches(){
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
-     ${k.id!=='none'&&k.id===S.meId?gcalCard(k):''}
+     ${S.showNew?'':`${k.id!=='none'&&k.id===S.meId?gcalCard(k):''}
      ${k.id!=='none'&&k.id===S.meId?tpInbox():''}
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span><span class="cm">${esc(S.clients.filter(c=>ttype(c)==='group'&&c.coachId===k.id&&(c.groupName||'קבוצה')===n&&(c.status||'active')==='active').map(c=>c.name).join(' · '))}</span></button>`).join('')}</div>`:''}
      ${(()=>{const solo=act.filter(c=>!(k.id!=='none'&&(ttype(c)==='group'||(ttype(c)==='pair'&&c.partnerId&&clientById(c.partnerId)))));const prs=k.id!=='none'?pairsOfCoach(k.id):[];
        const items=[...solo.map(c=>({n:c.name,h:card(c)})),...prs.map(pk=>{const ms=groupMembers(pk);const last=ms.map(c=>c.lastSessionDate||'').sort().pop();const due=ms.some(c=>periodicDue(c));return {n:gTitle(pk),h:`<button class="ccard" data-group="${esc(pk)}"><span class="cn">${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · ${freqTxt(ms[0]&&ms[0].freq)}</span><span class="cm">${last?`אימון אחרון ${fmt(last)}`:'עדיין אין אימונים'}${due?' · <span class="nflag">📋 מבדק תקופתי</span>':''}</span></button>`}})].sort((a,b)=>a.n.localeCompare(b.n,'he'));
        return items.length?`<div class="cgrid">${items.map(x=>x.h).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`})()}
-     ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`;
+     ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`}`;
   }
   const list=S.coaches.filter(k=>k.active!==false);
   const orphans=S.clients.filter(c=>!S.coaches.some(x=>x.id===c.coachId)).length;
@@ -1663,7 +1680,7 @@ function vClient(){
   let addDayHtml='';
   if(S.P&&S.P.edit&&S.tab==='session'){const ls={};S.P.sessions.forEach(x=>{const l=String(x.label);if(!ls[l]||x.status==='planned'||(ls[l].status!=='planned'&&(x.date||'')>(ls[l].date||'')))ls[l]=x});const lb=Object.keys(ls).sort();
     if(lb.length<2) addDayHtml=S.P.addOpen?`<span class="row small np-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lb.map(l=>`<button class="btn sm" data-act="addDay" data-src="${ls[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;}
-  const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>${S.user&&S.user.role==='admin'&&S.P.edit&&!S.P.edit.local?`<button class="btn sm ghost" data-act="delPlan" style="color:var(--bad,#c62828)" data-write>🗑️ מחיקת התוכנית</button>`:''}`):'';
+  const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>${S.user&&S.user.role==='admin'&&S.P.edit&&!S.P.edit.local?`<button class="btn sm ghost" data-act="delPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(S.P.edit.id)}</button>`:''}`):'';
   const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}${open?'':moreBadge}</button>${open?`<span class="morebox">${more.map(tb).join('')}<button class="tab" data-act="openReport">📄 דוח התקדמות</button><button class="tab" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button>${c.remote||(c.handoff&&c.handoff.text)?'':`<button class="tab" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button>`}</span>`:''}</div>`;
   const chipsL=(periodicDue(c)?`<span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span>`:'')+(!(c.goalsShort||c.goalText||c.goalsLong)?`<button type="button" class="chip info" style="cursor:pointer;border:0;font:inherit" data-act="goalSug" title="הצעה למטרות לפי התוכנית והגיל">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])} ←</button>`:'');
   const hl=(chipsL||addDayHtml||np)?`<div class="hline"><span class="row">${chipsL}</span><span class="tabs-side">${addDayHtml}${np}</span></div>${S.goalSug===c.id&&!(c.goalsShort||c.goalText||c.goalsLong)?goalSugHtml(c):''}`:'';
@@ -1716,7 +1733,7 @@ function progTable(ctx,doc){
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
      <td class="rngc" data-l="חזרות"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</td>
      <td class="kg" data-l="${isSmithPush(ex.name)?'גובה הגבהה בסמית':'משקל עבודה (בלי המוט)'}">${isSmithPush(ex.name)?`<select data-f="height" class="hsel" aria-label="גובה הגבהה בסמית">${[7,6,5,4,3,2,1].map(h=>`<option value="${h}"${(Number(ex.height)||7)===h?' selected':''}>גובה ${h}</option>`).join('')}</select><div class="muted small" style="font-size:12px;white-space:nowrap">7 קל ← 1 קשה</div>`:`<input type="text" inputmode="decimal" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג">`}</td>
-     <td class="notes"><textarea data-f="tempo" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="טמפו, מנח, ציוד">${esc(ex.tempo)}</textarea></td>
+     <td class="notes"><textarea data-f="tempo" data-hint="1" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, ציוד'}">${esc(ex.tempo)}</textarea></td>
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];return s?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===(ex.sets||[]).length-1?`${(ex.sets||[]).length<6?`<button type="button" class="addset" data-act="setAdd" title="הוספת סט לתרגיל הזה" aria-label="הוספת סט" data-write>+</button>`:''}${(ex.sets||[]).length>1?`<button type="button" class="addset delset" data-act="setDel" title="הורדת הסט האחרון" aria-label="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>'}).join('')}
      <td class="acts"><button class="btn ghost sm${num(ex.pain)||S.painEx===ex.id?' painon':''}" data-act="painOpen" data-i="${i}" data-tip="כאב" aria-label="כאב">🤕${num(ex.pain)?' '+ex.pain:''}</button><button class="btn ghost sm${num(ex.rpe)||S.effEx===ex.id?' effon':''}" data-act="effOpen" data-i="${i}" data-tip="${num(ex.rpe)?'מאמץ: '+effName(ex.rpe):'מאמץ'}" aria-label="מאמץ">💪${num(ex.rpe)?' '+effName(ex.rpe):''}</button><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" data-tip="תרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄</button><span class="mvcol"><button class="btn ghost sm" data-act="exUp" data-tip="למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" data-tip="למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="exDel" data-tip="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${S.painEx!=null&&S.painEx===ex.id?painRow(ex,i,nSets):''}${S.effEx!=null&&S.effEx===ex.id?effRow(ex,i,nSets):''}${S.cmEx!=null&&S.cmEx===ex.id?cmRow(ctx,ex,i,nSets):''}${sg}`}).join('');
   return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
@@ -1770,7 +1787,7 @@ function paneHtml(ctx,c,pane,pair){
   const freshBanner=ctx.edit.fresh?`<div class="banner info fresh-banner"><span><b>תבנית תוכנית ריקה.</b> כתבו את התרגילים, הסטים, החזרות והמשקל. הכול נשמר אוטומטית מהרגע שמתחילים לכתוב.</span>${canCopy?`<button class="btn sm" data-act="copyFrom" data-write>העתקת התוכנית מ${esc(clientById(other.clientId)?.name||'בן הזוג')}</button>`:''}</div>`:'';
   const nextPlanned=planned.find(x=>String(x.label)===String(d.label)&&x.id!==ctx.edit.id&&(Number(x.seq)||1)>(Number(d.seq)||1));
   const doneBanner=isDone?`<div class="banner up big"><span><b>${wk(d)} הסתיים ונשמר</b> · ${fmt(d.date)}</span>${nextPlanned?`<button class="btn primary" data-pick="${nextPlanned.id}">מעבר ל${wk(nextPlanned)}</button>`:`<button class="btn primary" data-act="buildFrom" data-id="${ctx.edit.id}" data-write>תכנון אימון הבא (שבוע ${(Number(d.seq)||1)+1})</button>`}</div>`:'';
-  const planBanner=(!isDone&&d.basedOn)?`<div class="banner info"><span><b>תכנון ${wk(d)}.</b> בכל תרגיל בחרו במה מתקדמים: משקל, חזרות, סטים או טווח תנועה (אפשר כמה), או שנו מספרים ידנית. ★ = רעיון לפי התוצאות של שבוע ${d.seq-1}, ההחלטה שלכם.</span></div>`:'';
+  const planBanner=(!isDone&&d.afterIntro)?`<div class="banner info"><span><b>האימון הראשון אחרי מפגש ההיכרות.</b> אתם מחליטים: תרגילים, סטים, חזרות, משקל וטמפו. מה שמופיע כאן הוא רק מה שהיה במפגש ההיכרות (הטמפו מהמפגש מופיע באפור בתיבת ההערות) – משנים בחופשיות לפי המטרות של המתאמן.</span></div>`:(!isDone&&d.basedOn)?`<div class="banner info"><span><b>תכנון ${wk(d)}.</b> בכל תרגיל בחרו במה מתקדמים: משקל, חזרות, סטים או טווח תנועה (אפשר כמה), או שנו מספרים ידנית. ★ = רעיון לפי התוצאות של שבוע ${d.seq-1}, ההחלטה שלכם.</span></div>`:'';
   const approveBanner=false?`<div class="banner warn"><span>המערכת בנתה את האימון לפי התוצאות של שבוע ${d.seq-1}. עברו על ההצעה בכל תרגיל, שנו מה שצריך ואשרו.</span><button class="btn primary sm" data-act="approve" data-write>אישור התוכנית</button></div>`:'';
   const list=(d.exercises||[]).length?progTable(ctx,d):`<div class="card empty"><strong>אין תרגילים באימון</strong><span>הוסיפו את התרגיל הראשון. שמות מהמאגר ממלאים אוטומטית את סוג העומס.</span></div>`;
   const delBtn=ctx.confirmDel===d.id?`<span class="row small"><span class="muted">למחוק את ${isDone?'האימון':'הטיוטה'}?</span><button class="btn danger sm" data-act="delSess" data-write>כן, מחיקה</button><button class="btn ghost sm" data-act="cancelDel">ביטול</button></span>`:`<button class="btn ghost sm" data-act="askDel" data-write>מחיקת ${isDone?'האימון':'הטיוטה'}</button>`;
@@ -1783,7 +1800,7 @@ function paneHtml(ctx,c,pane,pair){
     if(pe.length) painHtml=`<div class="banner bad painbanner"><span><b>⚠ דווח כאב באימון הקודם (${fmt(last.date)}):</b> ${pe.map(e=>`${esc(e.name)} – ${e.pain}/10`).join(' · ')}. לשקול התאמה, טווח תנועה קטן יותר או החלפת תרגיל.</span></div>`;}
   const weekChip=`<div class="weekchip">${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>`;
   const introHtml=d.intro&&!isDone?introCard([c]):'';
-  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row">${(()=>{const X=d.exercises||[];const L=X[X.length-1];return L&&!L.ss?'':'<button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button>'})()}<button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button></div>
+  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${d.afterIntro&&!isDone?planBanner:''}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row">${(()=>{const X=d.exercises||[];const L=X[X.length-1];return L&&!L.ss?'':'<button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button>'})()}<button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button></div>
    ${d.intro?introDocBox([c],d):`<label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label>`}<div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (${wk(nextPlanned)})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
 function tSession(c){
@@ -2257,7 +2274,7 @@ async function act(name,el){
     else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set];}
     applyProg(ex); saveEdit(ctx,0); render(); break;}
   case 'addSS': {const a=ctx.edit.doc.exercises; const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a.push({...newExercise(),ss:k},{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
-  case 'delPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב – מחיקה סופית, בלי שחזור';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
+  case 'delPlan': {if(!(S.user&&S.user.role==='admin'))break; if(!delArmed(ctx.edit.id)){armDel(ctx.edit.id);break}
     const id=ctx.edit.id; try{await delSessionDoc(id)}catch(e){onWriteError(e);break} ctx.sessions=(ctx.sessions||[]).filter(x=>x.id!==id); ctx.edit=null; toast('התוכנית נמחקה'); closeClient(); S.view='coaches'; S.coachView=S.meId; S.showNew=false; render(); window.scrollTo(0,0); break; render(); break;}
   case 'setDel': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length<=1)break;ex.sets.pop();ex.targetSets=ex.sets.length;saveEdit(ctx,0);render();break;}
   case 'setAdd': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length>=6)break;ex.sets.push({kg:'',reps:''});ex.targetSets=Math.max(Number(ex.targetSets)||0,ex.sets.length);saveEdit(ctx,0);render();break;}
@@ -2629,7 +2646,7 @@ function tPortal(c){
     <div class="row" style="margin-top:10px"><button class="btn" data-act="tpHAdd" data-write>+ תרגיל</button>${H.length?`<button class="btn primary" data-act="tpHSave" data-write>שמירה ועדכון הדף</button>`:''}${H.some(x=>x.n)&&c.portalPub?`<a class="btn primary" data-own="1" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,tpHomeMsg(c)))}" target="_blank" rel="noopener">📲 שליחת התרגילים בווטסאפ</a>`:''}</div>${c.phone?'':'<p class="muted small" style="margin:6px 0 0">כדי שהווטסאפ ייפתח ישר אצל המתאמן, הוסיפו את הטלפון שלו בתיק המתאמן.</p>'}</div>
   <div class="spread"><span></span>${S.tpConfirmDel===c.id?`<span class="row small"><span class="muted">לבטל את הקישור? הדף יפסיק לעבוד, וגם מה שהמתאמן שלח יימחק.</span><button class="btn danger sm" data-act="tpDel" data-write>כן, ביטול</button><button class="btn ghost sm" data-act="tpDelNo">לא</button></span>`:`<button class="btn ghost sm" data-act="tpDelAsk" data-write>ביטול הקישור</button>`}</div>`;
 }
-function tpInbox(){const L=S.clients.filter(c=>c.portal&&tpMine(c)&&S.tpNew[c.id]).map(c=>({c,n:S.tpNew[c.id],last:(S.tpReps[c.id]||[])[0]}));
+function tpInbox(){const L=S.clients.filter(c=>c.portal&&tpMine(c)&&S.tpNew[c.id]&&(c.remote||ttype(c)==='remote'||(c.homeEx||[]).some(x=>x&&x.n))).map(c=>({c,n:S.tpNew[c.id],last:(S.tpReps[c.id]||[])[0]}));
   if(!L.length) return '';
   return `<div class="card tpinbox"><h2 style="margin:0 0 6px">📩 התיבה שלי: הודעות מהמתאמנים</h2>${L.map(x=>`<button class="tpinrow" data-tpopen="${x.c.id}"><b>${esc(x.c.name)}</b> <span class="tpbadge">${x.n}</span><span class="muted small">${x.last?(x.last.kind==='pain'?'🤕 דיווח כאב':x.last.kind==='log'?'🏋️ תיעוד אימון':x.last.kind==='media'?'📷 צילום / סרטון':x.last.kind==='done'?'✓ תרגול בבית':'✍️ הודעה'):''}</span></button>`).join('')}</div>`}
 document.addEventListener('click',e=>{const a=e.target.closest('a[data-own]');if(a){const c=client();if(c&&S.meId&&tpOwner(c)!==S.meId)updClient(c.id,{portalOwner:S.meId})}const b=e.target.closest('[data-tpopen]');if(b){openClient(b.dataset.tpopen,'portal')}},true);
@@ -2732,7 +2749,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261109115631';
+const APP_V='20261109122431';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
