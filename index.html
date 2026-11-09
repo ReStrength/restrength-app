@@ -543,6 +543,36 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 [data-tip]{position:relative}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:30}
 .gtable tr.goff td{opacity:.75;background:var(--surface-2)}
+
+.pnow{position:relative;display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0;box-shadow:0 3px 10px rgba(0,0,0,.08);font-size:16px}
+.pnow .pn{padding:3px 10px;border-radius:999px}
+.p0 b,.pnow .p0{color:#1d5fa8}.p1 b,.pnow .p1{color:#a8431d}
+.pnow .p0{background:#e6f0fb}.pnow .p1{background:#fbeee6}
+.ptab th{background:var(--band);color:#fff;font-size:14px;padding:8px 6px;border:1px solid #2E2A29;white-space:nowrap}
+.ptab th.grp-res{background:var(--accent);font-size:17px}
+.ptab td.pname{min-width:170px;text-align:start;padding:6px 8px;background:var(--surface);vertical-align:middle}
+.ptab td.pname .gn{width:100%;font:inherit;font-size:17px;font-weight:700;border:0;background:transparent;text-align:start;min-height:0}
+.ptab td.narrow input{width:44px}
+.ptab .rng{display:flex;align-items:center;gap:2px;direction:ltr;justify-content:center}.ptab .rng input{width:36px!important;min-width:36px;flex:0 0 36px;font-size:17px;min-height:40px}.ptab td.narrow input{min-height:40px}.ptab td.rngc{min-width:100px;padding:0 4px}.ptab td.rngc .rng input{padding:0;text-align:center}
+.ptab td.pnotes{position:relative;min-width:150px;vertical-align:middle}
+.ptab td.pnotes textarea{width:100%;border:0;background:transparent;resize:none;font:inherit;font-size:14px;text-align:center;padding:4px;color:var(--ink)}
+.ptab td.pwho{text-align:start;padding:4px 8px;min-width:120px;white-space:normal}
+.ptab td.pwho .prevline,.ptab td.pwho .sghint{font-size:12px}
+.ptab tr.prow.p0 td.pwho{border-inline-start:4px solid #1d5fa8}.ptab tr.prow.p1 td.pwho{border-inline-start:4px solid #a8431d}
+.ptab tr.now td.pwho,.ptab tr.now td.gkg,.ptab tr.now td.res,.ptab tr.now td.gadapt{box-shadow:inset 0 0 0 9999px rgba(255,214,0,.13)}
+.ptab tr.plast td{border-bottom:2px solid var(--line)}
+.ptab td.res{position:relative}
+.ptab td.poff{background:var(--surface-2)}
+.ptab td.acts{white-space:nowrap}
+@media (max-width:900px){
+ .ptab thead{display:none}
+ .ptab,.ptab tbody{display:block}
+ .ptab tr.prow{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--surface)}
+ .ptab tr.prow td{display:block;border:0}
+ .ptab tr.prow td.pname,.ptab tr.prow td.pnotes,.ptab tr.prow td.pwho,.ptab tr.prow td.gadapt,.ptab tr.prow td.poff,.ptab tr.prow td.acts{grid-column:1/-1}
+ .ptab tr.prow td.narrow,.ptab tr.prow td.rngc{grid-column:span 2}
+ .ptab tr.gsep,.ptab tr.painrow{display:block}
+}
 </style>
 
 <div class="app" dir="rtl">
@@ -1248,6 +1278,38 @@ function gProg(ex,mm){
   else t=mm.sugg&&!/^⚠|^★|^בינוני|^היה|^קשה/.test(mm.sugg)?mm.sugg:'לא סומן: אותו עומס';
   return {kg:nk==null?'':nk,r:nr,sugg:t,okRun:ok,hardRun:hd};
 }
+
+/* ---------- אימון זוגי: טבלה כמו באימון האישי, שורה לכל אחד מבני הזוג ---------- */
+function pairBlocks(exs,tags){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,idx:exs.map((e,j)=>j).filter(j=>tags[j].n===tg.n)})});return bl}
+function pairNow(d,ms,bl){if(ms.length!==2||bl.length<2)return null;const k=((d.rot||0)%bl.length+bl.length)%bl.length;return {k,A:bl[k],B:bl[(k+1)%bl.length]}}
+function pairTable(d,ms,exs,tags){
+  const nSets=Math.max(2,...exs.map(e=>Number(e.targetSets)||0));const bl=pairBlocks(exs,tags);const now=pairNow(d,ms,bl);
+  const lab=b=>b?(b.ss?'סופר סט ':'תרגיל ')+b.n:'';
+  const nowOf=(cid,i)=>{if(!now)return false;const b=cid===ms[0].id?now.A:now.B;return b.idx.includes(i)};
+  const strip=now?`<div class="pnow"><span>🔄 עכשיו:</span><span class="pn p0"><b>${esc(String(ms[0].name).split(' ')[0])}</b> ${lab(now.A)}</span><span class="pn p1"><b>${esc(String(ms[1].name).split(' ')[0])}</b> ${lab(now.B)}</span><button class="btn primary sm" data-act="gRot" data-write>החלפה ←</button></div>`:'';
+  const head=`<thead><tr><th colspan="4" class="grp-plan">תוכנית</th><th colspan="2"></th><th colspan="${nSets}" class="grp-res">תוצאות</th><th colspan="2"></th></tr>
+   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>הערות / טמפו</th><th>מי</th><th>משקל עבודה</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>התאמה אישית</th><th>סדר</th></tr></thead>`;
+  let body='';
+  exs.forEach((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
+    if(tg.first&&(tg.ss||exs.some(e=>e.ss)))body+=`<tr class="gsep"><td colspan="${nSets+8}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span></td></tr>`;
+    ms.forEach((c,k)=>{const mm=ex.m[c.id]||{sets:[]};const first=k===0;const prev=mm.off?'':prevShort(gMemCtx(c.id),ex,null);
+      const shared=first?`<td class="pname" rowspan="${ms.length}"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">${barHint(ex.name)&&!isSmithPush(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}</td>
+        <td class="narrow" rowspan="${ms.length}"><input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></td>
+        <td class="rngc" rowspan="${ms.length}"><span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${esc(ex.repMax)}"></span>${sec?'<div class="muted small">שניות</div>':''}</td>
+        <td class="pnotes" rowspan="${ms.length}"><textarea data-gf="tempo" data-ei="${i}" rows="2" placeholder="טמפו, מנח, דגשים">${esc(ex.tempo||'')}</textarea></td>`:'';
+      const acts=first?`<td class="acts" rowspan="${ms.length}"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" data-tip="כאב – הצעה לשינוי מנח">🤕</button><span class="mvcol"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" data-tip="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" data-tip="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-tip="מחיקת התרגיל" data-write>✕</button></td>`:'';
+      const who=`<td class="pwho p${k}"><b>${esc(String(c.name).split(' ')[0])}</b>${mm.off?'':` <button class="linkbtn tiny" data-act="gOff" data-ei="${i}" data-cid="${c.id}" data-tip="התרגיל לא בתוכנית שלו/ה" data-write>לא עושה</button>`}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!mm.off&&mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>`;
+      let rest;
+      if(mm.off) rest=`<td colspan="${nSets+2}" class="poff"><span class="muted">לא בתוכנית של ${esc(String(c.name).split(' ')[0])}</span> <button class="linkbtn tiny" data-act="gOn" data-ei="${i}" data-cid="${c.id}" data-write>להוסיף</button></td>`;
+      else { const kgc=isSmithPush(ex.name)?`<select data-gm="height" data-ei="${i}" data-cid="${c.id}" class="hsel"><option value="">גובה?</option>${[7,6,5,4,3,2,1].map(h=>`<option value="${h}"${Number(mm.height)===h?' selected':''}>גובה ${h}</option>`).join('')}</select>`:`<input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'משקל גוף'}">`;
+        const L=mm.sets.length;
+        rest=`<td class="gkg">${kgc}</td>${Array.from({length:nSets},(_,j)=>j<L?`<td class="res"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}" aria-label="${esc(c.name)} סט ${j+1}">${j===L-1&&first?`${L<6?`<button type="button" class="addset" data-act="gSetAdd" data-ei="${i}" data-tip="הוספת סט" data-write>+</button>`:''}${L>1?`<button type="button" class="addset delset" data-act="gSetDel" data-ei="${i}" data-tip="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>').join('')}
+         <td class="gadapt"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt||'')}" placeholder="למשל: מדרגה נמוכה"></td>`}
+      body+=`<tr class="prow p${k}${nowOf(c.id,i)?' now':''}${k===ms.length-1?' plast':''}" data-gex="${i}">${shared}${who}${rest}${acts}</tr>`});
+    if(S.gPain===i)body+=`<tr class="painrow"><td colspan="${nSets+8}"><div class="banner bad" style="margin:4px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום ב"התאמה אישית" מה שונה.</span></span></div></td></tr>`;
+  });
+  return strip+`<div class="tbl-wrap"><table class="gtable ptab">${head}<tbody>${body}</tbody></table></div>`;
+}
 function vGroup(){
   const G=S.G; if(!G) return vCoaches();
   const ms=groupMembers(G.name);
@@ -1269,7 +1331,8 @@ function vGroup(){
   gEnsureMembers(d);
   const exs=d.exercises||[]; const tags=groupTags(exs);
   const nSets=Math.max(2,...exs.map(e=>Number(e.targetSets)||0));
-  const blocks=exs.map((ex,i)=>{const tg=tags[i];
+  const usePT=PR&&!gQuick(d);
+  const blocks=usePT?pairTable(d,ms,exs,tags):exs.map((ex,i)=>{const tg=tags[i];
     const sep=tg.first&&(tg.ss||exs.some(e=>e.ss))?`<div class="gsep">${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</div>`:'';
     const sec=unitOf(ex)==='sec';
     const Q=gQuick(d);
@@ -1295,7 +1358,7 @@ function vGroup(){
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq??1)>(d.seq??1));
   const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">${wk(s)}${s.status==='done'?' ✓':''}</button>`).join('');
   let rot='';
-  if(PR&&ms.length===2){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,names:exs.filter((e,j)=>tags[j].n===tg.n).map(e=>e.name).filter(Boolean)})});
+  if(PR&&ms.length===2&&!usePT){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,names:exs.filter((e,j)=>tags[j].n===tg.n).map(e=>e.name).filter(Boolean)})});
     if(bl.length>=2){const A=ms[0],B=ms[1],L=bl.length;const lab=b=>(b.ss?'סופר סט ':'תרגיל ')+b.n;
       rot=`<div class="card rotc"><h3>🔄 סדר העבודה בזוג</h3><p class="muted small">כל אחד עושה בלוק אחר, ומתחלפים כששניהם סיימו.</p><table class="rott"><thead><tr><th>סבב</th><th>${esc(A.name)}</th><th>${esc(B.name)}</th></tr></thead><tbody>${bl.map((b,k)=>{const bb=bl[(k+1)%L];return `<tr><td>${k+1}</td><td><b>${lab(b)}</b><small>${esc(b.names.join(' + '))}</small></td><td><b>${lab(bb)}</b><small>${esc(bb.names.join(' + '))}</small></td></tr>`}).join('')}</tbody></table></div>`}}
   return head+`<div class="labels">${weeks}</div>${rot}
@@ -1317,7 +1380,7 @@ function gInput(t){
   const mm=ex.m[t.dataset.cid]; if(!mm) return true; const f=t.dataset.gm;
   if(f==='rep'){mm.sets[Number(t.dataset.si)]=t.value===''?'':Number(t.value); if(!d.date&&t.value!=='') d.date=today(); t.dataset.st=setState(ex,{reps:t.value});
     if(t.value!==''&&Number(t.value)*10>Math.max(num(ex.repMax)||10,10)+5){const all=[...document.querySelectorAll('#main input[data-gm="rep"]')];const k=all.indexOf(t);setTimeout(()=>{if(all[k+1])all[k+1].focus();else t.blur()},0)}}
-  else if(f==='kg'||f==='pain'||f==='rpe'||f==='r') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
+  else if(f==='kg'||f==='pain'||f==='rpe'||f==='r'||f==='height') mm[f]=t.value===''?'':Number(t.value); else mm[f]=t.value;
   gSave(700); return true;
 }
 function gChange(t){
@@ -1347,6 +1410,8 @@ async function gAct(name,el){
   case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
   case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
+  case 'gRot': {d.rot=(d.rot||0)+1; gSave(0); render(); break;}
+  case 'gSetAdd': case 'gSetDel': {const ex=d.exercises[i]; const n=Number(ex.targetSets)||2; ex.targetSets=Math.max(1,Math.min(6,n+(name==='gSetAdd'?1:-1))); Object.values(ex.m||{}).forEach(mm=>{if(mm.off)return; while(mm.sets.length<ex.targetSets)mm.sets.push(''); while(mm.sets.length>ex.targetSets)mm.sets.pop()}); gEnsureMembers(d); gSave(0); render(); break;}
   case 'gOff': case 'gOn': {const mm=d.exercises[i].m[el.dataset.cid]; mm.off=name==='gOff'; gSave(0); render(); break;}
   case 'gApply': {const mm=d.exercises[i].m[el.dataset.cid]; mm.kg=mm.skg; gSave(0); render(); break;}
   case 'gComplete': {
@@ -1355,7 +1420,7 @@ async function gAct(name,el){
       const QQ=gQuick(d);
       const exsM=d.exercises.filter(ex=>ex.name&&!((ex.m||{})[c.id]||{}).off).map(ex=>{const mm=ex.m[c.id]||{sets:[]};
         if(QQ){const fl=FEEL.find(f=>f[0]===mm.feel);return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??'',sets:mm.feel?Array.from({length:Number(ex.targetSets)||2},()=>({kg:'',reps:gR(ex,mm)})):[],rir:'',rpe:mm.feel?FEEL_RPE[mm.feel]:'',pain:mm.feel==='pain'?4:'',feel:mm.feel||'',note:[fl?fl[1]:'',mm.adapt||''].filter(Boolean).join(' · '),sugg:null}}
-        return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
+        return {id:uid(),...carry(ex),...(mm.height?{height:mm.height}:{}),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
       if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
       const seq=gMemCtx(c.id).sessions.filter(s=>s.status==='done').length+1;
       const ref=S.db.collection('sessions').doc();
