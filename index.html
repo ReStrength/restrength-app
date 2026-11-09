@@ -1147,7 +1147,7 @@ function render(){
 const MUSIC_DEF=[['אנגלית של פעם','0Gds8XKqNx6Q3eQhRk6RAy'],['רוק קלאסי','6WD7pdD92M9v3CZ4yDUOfK'],['עברית של פעם','4w5H2VkDovrPrA9khl8Vv4'],['מזרחית','1mqV7W6k7QUKtyPvYrsAcI']];
 const MU={list:MUSIC_DEF.map(([n,id])=>({n,id})),cur:null};
 function muPid(v){const m=String(v||'').match(/playlist[\/:]([A-Za-z0-9]{22})/)||String(v||'').match(/^([A-Za-z0-9]{22})$/);return m?m[1]:null}
-function muChips(){const b=$('#mChips');if(!b)return;b.innerHTML=MU.list.map((p,i)=>`<button type="button" data-mi="${i}" aria-pressed="${MU.cur===p.id}">${esc(p.n)}</button>`).join('');
+function muChips(){const b=$('#mChips');if(!b)return;b.innerHTML=MU.list.map((p,i)=>`<button type="button" data-mi="${i}" aria-pressed="${MU.cur===p.id}">${esc(p.n)}</button>`).join('')+`<button type="button" data-mother aria-pressed="${!!MU.other}">🔎 אחר</button>`+(MU.other?`<form id="mOtherF" style="flex-basis:100%;display:flex;gap:6px"><input id="mOther" placeholder="שם של שיר או זמר, או קישור מספוטיפיי" style="flex:1;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px"><button class="btn sm primary">חיפוש</button></form>`:'');
   const a=$('#mAdmin');if(a)a.innerHTML=false?`<details><summary class="muted small">עריכת הרשימה (רק לך)</summary><div class="small">${MU.list.map((p,i)=>`<div class="spread"><span>${esc(p.n)}</span><button type="button" class="btn ghost sm" data-mdel="${i}">הסרה</button></div>`).join('')}<input id="mNewN" placeholder="שם הסגנון (למשל: שירי ארץ ישראל)"><input id="mNewL" placeholder="קישור לפלייליסט מספוטיפיי"><button type="button" class="btn sm" id="mAdd" style="margin-top:6px">+ הוספה</button></div></details>`:''}
 function muPlay(id){MU.cur=id;lsSet('rs_music',id);$('#mFrame').innerHTML=`<iframe src="https://open.spotify.com/embed/playlist/${id}?utm_source=generator" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="נגן מוזיקה"></iframe>`;muChips();$('#mBtn').classList.add('on')}
 async function muSave(){try{await S.db.doc('settings/music').set({list:MU.list,at:Date.now()})}catch(e){toast('לא נשמר: '+e.message)}}
@@ -1157,7 +1157,11 @@ async function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
   $('#mBtn').onclick=()=>{const b=$('#mBox');b.hidden=!b.hidden;$('#mBtn').setAttribute('aria-expanded',String(!b.hidden));if(!b.hidden&&!MU.cur){const last=lsGet('rs_music');if(last&&MU.list.some(p=>p.id===last))muPlay(last)}};
   $('#mClose').onclick=()=>{$('#mBox').hidden=true;$('#mBtn').setAttribute('aria-expanded','false')};
   document.addEventListener('pointerdown',e=>{const b=$('#mBox');if(b&&!b.hidden&&!e.target.closest('#music')){b.hidden=true;$('#mBtn').setAttribute('aria-expanded','false')}},true);
-  box.addEventListener('click',async e=>{const c=e.target.closest('[data-mi]');if(c){muPlay(MU.list[+c.dataset.mi].id);return}
+  box.addEventListener('submit',e=>{if(e.target.id!=='mOtherF')return;e.preventDefault();const v=$('#mOther').value.trim();if(!v)return;
+    const m=v.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist|artist)\/([A-Za-z0-9]{22})/);
+    if(m){MU.cur=m[2];$('#mFrame').innerHTML=`<iframe src="https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="נגן מוזיקה"></iframe>`;$('#mBtn').classList.add('on');return}
+    window.open('https://open.spotify.com/search/'+encodeURIComponent(v),'rs_spotify');toast('נפתח חיפוש בספוטיפיי – לוחצים ▶ על השיר')});
+  box.addEventListener('click',async e=>{if(e.target.closest('[data-mother]')){MU.other=!MU.other;muChips();if(MU.other)setTimeout(()=>{const i=$('#mOther');i&&i.focus()},50);return}const c=e.target.closest('[data-mi]');if(c){MU.other=false;muPlay(MU.list[+c.dataset.mi].id);return}
     const d=e.target.closest('[data-mdel]');if(d){MU.list.splice(+d.dataset.mdel,1);muChips();await muSave();return}
     if(e.target.id==='mAdd'){const n=$('#mNewN').value.trim(),id=muPid($('#mNewL').value.trim());if(!n||!id){toast('צריך שם וקישור לפלייליסט מספוטיפיי');return}MU.list.push({n,id});muChips();await muSave();toast('נוסף ✓')}})}
 function muShow(){const box=$('#music');if(!box)return;const on=!!(S.meId&&S.db);box.hidden=!on;if(on)muInit()}
@@ -1752,14 +1756,14 @@ function paneHtml(ctx,c,pane,pair){
   const delBtn=ctx.confirmDel===d.id?`<span class="row small"><span class="muted">למחוק את ${isDone?'האימון':'הטיוטה'}?</span><button class="btn danger sm" data-act="delSess" data-write>כן, מחיקה</button><button class="btn ghost sm" data-act="cancelDel">ביטול</button></span>`:`<button class="btn ghost sm" data-act="askDel" data-write>מחיקת ${isDone?'האימון':'הטיוטה'}</button>`;
   const npBtn=isDone?'':ctx.newProg?`<span class="row small"><span class="muted">תוכנית חדשה במקום ${wk(d)}:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm" data-act="askNewProg" data-write>+ פתיחת תוכנית אימונים חדשה</button>`;
   const foot=`<div class="sess-foot"><div class="row">${delBtn}${isDone&&planned.length?`<button class="btn ghost sm" data-act="backPlanned">חזרה לאימון המתוכנן</button>`:''}</div>
-    <div class="row"><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button>${isDone?'':`<button class="btn" data-act="complete" data-write>סיום אימון ושמירה</button>`}<button class="btn primary" data-act="planNext" data-write>${nextPlanned?`מעבר לאימון הבא (${wk(nextPlanned)})`:'תכנון אימון הבא'}</button></div></div>`;
+    <div class="row">${isDone?'':`<button class="btn" data-act="complete" data-write>סיום אימון ושמירה</button>`}<button class="btn primary" data-act="planNext" data-write>${nextPlanned?`מעבר לאימון הבא (${wk(nextPlanned)})`:'תכנון אימון הבא'}</button></div></div>`;
   let painHtml='';
   if(!isDone){const last=done.find(x=>String(x.label)===String(d.label)&&x.id!==d.id)||done.find(x=>x.id!==d.id);
     const pe=last?(last.exercises||[]).filter(e=>num(e.pain)>=4):[];
     if(pe.length) painHtml=`<div class="banner bad painbanner"><span><b>⚠ דווח כאב באימון הקודם (${fmt(last.date)}):</b> ${pe.map(e=>`${esc(e.name)} – ${e.pain}/10`).join(' · ')}. לשקול התאמה, טווח תנועה קטן יותר או החלפת תרגיל.</span></div>`;}
   const weekChip=`<div class="weekchip">${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>`;
   const introHtml=d.intro&&!isDone?introCard([c]):'';
-  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button></div>
+  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row">${(()=>{const X=d.exercises||[];const L=X[X.length-1];return L&&!L.ss?'':'<button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button>'})()}<button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button></div>
    <label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label><div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (${wk(nextPlanned)})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
 function tSession(c){
@@ -2315,7 +2319,7 @@ async function act(name,el){
   case 'logout': logout(); break;
   case 'forceNew': {if(ctx){ctx.forceNew=true; render();} break;}
   case 'gcalStep': S.gcalStep=el.dataset.st; render(); break;
-  case 'gcalLater': S.gcalLater=true; render(); break;
+  case 'gcalLater': {S.gcalLater=true; const k=S.coaches.find(x=>x.id===S.meId); if(k){k.gcal={mode:'later'}; saveDoc('coaches/'+k.id,{gcal:{mode:'later',at:Date.now()}},{merge:true});} render(); break;}
   case 'gcalSave': {const mode=el.dataset.mode; const k=S.coaches.find(x=>x.id===S.meId); if(!k) break;
     const email=mode==='new'?(($('#gcEmail')||{}).value||'').trim():''; const calId=mode==='existing'?(($('#gcCal')||{}).value||'').trim():'';
     if(mode==='new'&&!/@/.test(email)){toast('צריך מייל של גוגל');break}
