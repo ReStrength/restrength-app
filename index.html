@@ -1236,7 +1236,7 @@ function newClientForm(coachId){
     <div class="form-grid">
     <label class="f" for="n_coach">מאמן אחראי<select id="n_coach"><option value="">—</option>${S.coaches.filter(k=>k.active!==false).map(k=>`<option value="${k.id}"${k.id===coachId?' selected':''}>${esc(k.name)}</option>`).join('')}</select></label>
     <label class="f" for="n_start">תאריך התחלה<input id="n_start" type="date" value="${today()}"></label></div>
-    <label class="row" style="gap:8px;align-items:center;margin:6px 0 10px;font-weight:600"><input type="checkbox" id="n_intro" ${S.newIntro?'checked':''} style="width:22px;height:22px"> ⭐ מגיע/ה למפגש היכרות – התוכנית תיבנה מעצמה לפי התסריט</label>
+    <label class="row" style="gap:8px;align-items:center;margin:6px 0 10px;font-weight:600"><input type="checkbox" id="n_intro" checked style="width:22px;height:22px"> ⭐ מגיע/ה למפגש היכרות – התוכנית תיבנה מעצמה לפי התסריט</label>
     <div class="row"><button class="btn primary" data-act="createClient" data-write>יצירה ובניית התוכנית</button><button class="btn ghost" data-act="cancelNew">ביטול</button></div></div>`;
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ntype],[data-nfreq]');if(!b)return;
@@ -1460,8 +1460,8 @@ async function gAct(name,el){
   case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
   case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
-  case 'gDelPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב למחיקה';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
-    await saveDoc('sessions/'+G.edit.id,{clientId:'old:'+G.id,archivedFrom:G.id,archivedAt:Date.now(),archivedWhy:'נמחק על ידי ירין'},{merge:true}); G.edit=null; toast('התוכנית נמחקה (נשמר עותק בארכיון)'); render(); break;}
+  case 'gDelPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב – מחיקה סופית, בלי שחזור';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
+    const id=G.edit.id; try{await S.db.doc('sessions/'+id).delete()}catch(e){onWriteError(e);break} G.sessions=(G.sessions||[]).filter(x=>x.id!==id); G.edit=null; toast('התוכנית נמחקה'); render(); break;}
   case 'gRot': {d.rot=(d.rot||0)+1; gSave(0); render(); break;}
   case 'gSetAdd': case 'gSetDel': {const ex=d.exercises[i]; const n=Number(ex.targetSets)||2; ex.targetSets=Math.max(1,Math.min(6,n+(name==='gSetAdd'?1:-1))); Object.values(ex.m||{}).forEach(mm=>{if(mm.off)return; while(mm.sets.length<ex.targetSets)mm.sets.push(''); while(mm.sets.length>ex.targetSets)mm.sets.pop()}); gEnsureMembers(d); gSave(0); render(); break;}
   case 'gOff': case 'gOn': {const mm=d.exercises[i].m[el.dataset.cid]; mm.off=name==='gOff'; gSave(0); render(); break;}
@@ -2249,8 +2249,8 @@ async function act(name,el){
     else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set];}
     applyProg(ex); saveEdit(ctx,0); render(); break;}
   case 'addSS': {const a=ctx.edit.doc.exercises; const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a.push({...newExercise(),ss:k},{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
-  case 'delPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב למחיקה';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
-    const id=ctx.edit.id,cid=ctx.clientId; await saveDoc('sessions/'+id,{clientId:'old:'+cid,archivedFrom:cid,archivedAt:Date.now(),archivedWhy:'נמחק על ידי ירין'},{merge:true}); ctx.edit=null; toast('התוכנית נמחקה (נשמר עותק בארכיון)'); render(); break;}
+  case 'delPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב – מחיקה סופית, בלי שחזור';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
+    const id=ctx.edit.id; try{await S.db.doc('sessions/'+id).delete()}catch(e){onWriteError(e);break} ctx.sessions=(ctx.sessions||[]).filter(x=>x.id!==id); ctx.edit=null; toast('התוכנית נמחקה'); render(); break;}
   case 'setDel': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length<=1)break;ex.sets.pop();ex.targetSets=ex.sets.length;saveEdit(ctx,0);render();break;}
   case 'setAdd': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length>=6)break;ex.sets.push({kg:'',reps:''});ex.targetSets=Math.max(Number(ex.targetSets)||0,ex.sets.length);saveEdit(ctx,0);render();break;}
   case 'exUp': case 'exDown': case 'exDel': {
