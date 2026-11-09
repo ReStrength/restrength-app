@@ -542,6 +542,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 }
 [data-tip]{position:relative}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:30}
+.gtable tr.goff td{opacity:.75;background:var(--surface-2)}
 </style>
 
 <div class="app" dir="rtl">
@@ -1277,7 +1278,8 @@ function vGroup(){
        <td class="gkg" data-l="${sec?'שניות':'חזרות'}"><input type="number" min="1" inputmode="numeric" data-gm="r" data-ei="${i}" data-cid="${c.id}" value="${esc(gR(ex,mm))}"></td>
        <td class="gfeel" data-l="איך היה">${FEEL.map(f=>`<button class="fb ${f[2]}" aria-pressed="${mm.feel===f[0]}" data-act="gFeel" data-v="${f[0]}" data-ei="${i}" data-cid="${c.id}" data-write>${f[1]}</button>`).join('')}</td>
        <td class="gadapt" data-l="הערה"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="הערה קצרה"></td></tr>`;
-      return `<tr><td class="gname"><b>${esc(c.name)}</b>${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
+      if(mm.off) return `<tr class="goff"><td class="gname"><b>${esc(c.name)}</b></td><td colspan="${nSets+2}"><span class="muted">לא בתוכנית של ${esc(String(c.name).split(' ')[0])}</span> <button class="linkbtn tiny" data-act="gOn" data-ei="${i}" data-cid="${c.id}" data-write>להוסיף</button></td></tr>`;
+      return `<tr><td class="gname"><b>${esc(c.name)}</b>${PR?` <button class="linkbtn tiny" data-act="gOff" data-ei="${i}" data-cid="${c.id}" title="התרגיל לא בתוכנית שלו/ה" data-write>לא עושה</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
        <td class="gkg" data-l="משקל"><input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
        ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
        <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="למשל: מדרגה נמוכה"></td></tr>`}).join('');
@@ -1344,12 +1346,13 @@ async function gAct(name,el){
   case 'gFeel': {const mm=d.exercises[i].m[el.dataset.cid]; mm.feel=mm.feel===el.dataset.v?'':el.dataset.v; if(!d.date&&mm.feel) d.date=today(); gSave(0); render(); break;}
   case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
+  case 'gOff': case 'gOn': {const mm=d.exercises[i].m[el.dataset.cid]; mm.off=name==='gOff'; gSave(0); render(); break;}
   case 'gApply': {const mm=d.exercises[i].m[el.dataset.cid]; mm.kg=mm.skg; gSave(0); render(); break;}
   case 'gComplete': {
     const ms=groupMembers(G.name); if(!d.date) d.date=today(); let n=0;
     for(const c of ms){
       const QQ=gQuick(d);
-      const exsM=d.exercises.filter(ex=>ex.name).map(ex=>{const mm=ex.m[c.id]||{sets:[]};
+      const exsM=d.exercises.filter(ex=>ex.name&&!((ex.m||{})[c.id]||{}).off).map(ex=>{const mm=ex.m[c.id]||{sets:[]};
         if(QQ){const fl=FEEL.find(f=>f[0]===mm.feel);return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??'',sets:mm.feel?Array.from({length:Number(ex.targetSets)||2},()=>({kg:'',reps:gR(ex,mm)})):[],rir:'',rpe:mm.feel?FEEL_RPE[mm.feel]:'',pain:mm.feel==='pain'?4:'',feel:mm.feel||'',note:[fl?fl[1]:'',mm.adapt||''].filter(Boolean).join(' · '),sugg:null}}
         return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
       if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
@@ -1508,7 +1511,7 @@ function vCoaches(){
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&pairsOfCoach(k.id).length?`<div class="cgrid">${pairsOfCoach(k.id).map(pk=>`<button class="ccard gcard pcard" data-group="${esc(pk)}"><span class="cn">👥 ${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · תוכנית אחת לשניהם, ומתחלפים בסופר סטים</span></button>`).join('')}</div>`:''}
      ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span><span class="cm">${esc(S.clients.filter(c=>ttype(c)==='group'&&c.coachId===k.id&&(c.groupName||'קבוצה')===n&&(c.status||'active')==='active').map(c=>c.name).join(' · '))}</span></button>`).join('')}</div>`:''}
-     ${act.filter(c=>!(k.id!=='none'&&ttype(c)==='group')).length?`<div class="cgrid">${act.filter(c=>!(k.id!=='none'&&ttype(c)==='group')).map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
+     ${act.filter(c=>!(k.id!=='none'&&(ttype(c)==='group'||(ttype(c)==='pair'&&c.partnerId&&clientById(c.partnerId))))).length?`<div class="cgrid">${act.filter(c=>!(k.id!=='none'&&(ttype(c)==='group'||(ttype(c)==='pair'&&c.partnerId&&clientById(c.partnerId))))).map(card).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`}
      ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`;
   }
   const list=S.coaches.filter(k=>k.active!==false);
