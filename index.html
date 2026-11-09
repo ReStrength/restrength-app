@@ -219,7 +219,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .sheet td.name input{text-align:start;font-weight:600}
 .sheet td.notes{min-width:240px}
 .hsel{width:100%;font-size:15px;padding:6px 4px}
-@media (min-width:901px){.sheet td.notes{position:relative;padding:0;height:64px;cursor:text}.sheet td.notes textarea{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2em;min-height:0;max-height:100%;resize:none;overflow:hidden;text-align:center;padding:2px 8px}.sheet td.notes textarea.full{overflow:auto}}
+/*all*/@media all{.sheet td.notes{position:relative;padding:0;height:64px;cursor:text}.sheet td.notes textarea{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2em;min-height:0;max-height:100%;resize:none;overflow:hidden;text-align:center;padding:2px 8px}.sheet td.notes textarea.full{overflow:auto}}
 .sheet td.notes textarea{text-align:center}
 .sheet td.notes input{text-align:start;font-size:16px}
 .sheet td.kg{width:100px}
@@ -359,23 +359,8 @@ td.res input.si{-moz-appearance:textfield;padding-right:24px!important}td.res in
 .rbar{display:flex;gap:10px;justify-content:center;margin:0 0 16px}
 @media print{.top,.rbar,.toast{display:none!important}body{background:#fff}.report{border:0}}
 @media (max-width:900px){
- .sheet,.sheet tbody{display:block}
- .sheet thead{display:none}
- .sheet tr{display:block}
- .sheet tr[data-ex]:not(.progrow):not(.swaprow):not(.painrow){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;margin:10px 6px;overflow:hidden;background:var(--surface)}
- .sheet tr[data-ex] td{border:0;border-top:1px solid var(--line);display:block;width:auto!important;min-width:0!important}
- .sheet tr[data-ex] td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--muted);padding-top:4px}
- .sheet td.name,.sheet td.notes{grid-column:1/-1}
- .sheet td.acts{grid-column:1/-1;text-align:end}
- .sheet td.res.off{display:none!important}
- .sheet td.res input{min-height:64px;font-size:26px}
- .sheet input,.sheet select{min-height:52px}
- .sheet tr.progrow td,.sheet tr.gsep td,.sheet tr.swaprow td{display:block;border:0}
- .sheet tr.painrow{display:block;margin:-6px 6px 10px;border:1px solid #ffc9c9;border-radius:0 0 12px 12px}
- .sheet tr.painrow td{display:block;border:0;width:auto!important}
  .cmitem{width:100%}
  .morebox{display:flex;flex-wrap:wrap}
- .sheet .prevline{white-space:normal}
  .chead h1{font-size:28px}
 }
 .who{display:flex;align-items:center;gap:8px;color:var(--band-ink,#fff);font-weight:600;white-space:nowrap}
@@ -536,12 +521,13 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 #mAdmin input{width:100%;margin-top:6px}
 .hline{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-top:6px}.hline .tabs-side{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;margin:0;padding:0;align-items:center}.chead .row[style*="margin-top:8px"]:not(:has(*)){display:none}.chead h1{margin-bottom:2px}
 .chead{margin-bottom:4px!important}.chead>div{flex:1 1 auto}.chead .row:empty{display:none}
-@media (min-width:901px){
+@media all{
 .sheet td.name{min-width:190px}.sheet td.notes{min-width:190px}.sheet td.kg{width:88px}
 .sheet td.res{width:74px}.sheet th.setcol{min-width:70px;font-size:17px}.sheet td.res input{font-size:21px}
 .sheet td.acts{white-space:nowrap;padding:4px 2px}
 .sheet td.acts .btn.sm{font-size:17px;padding:4px 6px}
 }
+@media (max-width:900px){.sheet,.ptab{min-width:860px}.sheet td.name,.ptab td.pname{position:sticky;right:0;z-index:3;background:var(--surface);min-width:140px!important;max-width:160px;box-shadow:-2px 0 4px rgba(0,0,0,.06)}.sheet thead th:first-child,.ptab thead tr:last-child th:first-child{position:sticky;right:0;z-index:4}.sheet-wrap,.tbl-wrap{-webkit-overflow-scrolling:touch}}
 [data-tip]{position:relative}.addset[data-tip]{position:absolute}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:30}
 .gtable tr.goff td{opacity:.75;background:var(--surface-2)}
@@ -566,15 +552,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .ptab td.res{position:relative}.ptab td.res{vertical-align:top;padding-top:6px}.ptab td.res input.si{padding-right:0!important;min-height:38px}.ptab td.res .stp{position:static;transform:none;flex-direction:row;justify-content:center;gap:4px;margin:0 0 4px}.ptab td.res .stp button{width:28px;height:24px}
 .ptab td.poff{background:var(--surface-2)}
 .ptab td.acts{white-space:nowrap}
-@media (max-width:900px){
- .ptab thead{display:none}
- .ptab,.ptab tbody{display:block}
- .ptab tr.prow{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--surface)}
- .ptab tr.prow td{display:block;border:0}
- .ptab tr.prow td.pname,.ptab tr.prow td.pnotes,.ptab tr.prow td.pwho,.ptab tr.prow td.gadapt,.ptab tr.prow td.poff,.ptab tr.prow td.acts{grid-column:1/-1}
- .ptab tr.prow td.narrow,.ptab tr.prow td.rngc{grid-column:span 2}
- .ptab tr.gsep,.ptab tr.painrow{display:block}
-}
+
 
 .nmwrap{position:relative;display:block;min-height:1.4em}
 .nmview{display:block;white-space:normal;word-break:break-word;font-weight:700;font-size:17px;line-height:1.3;text-align:start;padding:2px 0}
@@ -593,7 +571,7 @@ input::placeholder{font-size:13px}
 .ptab .rng input[data-gf="repMin"]{text-align:right!important}.ptab .rng input[data-gf="repMax"]{text-align:left!important}
 .ptab .rng input::-webkit-outer-spin-button,.ptab .rng input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ptab td.rngc{min-width:84px!important;width:84px}
-@media (min-width:901px){.ptab td.pnotes{position:relative;padding:0;height:64px;cursor:text}.ptab td.pnotes textarea{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2em;max-height:100%;overflow:hidden;font-size:15px;padding:2px 8px}.ptab td.pnotes textarea.full{overflow:auto}}
+/*all*/@media all{.ptab td.pnotes{position:relative;padding:0;height:64px;cursor:text}.ptab td.pnotes textarea{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2em;max-height:100%;overflow:hidden;font-size:15px;padding:2px 8px}.ptab td.pnotes textarea.full{overflow:auto}}
 .sheet td.name .nmview{padding:4px 8px}.sheet td.name .nmwrap input{padding:0 8px}
 .rng input[data-f="repMax"]:placeholder-shown,.rng input[data-gf="repMax"]:placeholder-shown{opacity:.6}
 </style>
@@ -606,9 +584,9 @@ input::placeholder{font-size:13px}
       <nav class="nav" id="nav">
         <button data-nav="coaches">בית</button>
         <button data-nav="mine" id="navMine" hidden>התיקייה שלי</button>
+        <button data-nav="settings" id="navSet">הגדרות</button>
         <button data-nav="manager" id="navMgr" hidden>ניהול</button>
         <button data-nav="clinic" id="navClinic" hidden title="מעבר לאפליקציית הקליניקה">קליניקה ↗</button>
-        <button data-nav="settings">הגדרות</button>
       </nav>
       <div class="subrow">
         <span class="gsearch" id="gsearch" hidden><input id="gq" name="rs-client-search" type="search" placeholder="🔍 חיפוש מתאמן" autocomplete="off" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" aria-label="חיפוש מתאמן לפי שם"><div class="gres" id="gres" hidden></div></span>
@@ -1152,7 +1130,7 @@ function render(){
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
     else {
-    html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager(): S.view==='group'?vGroup(): vCoaches(); }
+    html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager()+`<h2 style="margin:28px 0 10px">⚙️ הגדרות</h2>`+vSettings(): S.view==='group'?vGroup(): vCoaches(); }
   }
   main.innerHTML=html;
   fitNotes(main);muShow();
@@ -1181,7 +1159,7 @@ async function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
     const d=e.target.closest('[data-mdel]');if(d){MU.list.splice(+d.dataset.mdel,1);muChips();await muSave();return}
     if(e.target.id==='mAdd'){const n=$('#mNewN').value.trim(),id=muPid($('#mNewL').value.trim());if(!n||!id){toast('צריך שם וקישור לפלייליסט מספוטיפיי');return}MU.list.push({n,id});muChips();await muSave();toast('נוסף ✓')}})}
 function muShow(){const box=$('#music');if(!box)return;const on=!!(S.meId&&S.db);box.hidden=!on;if(on)muInit()}
-function fitNote(ta){const td=ta.closest('td');if(!td||innerWidth<901){ta.style.height='';autoGrow(ta);return}td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;
+function fitNote(ta){const td=ta.closest('td');if(!td){autoGrow(ta);return}td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;
   if(need+8>td.clientHeight)td.style.height=(need+8)+'px';ta.style.height=Math.max(need,24)+'px';ta.classList.remove('full')}
 function autoGrow(ta){ta.style.height='auto';ta.style.height=(ta.scrollHeight+2)+'px'}
 const GROW_SEL='label.warmup textarea, textarea[data-introdoc], textarea[data-f="sess.notes"], textarea[data-gf="notes"]';
@@ -1481,7 +1459,7 @@ async function gAct(name,el){
   case 'gPain': S.gPain=S.gPain===i?null:i; render(); break;
   case 'gQuick': d.quick=el.dataset.v==='1'; gSave(0); render(); break;
   case 'gDelPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב – מחיקה סופית, בלי שחזור';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
-    const id=G.edit.id; try{await S.db.doc('sessions/'+id).delete()}catch(e){onWriteError(e);break} G.sessions=(G.sessions||[]).filter(x=>x.id!==id); G.edit=null; toast('התוכנית נמחקה'); render(); break;}
+    const id=G.edit.id; try{await S.db.doc('sessions/'+id).delete()}catch(e){onWriteError(e);break} G.sessions=(G.sessions||[]).filter(x=>x.id!==id); G.edit=null; toast('התוכנית נמחקה'); S.G=null; S.view='coaches'; S.coachView=S.meId; render(); window.scrollTo(0,0); break; render(); break;}
   case 'gRot': {d.rot=(d.rot||0)+1; gSave(0); render(); break;}
   case 'gSetAdd': case 'gSetDel': {const ex=d.exercises[i]; const n=Number(ex.targetSets)||2; ex.targetSets=Math.max(1,Math.min(6,n+(name==='gSetAdd'?1:-1))); Object.values(ex.m||{}).forEach(mm=>{if(mm.off)return; while(mm.sets.length<ex.targetSets)mm.sets.push(''); while(mm.sets.length>ex.targetSets)mm.sets.pop()}); gEnsureMembers(d); gSave(0); render(); break;}
   case 'gOff': case 'gOn': {const mm=d.exercises[i].m[el.dataset.cid]; mm.off=name==='gOff'; gSave(0); render(); break;}
@@ -1525,7 +1503,7 @@ async function pinHash(id,pin){const txt='rs-pin:'+id+':'+pin;
   let h=5381;for(const ch of txt)h=((h*33)^ch.charCodeAt(0))>>>0;return 'd'+h.toString(16)}
 const MGR=['yarin'];
 function renderWho(){const w=$('#who'),m=$('#navMine');if(!w)return;const k=S.meId&&S.coaches.find(x=>x.id===S.meId);
-  if(m)m.hidden=!k; const mg=$('#navMgr'); if(mg)mg.hidden=!(k&&MGR.includes(k.id)); const cl=$('#navClinic'); if(cl)cl.hidden=!(k&&MGR.includes(k.id)); const gs=$('#gsearch'); if(gs)gs.hidden=!k; const nv=$('#nav'); if(nv)nv.style.visibility=(S.db&&!k)?'hidden':''; if(!k){w.hidden=true;w.textContent='';return}
+  if(m)m.hidden=!k; const mg=$('#navMgr'); if(mg)mg.hidden=!(k&&MGR.includes(k.id)); const cl=$('#navClinic'); if(cl)cl.hidden=!(k&&MGR.includes(k.id)); const ns=$('#navSet'); if(ns)ns.hidden=!!(k&&MGR.includes(k.id)); const gs=$('#gsearch'); if(gs)gs.hidden=!k; const nv=$('#nav'); if(nv)nv.style.visibility=(S.db&&!k)?'hidden':''; if(!k){w.hidden=true;w.textContent='';return}
   w.hidden=false;w.innerHTML='';const sp=document.createElement('span');sp.textContent='שלום, '+k.name;w.append(sp)}
 function gMatches(q){q=q.trim(); if(!q) return [];
   const mine=S.meId;
@@ -2270,7 +2248,7 @@ async function act(name,el){
     applyProg(ex); saveEdit(ctx,0); render(); break;}
   case 'addSS': {const a=ctx.edit.doc.exercises; const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a.push({...newExercise(),ss:k},{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
   case 'delPlan': {if(!(S.user&&S.user.role==='admin'))break; if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='לחצו שוב – מחיקה סופית, בלי שחזור';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='🗑️ מחיקת התוכנית'}},4000);break}
-    const id=ctx.edit.id; try{await S.db.doc('sessions/'+id).delete()}catch(e){onWriteError(e);break} ctx.sessions=(ctx.sessions||[]).filter(x=>x.id!==id); ctx.edit=null; toast('התוכנית נמחקה'); render(); break;}
+    const id=ctx.edit.id; try{await S.db.doc('sessions/'+id).delete()}catch(e){onWriteError(e);break} ctx.sessions=(ctx.sessions||[]).filter(x=>x.id!==id); ctx.edit=null; toast('התוכנית נמחקה'); closeClient(); S.view='coaches'; S.coachView=S.meId; S.showNew=false; render(); window.scrollTo(0,0); break; render(); break;}
   case 'setDel': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length<=1)break;ex.sets.pop();ex.targetSets=ex.sets.length;saveEdit(ctx,0);render();break;}
   case 'setAdd': {const i=Number(el.closest('[data-ex]').dataset.ex);const ex=ctx.edit.doc.exercises[i];ex.sets=ex.sets||[];if(ex.sets.length>=6)break;ex.sets.push({kg:'',reps:''});ex.targetSets=Math.max(Number(ex.targetSets)||0,ex.sets.length);saveEdit(ctx,0);render();break;}
   case 'exUp': case 'exDown': case 'exDel': {
