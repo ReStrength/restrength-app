@@ -1125,7 +1125,7 @@ function lineChart(pts,{color='var(--accent)',unit=''}={}){
 /* ---------- views ---------- */
 function render(){
   const main=$('#main');
-  try{if(S.db&&S.loaded&&S.loaded.k)sessionStorage.setItem('rs_nav',JSON.stringify({v:S.view,cv:S.coachView??null,c:S.clientId||null,t:S.tab||null,g:S.G&&S.G.name||null}))}catch(e){}
+  try{if(S.db&&S.loaded&&S.loaded.k)localStorage.setItem('rs_nav',JSON.stringify({v:S.view,cv:S.coachView??null,c:S.clientId||null,t:S.tab||null,g:S.G&&S.G.name||null}))}catch(e){}
   const cv=S.view==='client'?(client()||{}).coachId:(S.view==='coaches'?S.coachView:S.view==='group'?(groupMembers(S.G?S.G.name:'')[0]||{}).coachId:undefined);const inMine=!!S.meId&&(S.view==='coaches'||S.view==='client'||S.view==='group')&&cv===S.meId;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.nav==='mine'?inMine:(b.dataset.nav==='coaches'?((S.view==='coaches'||S.view==='client'||S.view==='group')&&!inMine):b.dataset.nav===S.view))));
   renderWho();
@@ -2725,13 +2725,17 @@ async function boot(){
   db.collection('clients').onSnapshot(snap=>{S.clients=snap.docs.map(d=>({id:d.id,...d.data()}));S.loaded.k=true;
     if(!S.tpPolled){S.tpPolled=1;setTimeout(()=>tpPoll(),4000)}
     const h=(location.hash||'').slice(1); if(!linked&&h&&S.clients.some(c=>c.id===h)){linked=true;openClient(h,'session');return}
-    if(!linked){linked=true;let nv=null;try{nv=JSON.parse(sessionStorage.getItem('rs_nav')||'null')}catch(e){}
+    if(!linked){linked=true;let nv=null;try{nv=JSON.parse(localStorage.getItem('rs_nav')||'null')}catch(e){}
       if(nv&&nv.v==='client'&&nv.c&&S.clients.some(c=>c.id===nv.c)){openClient(nv.c,nv.t||'session');return}
       if(nv&&nv.v==='group'&&nv.g){try{openGroup(nv.g);return}catch(e){}}
       if(nv&&['coaches','manager','settings'].includes(nv.v)){S.view=nv.v;S.coachView=nv.cv??null;}}
     scheduleRender()},dbErr);
   render();
 }
+const APP_V='20261109115449';
+async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
+  if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
+setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
 boot();
 </script>
 
