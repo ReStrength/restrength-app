@@ -1655,7 +1655,7 @@ function vCoaches(){
     if(!k){S.coachView=null;return vCoaches();}
     const mine=S.clients.filter(c=>k.id==='none'?!S.coaches.some(x=>x.id===c.coachId):c.coachId===k.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
     const act=mine.filter(c=>(c.status||'active')==='active'), rest=mine.filter(c=>(c.status||'active')!=='active');
-    const card=c=>{const p=partnerOf(c);return `<button class="ccard" data-open="${c.id}"><span class="cn">${esc(c.name)}</span><span class="cm">${TTYPES[ttype(c)]}${p?` עם ${esc(p.name)}`:''}${ttype(c)==='group'&&c.groupName?` · ${esc(c.groupName)}`:''} · ${freqTxt(c.freq)}</span><span class="cm">${c.lastSessionDate?`אימון אחרון ${fmt(c.lastSessionDate)}`:'עדיין אין אימונים'}${c.pendingApproval?' · <b class="pend">ממתין לאישור</b>':''}${c.handoff&&c.handoff.text?' · <span class="nflag">📝 הערה</span>':''}${(c.status||'active')==='active'&&c.lastSessionDate&&!c.hasPlan?' · <b class="pend">⏳ ממתין לתכנון</b>':''}${(c.status||'active')==='active'&&periodicDue(c)?' · <span class="nflag">📋 מבדק תקופתי</span>':''}${(c.status||'active')!=='active'?` · ${c.status==='paused'?'בהקפאה':'בארכיון'}`:''}</span></button>`};
+    const card=c=>{const p=partnerOf(c);return `<button class="ccard" data-open="${c.id}"><span class="cn">${esc(c.name)}</span><span class="cm">${TTYPES[ttype(c)]}${p?` עם ${esc(p.name)}`:''}${ttype(c)==='group'&&c.groupName?` · ${esc(c.groupName)}`:''} · ${freqTxt(c.freq)}</span><span class="cm">${c.lastSessionDate?`אימון אחרון ${fmt(c.lastSessionDate)}`:'עדיין אין אימונים'}${c.pendingApproval?' · <b class="pend">ממתין לאישור</b>':''}${c.handoff&&c.handoff.text?' · <span class="nflag">📝 הערה</span>':''}${(c.status||'active')==='active'&&c.lastSessionDate&&!c.hasPlan?' · <b class="pend">⏳ ממתין לתכנון</b>':''}${(c.status||'active')!=='active'?` · ${c.status==='paused'?'בהקפאה':'בארכיון'}`:''}</span></button>`};
     return `<div><button class="btn ghost sm" data-act="backCoaches">→ כל המאמנים</button></div>
      <div class="spread"><h1>${esc(k.name)}</h1>${k.id!=='none'?`<button class="btn primary" data-act="newClient" data-write>+ מתאמן חדש</button>`:''}</div>
      ${S.showNew?newClientForm(k.id):''}
@@ -1664,7 +1664,7 @@ function vCoaches(){
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span><span class="cm">${esc(S.clients.filter(c=>ttype(c)==='group'&&c.coachId===k.id&&(c.groupName||'קבוצה')===n&&(c.status||'active')==='active').map(c=>c.name).join(' · '))}</span></button>`).join('')}</div>`:''}
      ${(()=>{const solo=act.filter(c=>!(k.id!=='none'&&(ttype(c)==='group'||(ttype(c)==='pair'&&c.partnerId&&clientById(c.partnerId)))));const prs=k.id!=='none'?pairsOfCoach(k.id):[];
-       const items=[...solo.map(c=>({n:c.name,h:card(c)})),...prs.map(pk=>{const ms=groupMembers(pk);const last=ms.map(c=>c.lastSessionDate||'').sort().pop();const due=ms.some(c=>periodicDue(c));return {n:gTitle(pk),h:`<button class="ccard" data-group="${esc(pk)}"><span class="cn">${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · ${freqTxt(ms[0]&&ms[0].freq)}</span><span class="cm">${last?`אימון אחרון ${fmt(last)}`:'עדיין אין אימונים'}${due?' · <span class="nflag">📋 מבדק תקופתי</span>':''}</span></button>`}})].sort((a,b)=>a.n.localeCompare(b.n,'he'));
+       const items=[...solo.map(c=>({n:c.name,h:card(c)})),...prs.map(pk=>{const ms=groupMembers(pk);const last=ms.map(c=>c.lastSessionDate||'').sort().pop();const due=ms.some(c=>periodicDue(c));return {n:gTitle(pk),h:`<button class="ccard" data-group="${esc(pk)}"><span class="cn">${esc(gTitle(pk))}</span><span class="cm">אימון זוגי · ${freqTxt(ms[0]&&ms[0].freq)}</span><span class="cm">${last?`אימון אחרון ${fmt(last)}`:'עדיין אין אימונים'}</span></button>`}})].sort((a,b)=>a.n.localeCompare(b.n,'he'));
        return items.length?`<div class="cgrid">${items.map(x=>x.h).join('')}</div>`:`<div class="card empty"><strong>עדיין אין מתאמנים ל${esc(k.name)}</strong><span>לחצו על "+ מתאמן חדש" כדי להוסיף.</span></div>`})()}
      ${rest.length?`<h3 class="muted">בהקפאה ובארכיון</h3><div class="cgrid">${rest.map(card).join('')}</div>`:''}`}`;
   }
@@ -2769,7 +2769,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261109123225';
+const APP_V='20261109124215';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
