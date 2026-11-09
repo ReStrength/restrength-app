@@ -601,7 +601,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
   <main class="wrap" id="main">
     <div class="empty"><strong>טוען את נתוני הסטודיו…</strong><span>מתאמנים, תוכניות ותוצאות יופיעו כאן.</span></div>
   </main>
-  <div id="music" hidden><button type="button" id="mBtn" aria-expanded="false">🎵 מוזיקה</button><div id="mBox" hidden><div class="mhead"><b>🎵 סטודיו כוח מחודש</b><button type="button" id="mClose" aria-label="סגירה">✕</button></div><div id="mChips"></div><div id="mFrame"></div><div id="mAdmin"></div><p class="muted small" style="margin:6px 0 0">שירים מלאים בלי פרסומות: הדפדפן במכשיר הזה צריך להיות מחובר לספוטיפיי פרימיום של הסטודיו. אם מתנגנות רק 30 שניות – לחצו בנגן על "התחברות" פעם אחת.</p></div></div>
+  <div id="music" hidden><button type="button" id="mBtn" aria-expanded="false">🎵 מוזיקה</button><div id="mBox" hidden><div class="mhead"><b>🎵 סטודיו כוח מחודש</b><button type="button" id="mClose" aria-label="סגירה">✕</button></div><div id="mChips"></div><div id="mFrame"></div><div id="mAdmin"></div></div></div>
   <datalist id="lib"></datalist>
   <div class="toast" id="toast" hidden></div>
 </div>
@@ -1123,11 +1123,11 @@ function render(){
   S.deferred=false;
 }
 /* ---------- מוזיקה לסטודיו (נגן ספוטיפיי) ---------- */
-const MUSIC_DEF=[['להיטים לועזיים 60-80','0Gds8XKqNx6Q3eQhRk6RAy'],['רוק קלאסי','6WD7pdD92M9v3CZ4yDUOfK'],['עברית של פעם','4w5H2VkDovrPrA9khl8Vv4'],['מזרחית','1mqV7W6k7QUKtyPvYrsAcI']];
+const MUSIC_DEF=[['אנגלית של פעם','0Gds8XKqNx6Q3eQhRk6RAy'],['רוק קלאסי','6WD7pdD92M9v3CZ4yDUOfK'],['עברית של פעם','4w5H2VkDovrPrA9khl8Vv4'],['מזרחית','1mqV7W6k7QUKtyPvYrsAcI']];
 const MU={list:MUSIC_DEF.map(([n,id])=>({n,id})),cur:null};
 function muPid(v){const m=String(v||'').match(/playlist[\/:]([A-Za-z0-9]{22})/)||String(v||'').match(/^([A-Za-z0-9]{22})$/);return m?m[1]:null}
 function muChips(){const b=$('#mChips');if(!b)return;b.innerHTML=MU.list.map((p,i)=>`<button type="button" data-mi="${i}" aria-pressed="${MU.cur===p.id}">${esc(p.n)}</button>`).join('');
-  const a=$('#mAdmin');if(a)a.innerHTML=(S.user&&S.user.role==='admin')?`<details><summary class="muted small">עריכת הרשימה (רק לך)</summary><div class="small">${MU.list.map((p,i)=>`<div class="spread"><span>${esc(p.n)}</span><button type="button" class="btn ghost sm" data-mdel="${i}">הסרה</button></div>`).join('')}<input id="mNewN" placeholder="שם הסגנון (למשל: שירי ארץ ישראל)"><input id="mNewL" placeholder="קישור לפלייליסט מספוטיפיי"><button type="button" class="btn sm" id="mAdd" style="margin-top:6px">+ הוספה</button></div></details>`:''}
+  const a=$('#mAdmin');if(a)a.innerHTML=false?`<details><summary class="muted small">עריכת הרשימה (רק לך)</summary><div class="small">${MU.list.map((p,i)=>`<div class="spread"><span>${esc(p.n)}</span><button type="button" class="btn ghost sm" data-mdel="${i}">הסרה</button></div>`).join('')}<input id="mNewN" placeholder="שם הסגנון (למשל: שירי ארץ ישראל)"><input id="mNewL" placeholder="קישור לפלייליסט מספוטיפיי"><button type="button" class="btn sm" id="mAdd" style="margin-top:6px">+ הוספה</button></div></details>`:''}
 function muPlay(id){MU.cur=id;lsSet('rs_music',id);$('#mFrame').innerHTML=`<iframe src="https://open.spotify.com/embed/playlist/${id}?utm_source=generator" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="נגן מוזיקה"></iframe>`;muChips();$('#mBtn').classList.add('on')}
 async function muSave(){try{await S.db.doc('settings/music').set({list:MU.list,at:Date.now()})}catch(e){toast('לא נשמר: '+e.message)}}
 async function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
