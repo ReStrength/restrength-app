@@ -573,6 +573,26 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
  .ptab tr.prow td.narrow,.ptab tr.prow td.rngc{grid-column:span 2}
  .ptab tr.gsep,.ptab tr.painrow{display:block}
 }
+
+.nmwrap{position:relative;display:block;min-height:1.4em}
+.nmview{display:block;white-space:normal;word-break:break-word;font-weight:700;font-size:17px;line-height:1.3;text-align:start;padding:2px 0}
+.nmwrap input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:text}
+.nmwrap:focus-within input{opacity:1;background:var(--surface);z-index:2;outline:2px solid var(--accent);border-radius:6px}
+.nmwrap:focus-within .nmview{visibility:hidden}
+.ptab td.pname .nmview{font-size:17px}
+input::placeholder{font-size:13px}
+.sheet td.kg input::placeholder,.ptab td.gkg input::placeholder{font-size:12px}
+.ptab tr.gsep td{text-align:start;padding:6px 12px;font-weight:700;color:var(--accent);background:var(--surface-2)}
+.poffbtn{opacity:0;transition:opacity .15s;color:var(--muted)}
+.ptab tr.prow:hover .poffbtn{opacity:1}
+@media (hover:none){.poffbtn{opacity:.5}}
+.ptab .rng{gap:0!important}.ptab .rng .rngsep{padding:0 3px!important;font-size:18px;color:var(--muted)}
+.ptab .rng input{width:30px!important;min-width:30px!important;flex:0 0 30px!important;padding:4px 0!important;-moz-appearance:textfield;appearance:textfield}
+.ptab .rng input[data-gf="repMin"]{text-align:right!important}.ptab .rng input[data-gf="repMax"]{text-align:left!important}
+.ptab .rng input::-webkit-outer-spin-button,.ptab .rng input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ptab td.rngc{min-width:84px!important;width:84px}
+@media (min-width:901px){.ptab td.pnotes{position:relative;padding:0;height:64px;cursor:text}.ptab td.pnotes textarea{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2em;max-height:100%;overflow:hidden;font-size:15px;padding:2px 8px}.ptab td.pnotes textarea.full{overflow:auto}}
+.sheet td.name .nmview{padding:4px 8px}.sheet td.name .nmwrap input{padding:0 8px}
 </style>
 
 <div class="app" dir="rtl">
@@ -1112,6 +1132,7 @@ function render(){
     if(!S.canWrite) html+=`<div class="banner warn"><b>מצב צפייה בלבד.</b> כדי להזין תוצאות צריך הרשאת עריכה מבעל הדף.</div>`;
     if(S.user&&S.user.coachId) S.meId=S.user.coachId;
     else if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
+    if(S.meId&&!S.landed&&S.loaded.c){S.landed=true;if(S.view==='coaches'&&!S.coachView)S.coachView=S.meId}
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
     else {
@@ -1141,10 +1162,10 @@ async function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
     if(e.target.id==='mAdd'){const n=$('#mNewN').value.trim(),id=muPid($('#mNewL').value.trim());if(!n||!id){toast('צריך שם וקישור לפלייליסט מספוטיפיי');return}MU.list.push({n,id});muChips();await muSave();toast('נוסף ✓')}})}
 function muShow(){const box=$('#music');if(!box)return;const on=!!(S.meId&&S.db);box.hidden=!on;if(on)muInit()}
 function fitNote(ta){const td=ta.closest('td');if(!td||innerWidth<901){ta.style.height='';return}ta.style.height='0px';const max=td.clientHeight;const h=Math.min(ta.scrollHeight,max);ta.style.height=Math.max(h,24)+'px';ta.classList.toggle('full',ta.scrollHeight>max)}
-function fitNotes(root){(root||document).querySelectorAll('.sheet td.notes textarea').forEach(fitNote)}
+function fitNotes(root){(root||document).querySelectorAll('.sheet td.notes textarea, .ptab td.pnotes textarea').forEach(fitNote)}
 addEventListener('resize',()=>fitNotes());
-document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('.sheet td.notes textarea'))fitNote(e.target)},true);
-document.addEventListener('click',e=>{const td=e.target.closest&&e.target.closest('.sheet td.notes');if(td&&e.target===td){const ta=td.querySelector('textarea');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}});
+document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('.sheet td.notes textarea, .ptab td.pnotes textarea'))fitNote(e.target)},true);
+document.addEventListener('click',e=>{const td=e.target.closest&&e.target.closest('.sheet td.notes, .ptab td.pnotes');if(td&&e.target===td){const ta=td.querySelector('textarea');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}});
 function editorFocused(){const a=document.activeElement;return !!(a&&a.closest&&a.closest('#main')&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))}
 function scheduleRender(){ if(editorFocused()){S.deferred=true;return} render(); }
 
@@ -1202,8 +1223,8 @@ function newClientForm(coachId){
   const pairs=activeClients().filter(x=>!x.partnerId).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
   return `<div class="card ncf"><h2>מתאמן חדש</h2>
     <label class="f" for="n_name">שם מלא<input id="n_name" autocomplete="off"></label>
-    <div class="nq"><div class="nql">אימון אישי, זוגי או ליווי מרחוק?</div><div class="nbtns"><button type="button" class="nbig" data-ntype="personal" aria-pressed="false">👤 אישי</button><button type="button" class="nbig" data-ntype="pair" aria-pressed="false">👥 זוגי</button><button type="button" class="nbig" data-ntype="remote" aria-pressed="false">🌍 ליווי מרחוק</button></div><input type="hidden" id="n_type"></div>
-    <div class="nq" id="n_pairwrap" hidden><div class="nql">עם מי?</div>
+    <div class="nq"><div class="nql">אימון אישי או זוגי?</div><div class="nbtns"><button type="button" class="nbig" data-ntype="personal" aria-pressed="false">👤 אישי</button><button type="button" class="nbig" data-ntype="pair" aria-pressed="${S.newPair?'true':'false'}">👥 זוגי</button></div><input type="hidden" id="n_type" value="${S.newPair?'pair':''}"></div>
+    <div class="nq" id="n_pairwrap" ${S.newPair?'':'hidden'}><div class="nql">עם מי?</div>
       <select id="n_partner"><option value="__new">בן/בת זוג חדש/ה (עוד לא במערכת)</option>${pairs.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}<option value="">עוד לא ידוע</option></select>
       <label class="f" for="n_pname" id="n_pnamewrap">שם בן/בת הזוג<input id="n_pname" autocomplete="off"></label></div>
     <div class="nq"><div class="nql">כמה פעמים בשבוע?</div><div class="nbtns"><button type="button" class="nbig" data-nfreq="1" aria-pressed="false">פעם בשבוע</button><button type="button" class="nbig" data-nfreq="2" aria-pressed="false">פעמיים בשבוע</button></div><input type="hidden" id="n_freq"></div>
@@ -1293,12 +1314,12 @@ function pairTable(d,ms,exs,tags){
   exs.forEach((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
     if(tg.first&&(tg.ss||exs.some(e=>e.ss)))body+=`<tr class="gsep"><td colspan="${nSets+8}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span></td></tr>`;
     ms.forEach((c,k)=>{const mm=ex.m[c.id]||{sets:[]};const first=k===0;const prev=mm.off?'':prevShort(gMemCtx(c.id),ex,null);
-      const shared=first?`<td class="pname" rowspan="${ms.length}"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל">${barHint(ex.name)&&!isSmithPush(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}</td>
+      const shared=first?`<td class="pname" rowspan="${ms.length}"><span class="nmwrap"><span class="nmview">${esc(ex.name)||'<span class="muted">שם התרגיל</span>'}</span><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(ex.name)}" placeholder="שם התרגיל"></span>${barHint(ex.name)&&!isSmithPush(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}</td>
         <td class="narrow" rowspan="${ms.length}"><input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></td>
         <td class="rngc" rowspan="${ms.length}"><span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${esc(ex.repMax)}"></span>${sec?'<div class="muted small">שניות</div>':''}</td>
         <td class="pnotes" rowspan="${ms.length}"><textarea data-gf="tempo" data-ei="${i}" rows="2" placeholder="טמפו, מנח, דגשים">${esc(ex.tempo||'')}</textarea></td>`:'';
       const acts=first?`<td class="acts" rowspan="${ms.length}"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" data-tip="כאב – הצעה לשינוי מנח">🤕</button><span class="mvcol"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" data-tip="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" data-tip="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-tip="מחיקת התרגיל" data-write>✕</button></td>`:'';
-      const who=`<td class="pwho p${k}"><b>${esc(String(c.name).split(' ')[0])}</b>${mm.off?'':` <button class="linkbtn tiny" data-act="gOff" data-ei="${i}" data-cid="${c.id}" data-tip="התרגיל לא בתוכנית שלו/ה" data-write>לא עושה</button>`}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!mm.off&&mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>`;
+      const who=`<td class="pwho p${k}"><b>${esc(String(c.name).split(' ')[0])}</b>${mm.off?'':` <button class="linkbtn tiny poffbtn" data-act="gOff" data-ei="${i}" data-cid="${c.id}" data-tip="להוציא את התרגיל מהתוכנית של ${esc(String(c.name).split(' ')[0])}" data-write>✕</button>`}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!mm.off&&mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>`;
       let rest;
       if(mm.off) rest=`<td colspan="${nSets+2}" class="poff"><span class="muted">לא בתוכנית של ${esc(String(c.name).split(' ')[0])}</span> <button class="linkbtn tiny" data-act="gOn" data-ei="${i}" data-cid="${c.id}" data-write>להוסיף</button></td>`;
       else { const kgc=isSmithPush(ex.name)?`<select data-gm="height" data-ei="${i}" data-cid="${c.id}" class="hsel"><option value="">גובה?</option>${[7,6,5,4,3,2,1].map(h=>`<option value="${h}"${Number(mm.height)===h?' selected':''}>גובה ${h}</option>`).join('')}</select>`:`<input type="number" step="0.5" min="0" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'משקל גוף'}">`;
@@ -1310,6 +1331,19 @@ function pairTable(d,ms,exs,tags){
   });
   return strip+`<div class="tbl-wrap"><table class="gtable ptab">${head}<tbody>${body}</tbody></table></div>`;
 }
+
+function introDocDefault(c){return `מפגש היכרות עם ${String(c.name||'').split(' ')[0]}${ageOf(c)?` (${ageOf(c)})`:''}:\n🎯 מה הכי חשוב ${c.sex==='F'?'לה':c.sex==='M'?'לו':'לו/לה'} ולמה: \n🔍 מה ראינו באימון: \n📝 ההמלצה שלי: `}
+function introCard(list){const pair=list.length>1;return `<details class="card" open style="border:2px solid #ffe08a;background:#fffbea"><summary><b>⭐ תסריט מפגש היכרות${pair?' זוגי':''} – תזכורת</b></summary><ol class="small" style="margin:8px 0 0;padding-inline-start:18px;line-height:1.7">
+   <li><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.</li>
+   <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים (גיל, ניסיון, מטרה, כאבים), שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.</li>
+   <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
+   <li><b>עבודת כוח:</b> סופר סטים 2×8, טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
+   <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
+   <li><b>⭐ חובה:</b> תיעוד בארבוקס מיד בסיום – לא הולכים בלי לרשום! (שקד קוראת את זה ומשתמשת בזה בשיחת ההמשך)</li></ol>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
+   ${list.map(c=>`<div style="margin-top:10px"><b>📲 התיעוד לארבוקס${pair?' – '+esc(c.name):''}</b> <span class="muted small">(ממלאים כאן, מעתיקים, ובארבוקס: שם המתעניין ← "הערות כלליות" ← ➕ ← מדביקים ← שמירה)</span>
+   <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea>
+   <div class="row" style="margin-top:6px"><button class="btn primary sm" data-act="introCopy" data-cid="${c.id}">📋 העתקה לארבוקס${pair?' – '+esc(String(c.name).split(' ')[0]):''}</button></div></div>`).join('')}
+   <div class="muted small" style="margin-top:6px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div></details>`}
 function vGroup(){
   const G=S.G; if(!G) return vCoaches();
   const ms=groupMembers(G.name);
@@ -1366,6 +1400,7 @@ function vGroup(){
    ${PR?'':`<div class="row qmode"><span class="muted small">רישום:</span><button class="chip" data-tone="neutral" aria-pressed="${gQuick(d)}" data-act="gQuick" data-v="1" data-write>⚡ מהיר: קל / בינוני / קשה</button><button class="chip" data-tone="neutral" aria-pressed="${!gQuick(d)}" data-act="gQuick" data-v="0" data-write>מפורט: חזרות בכל סט</button></div>
    ${gQuick(d)?`<div class="banner info small"><span>אחרי כל תרגיל לוחצים לכל משתתף <b>קל / בינוני / קשה</b> (או כאב). את המשקל והחזרות לשבוע הבא המערכת מחשבת לבד: <b>קל</b> מוסיף משקל, <b>בינוני</b> מוסיף חזרה ובתקרה (${'12'}, בחד־צדדי 8) מוסיף משקל, <b>קשה פעמיים</b> מוריד. מי שלא סומן לא הגיע.</span></div>`:''}`}
    ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
+   ${d.intro&&!isDone?introCard(ms):''}
    <label class="f warmup">חימום<textarea data-gf="warmup" rows="2" placeholder="${isPairKey(S.G&&S.G.name)?'חימום משותף לזוג':'חימום משותף לקבוצה'}">${esc(d.warmup||'')}</textarea></label>
    ${blocks||'<div class="card empty"><strong>אין תרגילים</strong></div>'}
    <div class="row"><button class="btn" data-act="gAddSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="gAddEx" data-write>+ תרגיל בודד</button></div>
@@ -1422,10 +1457,10 @@ async function gAct(name,el){
         if(QQ){const fl=FEEL.find(f=>f[0]===mm.feel);return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??'',sets:mm.feel?Array.from({length:Number(ex.targetSets)||2},()=>({kg:'',reps:gR(ex,mm)})):[],rir:'',rpe:mm.feel?FEEL_RPE[mm.feel]:'',pain:mm.feel==='pain'?4:'',feel:mm.feel||'',note:[fl?fl[1]:'',mm.adapt||''].filter(Boolean).join(' · '),sugg:null}}
         return {id:uid(),...carry(ex),...(mm.height?{height:mm.height}:{}),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map(r=>({kg:'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
       if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
-      const seq=gMemCtx(c.id).sessions.filter(s=>s.status==='done').length+1;
+      const seq=d.intro?0:gMemCtx(c.id).sessions.filter(s=>s.status==='done'&&!s.intro).length+1;
       const ref=S.db.collection('sessions').doc();
-      await saveDoc('sessions/'+ref.id,{clientId:c.id,label:'1',seq,status:'done',approved:true,date:d.date,coach:coachName(S.meId),notes:d.notes||'',warmup:d.warmup||'',exercises:exsM,groupSession:G.edit.id,groupName:G.name,createdAt:Date.now(),completedAt:Date.now()});
-      await updClient(c.id,{lastSessionDate:d.date,lastCoach:coachName(S.meId),recentDays:[...new Set([...(c.recentDays||[]),d.date])].sort().slice(-8),...(c.startDate?{}:{startDate:d.date})}); n++;
+      await saveDoc('sessions/'+ref.id,{clientId:c.id,label:'1',seq,...(d.intro?{intro:true}:{}),status:'done',approved:true,date:d.date,coach:coachName(S.meId),notes:d.notes||'',warmup:d.warmup||'',exercises:exsM,groupSession:G.edit.id,groupName:G.name,createdAt:Date.now(),completedAt:Date.now()});
+      await updClient(c.id,{lastSessionDate:d.date,lastCoach:coachName(S.meId),recentDays:[...new Set([...(c.recentDays||[]),d.date])].sort().slice(-8),...(c.startDate||d.intro?{}:{startDate:d.date})}); n++;
     }
     d.status='done'; d.completedAt=Date.now(); await saveDoc('sessions/'+G.edit.id,d); toast(`האימון נשמר בתיק של ${n} משתתפים`); render(); window.scrollTo(0,0); break;}
   case 'gNext': {
@@ -1555,9 +1590,9 @@ function abHtml(k){
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
   const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
-      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}"`:`data-open="${c.id}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
+      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}"`:`data-open="${c.id}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-abpair="${/זוגי/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
   return `<div class="abbox"><div class="abh"><h2>🗓️ לו"ז הסטודיו ${off?'מחר':'היום'}</h2>${tabs}</div>${body}</div>`}
-document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-abnew]');if(!a)return;e.preventDefault();e.stopPropagation();const nm=a.dataset.abnew.trim();S.newIntro=!!a.dataset.abintro;const cid=(S.coaches.find(k=>{try{return abCoachMatch(k,a.dataset.abc)}catch(_){return false}})||{}).id||S.meId;closeClient();S.view='coaches';S.coachView=cid;S.showNew=true;render();setTimeout(()=>{const i=$('#n_name');if(i){i.value=nm;i.focus()}window.scrollTo(0,0)},0)},true);
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-abnew]');if(!a)return;e.preventDefault();e.stopPropagation();const nm=a.dataset.abnew.trim();S.newIntro=!!a.dataset.abintro;S.newPair=!!a.dataset.abpair;const cid=(S.coaches.find(k=>{try{return abCoachMatch(k,a.dataset.abc)}catch(_){return false}})||{}).id||S.meId;closeClient();S.view='coaches';S.coachView=cid;S.showNew=true;render();setTimeout(()=>{const i=$('#n_name');if(i){i.value=nm;i.focus()}window.scrollTo(0,0)},0)},true);
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-openc]');if(a){e.preventDefault();e.stopPropagation();openClient(a.dataset.openc);return}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-abday]');if(!b)return;S.abDay=+b.dataset.abday;render()});
 function vCoaches(){
@@ -1573,7 +1608,7 @@ function vCoaches(){
      ${S.showNew?newClientForm(k.id):''}
      ${k.id!=='none'&&k.id===S.meId?gcalCard(k):''}
      ${k.id!=='none'&&k.id===S.meId?tpInbox():''}
-     ${k.id!=='none'?abHtml(k):''}
+     ${k.id!=='none'?abHtml(k.id===S.meId?null:k):''}
      ${k.id!=='none'?todayHtml(act):''}
      ${k.id!=='none'&&groupsOfCoach(k.id).length?`<div class="cgrid">${groupsOfCoach(k.id).map(([n,cnt])=>`<button class="ccard gcard" data-group="${esc(n)}"><span class="cn">👥 ${esc(n)}</span><span class="cm">אימון קבוצתי · ${cnt} משתתפים · תוכנית אחת לכולם</span><span class="cm">${esc(S.clients.filter(c=>ttype(c)==='group'&&c.coachId===k.id&&(c.groupName||'קבוצה')===n&&(c.status||'active')==='active').map(c=>c.name).join(' · '))}</span></button>`).join('')}</div>`:''}
      ${(()=>{const solo=act.filter(c=>!(k.id!=='none'&&(ttype(c)==='group'||(ttype(c)==='pair'&&c.partnerId&&clientById(c.partnerId)))));const prs=k.id!=='none'?pairsOfCoach(k.id):[];
@@ -1653,7 +1688,7 @@ function progTable(ctx,doc){
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
-     <td class="name"><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל">${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
+     <td class="name"><span class="nmwrap"><span class="nmview">${esc(ex.name)||'<span class="muted">שם התרגיל</span>'}</span><input list="lib" data-f="name" value="${esc(ex.name)}" placeholder="שם התרגיל"></span>${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
      <td class="rngc" data-l="חזרות"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${esc(ex.repMax)}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</td>
      <td class="kg" data-l="${isSmithPush(ex.name)?'גובה הגבהה בסמית':'משקל עבודה (בלי המוט)'}">${isSmithPush(ex.name)?`<select data-f="height" class="hsel" aria-label="גובה הגבהה בסמית"><option value="">גובה?</option>${[7,6,5,4,3,2,1].map(h=>`<option value="${h}"${Number(ex.height)===h?' selected':''}>גובה ${h}${h===7?' (קל)':h===1?' (קשה)':''}</option>`).join('')}</select><div class="muted small" style="font-size:12px;white-space:nowrap">7 קל ← 1 קשה</div>`:`<input type="number" step="0.5" inputmode="decimal" min="0" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${sec?'—':'משקל גוף'}" aria-label="משקל עבודה בק״ג">`}</td>
@@ -1723,17 +1758,7 @@ function paneHtml(ctx,c,pane,pair){
     const pe=last?(last.exercises||[]).filter(e=>num(e.pain)>=4):[];
     if(pe.length) painHtml=`<div class="banner bad painbanner"><span><b>⚠ דווח כאב באימון הקודם (${fmt(last.date)}):</b> ${pe.map(e=>`${esc(e.name)} – ${e.pain}/10`).join(' · ')}. לשקול התאמה, טווח תנועה קטן יותר או החלפת תרגיל.</span></div>`;}
   const weekChip=`<div class="weekchip">${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>`;
-  const introHtml=d.intro&&!isDone?`<details class="card" open style="border:2px solid #ffe08a;background:#fffbea"><summary><b>⭐ תסריט מפגש היכרות – תזכורת</b></summary><ol class="small" style="margin:8px 0 0;padding-inline-start:18px;line-height:1.7">
-   <li><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.</li>
-   <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים (גיל, ניסיון, מטרה, כאבים), שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.</li>
-   <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
-   <li><b>עבודת כוח:</b> סופר סטים 2×8, טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
-   <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
-   <li><b>⭐ חובה:</b> תיעוד בארבוקס מיד בסיום – לא הולכים בלי לרשום! (שקד קוראת את זה ומשתמשת בזה בשיחת ההמשך)</li></ol>
-   <div style="margin-top:10px"><b>📲 התיעוד לארבוקס</b> <span class="muted small">(ממלאים כאן, מעתיקים, ובארבוקס: שם המתעניין ← "הערות כלליות" ← ➕ ← מדביקים ← שמירה)</span>
-   <textarea id="introDoc" rows="7" style="width:100%;margin-top:6px" data-introdoc>${esc(c.introDoc||`מפגש היכרות עם ${String(c.name||'').split(' ')[0]}${ageOf(c)?` (${ageOf(c)})`:''}:\n🎯 מה הכי חשוב ${c.sex==='F'?'לה':c.sex==='M'?'לו':'לו/לה'} ולמה: \n🔍 מה ראינו באימון: \n📝 ההמלצה שלי: `)}</textarea>
-   <div class="muted small">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
-   <div class="row" style="margin-top:6px"><button class="btn primary sm" data-act="introCopy">📋 העתקה לארבוקס</button></div></div></details>`:'';
+  const introHtml=d.intro&&!isDone?introCard([c]):'';
   return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row"><button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button><button class="btn ghost sm" data-act="saveTpl" data-write>💾 שמירה כתבנית</button></div>
    <label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label><div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (${wk(nextPlanned)})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
@@ -2154,7 +2179,7 @@ async function act(name,el){
           for(const m of mem) await updClient(m,{hasPlan:true,warmup:t.warm,intro:true});}
         else{const doc=blankPlan(ref.id,'1','ss');doc.exercises=tplExercises('intro');doc.warmup=t.warm;doc.intro=true;doc.seq=0;
           await saveDoc('sessions/'+S.db.collection('sessions').doc().id,doc);await updClient(ref.id,{hasPlan:true,warmup:t.warm,intro:true});}}
-      S.newIntro=false; S.showNew=false; if(isIntro&&ttyp==='pair'){openGroup('pair:'+[ref.id,partner].sort().join(':'));toast('הזוג נוצר, ותוכנית מפגש ההיכרות כבר מוכנה');break}
+      S.newIntro=false; S.newPair=false; S.showNew=false; if(isIntro&&ttyp==='pair'){openGroup('pair:'+[ref.id,partner].sort().join(':'));toast('הזוג נוצר, ותוכנית מפגש ההיכרות כבר מוכנה');break}
       openClient(ref.id,'session'); if(isIntro){toast('התיק נוצר, ותוכנית מפגש ההיכרות כבר מוכנה לפי התסריט');break} toast(ttyp==='pair'?'הזוג נוצר. בונים את האימון הראשון, ואותה תוכנית תופיע לשניהם':'המתאמן נוצר. בונים את האימון הראשון'); }
     break;}
   case 'saveProfile': {
@@ -2327,7 +2352,7 @@ async function act(name,el){
   case 'printReport': try{window.print()}catch(e){toast('ההדפסה לא זמינה בתצוגה הזו')} break;
   case 'nameTo': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const old=ex.name; const n=el.dataset.name; const note=el.dataset.note||''; if(note&&!String(ex.tempo||'').includes(note))ex.tempo=note+(ex.tempo?'\n'+ex.tempo:''); ex.name=n; const l=libFind(n); if(l){ex.unit=l[1];ex.group=l[2];}
     saveEdit(ctx,0); toast(`עודכן ל: ${n}`); render(); break;}
-  case 'introCopy': {const t=$('#introDoc'); if(!t) break; const cl=clientById(S.clientId); if(cl){cl.introDoc=t.value; updClient(cl.id,{introDoc:t.value});}
+  case 'introCopy': {const cid=el.dataset.cid||S.clientId;const t=document.querySelector(`[data-introdoc="${cid}"]`); if(!t) break; const cl=clientById(cid); if(cl){cl.introDoc=t.value; updClient(cl.id,{introDoc:t.value});}
     try{await navigator.clipboard.writeText(t.value);toast('הועתק ✓ עכשיו מדביקים בארבוקס ב"הערות כלליות"')}catch(e){t.select();document.execCommand('copy');toast('הועתק ✓')} break;}
   case 'cmOpen': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; S.cmEx=S.cmEx===ex.id?null:ex.id; S.painEx=null; S.effEx=null; render(); break;}
   case 'cmAdd': {const ex=ctx.edit.doc.exercises[Number(el.dataset.i)]; const cl=clientById(ctx.clientId); if(!cl) break;
