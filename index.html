@@ -256,7 +256,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .sheet td.notes textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
 .sheet tr.gsep td{background:var(--surface-2);color:var(--accent-text);font-weight:700;font-size:15px;text-align:start;padding:7px 14px;border-top:4px solid var(--band);border-left:0;border-right:0}
 .sheet thead + tbody tr.gsep:first-child td{border-top:0}
-.warmup textarea{min-height:56px;font-size:16px}
+.warmup textarea{min-height:56px;font-size:16px}.sheet td.notes textarea,.ptab td.pnotes textarea,label.warmup textarea,textarea[data-introdoc]{overflow:hidden}
 .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .kcard,.ccard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:start;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer}
 .kcard{padding:26px 22px;border-top:5px solid var(--accent)}
@@ -1181,10 +1181,13 @@ async function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
     const d=e.target.closest('[data-mdel]');if(d){MU.list.splice(+d.dataset.mdel,1);muChips();await muSave();return}
     if(e.target.id==='mAdd'){const n=$('#mNewN').value.trim(),id=muPid($('#mNewL').value.trim());if(!n||!id){toast('צריך שם וקישור לפלייליסט מספוטיפיי');return}MU.list.push({n,id});muChips();await muSave();toast('נוסף ✓')}})}
 function muShow(){const box=$('#music');if(!box)return;const on=!!(S.meId&&S.db);box.hidden=!on;if(on)muInit()}
-function fitNote(ta){const td=ta.closest('td');if(!td||innerWidth<901){ta.style.height='';return}ta.style.height='0px';const max=td.clientHeight;const h=Math.min(ta.scrollHeight,max);ta.style.height=Math.max(h,24)+'px';ta.classList.toggle('full',ta.scrollHeight>max)}
-function fitNotes(root){(root||document).querySelectorAll('.sheet td.notes textarea, .ptab td.pnotes textarea').forEach(fitNote)}
+function fitNote(ta){const td=ta.closest('td');if(!td||innerWidth<901){ta.style.height='';autoGrow(ta);return}td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;
+  if(need+8>td.clientHeight)td.style.height=(need+8)+'px';ta.style.height=Math.max(need,24)+'px';ta.classList.remove('full')}
+function autoGrow(ta){ta.style.height='auto';ta.style.height=(ta.scrollHeight+2)+'px'}
+const GROW_SEL='label.warmup textarea, textarea[data-introdoc], textarea[data-f="sess.notes"], textarea[data-gf="notes"]';
+function fitNotes(root){(root||document).querySelectorAll('.sheet td.notes textarea, .ptab td.pnotes textarea').forEach(fitNote);(root||document).querySelectorAll(GROW_SEL).forEach(autoGrow)}
 addEventListener('resize',()=>fitNotes());
-document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('.sheet td.notes textarea, .ptab td.pnotes textarea'))fitNote(e.target)},true);
+document.addEventListener('input',e=>{if(!e.target.matches)return;if(e.target.matches('.sheet td.notes textarea, .ptab td.pnotes textarea'))fitNote(e.target);else if(e.target.matches(GROW_SEL))autoGrow(e.target)},true);
 let _idT;document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.introdoc)return;const c=clientById(t.dataset.introdoc);if(!c)return;c.introDoc=t.value;clearTimeout(_idT);_idT=setTimeout(()=>updClient(c.id,{introDoc:c.introDoc}),900)},true);
 document.addEventListener('click',e=>{const td=e.target.closest&&e.target.closest('.sheet td.notes, .ptab td.pnotes');if(td&&e.target===td){const ta=td.querySelector('textarea');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}});
 function editorFocused(){const a=document.activeElement;return !!(a&&a.closest&&a.closest('#main')&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))}
@@ -1360,9 +1363,9 @@ function introCard(list){const pair=list.length>1;return `<details class="card" 
    <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
    <li><b>עבודת כוח:</b> סופר סטים 2×8, טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
    <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
-   <li><b>⭐ חובה:</b> ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! בלחיצה על "סיום" זה עובר אוטומטית לשקד כמשימה בארבוקס.</li></ol>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
-   <div class="muted small" style="margin-top:6px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div></details>`}
-function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש. בלחיצה על "סיום אימון ושמירה" זה עובר <b>אוטומטית לשקד</b> כמשימה בארבוקס – לא צריך לכתוב בארבוקס.</div>
+   <li><b>⭐ חובה:</b> ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! כשמסיימים את האימון באפליקציה זה עובר אוטומטית לשקד כמשימה בארבוקס.</li></ol>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
+</details>`}
+function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש. כשמסיימים את האימון באפליקציה, זה עובר <b>אוטומטית לשקד</b> כמשימה בארבוקס – לא צריך לכתוב בארבוקס.</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
    ${list.map(c=>`<div style="margin-top:10px">${pair?`<b>${esc(c.name)}</b>`:''}${sent[c.id]?` <span class="chip up">נשלח לשקד ✓</span>`:''}
    <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea></div>`).join('')}</div>`}
 const INTRO_HOOK='https://hook.eu1.make.com/t6mxy6fufk4w34z0xnkste5mah910fj1';
