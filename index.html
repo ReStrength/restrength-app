@@ -562,7 +562,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
   <main class="wrap" id="main">
     <div class="empty"><strong>טוען את נתוני הסטודיו…</strong><span>מתאמנים, תוכניות ותוצאות יופיעו כאן.</span></div>
   </main>
-  <div id="music" hidden><button type="button" id="mBtn" aria-expanded="false">🎵 מוזיקה</button><div id="mBox" hidden><div class="mhead"><b>🎵 מוזיקה לסטודיו</b><button type="button" id="mClose" aria-label="סגירה">✕</button></div><div id="mChips"></div><div id="mFrame"></div><div id="mAdmin"></div><p class="muted small" style="margin:6px 0 0">שירים מלאים בלי פרסומות: הדפדפן במכשיר הזה צריך להיות מחובר לספוטיפיי פרימיום של הסטודיו. אם מתנגנות רק 30 שניות – לחצו בנגן על "התחברות" פעם אחת.</p></div></div>
+  <div id="music" hidden><button type="button" id="mBtn" aria-expanded="false">🎵 מוזיקה</button><div id="mBox" hidden><div class="mhead"><b>🎵 סטודיו כוח מחודש</b><button type="button" id="mClose" aria-label="סגירה">✕</button></div><div id="mChips"></div><div id="mFrame"></div><div id="mAdmin"></div><p class="muted small" style="margin:6px 0 0">שירים מלאים בלי פרסומות: הדפדפן במכשיר הזה צריך להיות מחובר לספוטיפיי פרימיום של הסטודיו. אם מתנגנות רק 30 שניות – לחצו בנגן על "התחברות" פעם אחת.</p></div></div>
   <datalist id="lib"></datalist>
   <div class="toast" id="toast" hidden></div>
 </div>
@@ -1084,7 +1084,7 @@ function render(){
   S.deferred=false;
 }
 /* ---------- מוזיקה לסטודיו (נגן ספוטיפיי) ---------- */
-const MUSIC_DEF=[['ישראלי קלאסי','2PzkaMHWNVa6etsR9cGx6F'],['ים תיכוני','37i9dQZF1DXbsaWcLv093h'],['שנות ה-60','37i9dQZF1DXaKIA8E7WcJj'],['שנות ה-70','37i9dQZF1DWTJ7xPn4vNaz'],['שנות ה-80','37i9dQZF1DX4UtSsGT1Sbe'],['רוק קלאסי','37i9dQZF1DWXRqgorJj26U'],['דיסקו','37i9dQZF1DX1MUPbVKMgJE'],['מוטאון','37i9dQZF1DWYC7CaxNgoCg'],['פיל גוד','37i9dQZF1DWVinJBuv0P4z'],['ג׳אז רגוע','37i9dQZF1DXbITWG1ZJKYt']];
+const MUSIC_DEF=[['להיטים לועזיים 60-80','0Gds8XKqNx6Q3eQhRk6RAy'],['רוק קלאסי','6WD7pdD92M9v3CZ4yDUOfK'],['עברית של פעם','4w5H2VkDovrPrA9khl8Vv4'],['מזרחית','1mqV7W6k7QUKtyPvYrsAcI']];
 const MU={list:MUSIC_DEF.map(([n,id])=>({n,id})),cur:null};
 function muPid(v){const m=String(v||'').match(/playlist[\/:]([A-Za-z0-9]{22})/)||String(v||'').match(/^([A-Za-z0-9]{22})$/);return m?m[1]:null}
 function muChips(){const b=$('#mChips');if(!b)return;b.innerHTML=MU.list.map((p,i)=>`<button type="button" data-mi="${i}" aria-pressed="${MU.cur===p.id}">${esc(p.n)}</button>`).join('');
