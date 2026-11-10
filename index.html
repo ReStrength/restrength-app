@@ -842,7 +842,7 @@ function num(v){return v===''||v==null||isNaN(Number(v))?null:Number(v)}
 function r05(x){return Math.round(x*2)/2}
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-function libFind(name){return LIB.find(l=>l[0]===name)}
+function libFind(name){const d=LIB.find(l=>l[0]===name);if(d)return d;const orig=S.exNames&&S.exNamesRev&&S.exNamesRev[name];return orig?LIB.find(l=>l[0]===orig):null}
 function coachName(id){const c=S.coaches.find(x=>x.id===id);return c?c.name:'—'}
 function clientById(id){return S.clients.find(c=>c.id===id)}
 function isUrl(u){return /^https?:\/\/\S+$/i.test(String(u||'').trim())}
@@ -852,7 +852,8 @@ function mkCtx(id){return {clientId:id,sessions:[],edit:null,confirmDel:null,uns
 const S = {autoIntro:{},meId:(lsGet('rs_me')||null),loginPick:null,loginErr:'',db:null,user:null,canWrite:true,offline:false,coaches:[],clients:[],loaded:{c:false,k:false},
   view:'coaches',coachView:null,clientId:null,tab:'session',P:null,Q:null,pairMode:false,assess:[],assUnsub:null,
   progEx:null,assTest:null,newAssess:false,filterCoach:'',filterStatus:'active',q:'',showNew:false,
-  me:lsGet('rs_me')||'',deferred:false,settings:{step:1}};
+  me:lsGet('rs_me')||'',deferred:false,settings:{step:1},exNames:{},exNamesRev:{}};
+function refreshLib(){$('#lib').innerHTML=LIB.map(l=>{const dn=(S.exNames&&S.exNames[l[0]])||l[0];const alias=EX_ALIAS(l[0]);return `<option value="${esc(dn)}"${alias&&!S.exNames[l[0]]?` label="${esc(alias)}"`:''}>`;}).join('');}
 function ctxOf(el){const p=el&&el.closest&&el.closest('[data-pane]');return p&&p.dataset.pane==='1'?S.Q:S.P}
 
 /* ---------- writes: one at a time per document ---------- */
@@ -1283,12 +1284,25 @@ function vManager(){
   const rows=absent.map(c=>{const g=gap(c);return `<tr class="clickrow" tabindex="0" data-open="${c.id}"><td><b>${esc(c.name)}</b></td><td>${esc(coachName(c.coachId))}</td><td>${c.lastSessionDate?fmt(c.lastSessionDate):'עדיין לא התאמן'}</td><td>${g===Infinity?'—':`<span class="chip ${g>=28?'bad':'warn'}">${g} ימים</span>`}</td></tr>`}).join('');
   const coaches=S.coaches.filter(k=>k.active!==false).map(k=>{const cs=act.filter(c=>c.coachId===k.id);
     return `<tr class="clickrow" tabindex="0" data-mgrcoach="${k.id}"><td><b>${esc(k.name)}</b></td><td>${cs.length}</td><td>${cs.filter(c=>daysSince(c.lastSessionDate)<=7).length}</td><td>${cs.filter(c=>absent.includes(c)).length||'—'}</td><td>${cs.filter(c=>c.handoff&&c.handoff.text).length||'—'}</td></tr>`}).join('');
+  /* duplicate clients (same name) */
+  const allAct=S.clients.filter(c=>(c.status||'active')==='active');
+  const nameMap={};allAct.forEach(c=>{const n=(c.name||'').trim().toLowerCase();if(n){if(!nameMap[n])nameMap[n]=[];nameMap[n].push(c);}});
+  const dups=Object.values(nameMap).filter(arr=>arr.length>1);
+  const dupsHtml=dups.length?`<div class="card" style="border:2px solid var(--warn)"><div class="spread"><h2 style="margin:0">⚠️ מתאמנים עם שם זהה</h2><span class="muted small">ייתכן שנוצרו בטעות כרטיסים כפולים – בדקו ומזגו אם צריך</span></div>
+  ${dups.map(arr=>`<div style="margin-top:12px;padding:10px;background:var(--bg2);border-radius:8px"><b>${esc(arr[0].name)}</b><div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">${arr.map(c=>`<div style="display:flex;align-items:center;gap:8px"><button class="btn ghost sm" data-open="${c.id}">${esc(c.name)} · ${esc(coachName(c.coachId))} · ${c.lastSessionDate?fmt(c.lastSessionDate):'ללא אימון'}</button><button class="btn danger sm" data-act="mergeInto" data-keep="${arr.find(x=>x!==c)&&arr.find(x=>x!==c).id}" data-del="${c.id}" data-write>מזג והסר זה</button></div>`).join('')}</div></div>`).join('')}</div>`:'';
+  /* exercise names editing */
+  const exGrpNames={lower:'רגליים',upper:'פלג גוף עליון',core:'ליבה',balance:'שיווי משקל'};
+  const byGrp={};LIB.forEach(l=>{const g=l[2]||'other';if(!byGrp[g])byGrp[g]=[];byGrp[g].push(l[0]);});
+  const exNamesHtml=`<div class="card"><h2>שמות תרגילים</h2><p class="muted small">ניתן לשנות את השם המוצג של תרגיל קבוע ברשימת הבחירה. השינוי משפיע על הרשימה הנפתחת בהקלדת שם תרגיל.</p>
+  ${Object.entries(exGrpNames).filter(([k])=>byGrp[k]).map(([k,title])=>`<details style="margin-bottom:8px"><summary style="cursor:pointer;padding:6px 0;font-weight:600">${title} (${(byGrp[k]||[]).length})</summary><div class="tbl-wrap"><table class="tbl" style="margin-top:6px"><thead><tr><th>שם מקורי</th><th>שם מותאם</th></tr></thead><tbody>${(byGrp[k]||[]).map(orig=>`<tr><td class="muted">${esc(orig)}</td><td><input type="text" data-exname="${esc(orig)}" value="${esc((S.exNames&&S.exNames[orig])||orig)}" style="width:100%;min-width:200px"></td></tr>`).join('')}</tbody></table></div></details>`).join('')}</div>`;
   return `<div class="mgr"><h1>ניהול</h1>
+   ${dupsHtml}
    <div class="card"><div class="spread"><h2>לא התאמנו שבועיים ומעלה</h2><span class="muted small">${absent.length} מתוך ${inStudio.length} מתאמנים בסטודיו</span></div>
    <span class="muted small">לשיחת "מתגעגעים אליך" לפני שהם עוזבים. לחיצה על שורה פותחת את התיק.</span>
    ${absent.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>מתאמן</th><th>מאמן</th><th>אימון אחרון</th><th>לא התאמן</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<div class="empty"><strong>כולם התאמנו בשבועיים האחרונים 👏</strong></div>`}
    ${noLog.length?`<details style="margin-top:10px"><summary class="muted">עוד אין אימון מתועד במערכת: ${noLog.length} מתאמנים (כדאי שהמאמן יתעד את האימון הבא)</summary><div class="row" style="margin-top:6px;flex-wrap:wrap">${noLog.map(c=>`<button class="btn ghost sm" data-open="${c.id}">${esc(c.name)} · ${esc(coachName(c.coachId))}</button>`).join('')}</div></details>`:''}</div>
-   <div class="card"><h2>לפי מאמן</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>מאמן</th><th>מתאמנים פעילים</th><th>תועדו ב־7 ימים</th><th>לא התאמנו 14+</th><th>הערות פתוחות</th></tr></thead><tbody>${coaches}</tbody></table></div></div></div>`;
+   <div class="card"><h2>לפי מאמן</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>מאמן</th><th>מתאמנים פעילים</th><th>תועדו ב־7 ימים</th><th>לא התאמנו 14+</th><th>הערות פתוחות</th></tr></thead><tbody>${coaches}</tbody></table></div></div>
+   ${exNamesHtml}</div>`;
 }
 
 /* ---------- group training (one shared plan, per-member results) ---------- */
@@ -2253,6 +2267,16 @@ async function act(name,el){
       if(newP){S.Q=mkCtx(newP);subSessions(S.Q);S.pairMode=true;}
     }
     if(ok) toast('התיק נשמר'); break;}
+  case 'mergeInto': {
+    const keepId=el.dataset.keep, delId=el.dataset.del;
+    const keepC=clientById(keepId), delC=clientById(delId);
+    if(!keepC||!delC){toast('שגיאה: לא נמצאו הכרטיסים');break;}
+    if(!confirm(`מזג את "${delC.name}" לתוך "${keepC.name}"?\nתרגילי הבית של שניהם יאוחדו בכרטיס "${keepC.name}".\nהכרטיס של "${delC.name}" יימחק (ללא האימונים).`)){break;}
+    const mergedHome=[...(keepC.homeEx||[]),...(delC.homeEx||[]).filter(e=>!(keepC.homeEx||[]).some(x=>x.n===e.n))];
+    await updClient(keepId,{homeEx:mergedHome});keepC.homeEx=mergedHome;
+    await S.db.doc('clients/'+delId).delete();
+    toast('המיזוג הושלם. בדקו את הדף האישי ועדכנו אם צריך.');
+    render();break;}
   case 'askDelClient': S.confirmDelClient=c.id; render(); break;
   case 'cancelDelClient': S.confirmDelClient=null; render(); break;
   case 'delClient': {
@@ -2511,12 +2535,15 @@ function bind(){
     if(e.target.type==='number'&&(e.key==='-'||e.key==='e'||e.key==='E'||e.key==='+')){e.preventDefault();return}
     if(e.key==='Enter'&&e.target.classList.contains('clickrow')){e.target.click();return}
     if(e.key==='Enter'&&e.target.classList.contains('si')){e.preventDefault();const nx=siNext(e.target);if(nx)nx.focus();else e.target.blur();}
+    if(e.key==='Enter'&&(e.target.dataset.f==='repMin'||e.target.dataset.gf==='repMin')){e.preventDefault();const fk=e.target.dataset.f?'f':'gf';const row=e.target.closest('[data-ex],[data-ei]');const repMax=row&&row.querySelector(`[data-${fk}="repMax"]`);if(repMax){repMax.focus();repMax.select();}return;}
+    if(e.key==='Enter'&&(e.target.dataset.f==='repMax'||e.target.dataset.gf==='repMax')){e.preventDefault();const fk=e.target.dataset.f?'f':'gf';const scope=e.target.closest('[data-pane]')||e.target.closest('table')||document.getElementById('main');const curRow=e.target.closest('[data-ex],[data-ei]');if(curRow&&scope){const allRows=[...scope.querySelectorAll('[data-ex],[data-ei]')];const ci=allRows.indexOf(curRow);for(let j=ci+1;j<allRows.length;j++){const nx=allRows[j].querySelector(`[data-${fk}="repMin"]`);if(nx){nx.focus();nx.select();break;}}}return;}
   });
   main.addEventListener('input',e=>{
     const t=e.target;
     if(S.view==='group'&&(t.dataset.gf||t.dataset.gm)){gInput(t);return}
     if(t.type==='number'&&t.value!==''&&Number(t.value)<0){t.value='';}
     if(t.id==='q'){S.q=t.value;clearTimeout(S.qT);S.qT=setTimeout(()=>{const p=t.selectionStart;render();const q=$('#q');if(q){q.focus();q.setSelectionRange(p,p)}},250);return}
+    if(t.dataset.exname!=null){const orig=t.dataset.exname;const custom=t.value.trim();if(!S.exNames)S.exNames={};if(custom&&custom!==orig){S.exNames[orig]=custom;}else{delete S.exNames[orig];}S.exNamesRev={};Object.entries(S.exNames||{}).forEach(([o,c])=>{if(c&&c!==o)S.exNamesRev[c]=o;});refreshLib();saveDoc('settings/exercises',{...S.exNames},{delay:800});return;}
     const f=t.dataset.f; const ctx=ctxOf(t); if(!f||!ctx||!ctx.edit) return;
     const d=ctx.edit.doc;
     if(f==='sess.notes'){d.notes=t.value;saveEdit(ctx,900);return}
@@ -2750,7 +2777,7 @@ async function tpAct(name,el){
 setInterval(()=>tpPoll(),15*60*1000);
 
 async function boot(){
-  $('#lib').innerHTML=LIB.map(l=>`<option value="${esc(l[0])}"${EX_ALIAS(l[0])?` label="${esc(EX_ALIAS(l[0]))}"`:''}>`).join('');
+  refreshLib();
   bind(); render();
   const use=n=>(window.claude&&window.claude.use)?window.claude.use(n):Promise.resolve(null);
   const [db,user]=await Promise.all([use('db'),use('user')]);
@@ -2762,6 +2789,7 @@ async function boot(){
   db.doc('settings/templates').onSnapshot(sn=>{S.tpls=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
   db.doc('settings/cues').onSnapshot(sn=>{S.cues=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
   db.doc('settings/progression').onSnapshot(sn=>{if(sn.exists)S.settings={step:1,...sn.data()};scheduleRender()},()=>{});
+  db.doc('settings/exercises').onSnapshot(sn=>{const d=sn.exists?(sn.data()||{}):{};S.exNames=d;S.exNamesRev={};Object.entries(d).forEach(([o,c])=>{if(c&&c!==o)S.exNamesRev[c]=o;});refreshLib();scheduleRender()},()=>{});
   let linked=false;
   db.collection('clients').onSnapshot(snap=>{S.clients=snap.docs.map(d=>({id:d.id,...d.data()}));S.loaded.k=true;
     if(!S.tpPolled){S.tpPolled=1;setTimeout(()=>tpPoll(),4000)}
