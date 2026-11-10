@@ -1062,10 +1062,10 @@ const T_TEMPO='2 שנ׳ ירידה, נשיפה במאמץ';
 const T_INTRO='שאיפה בירידה + בלימה 2 שנ׳, נשיפה בעלייה (קל? + שנייה עצירה בחלק הקשה)';
 const INTRO_WARM='חימום דינמי לבחירתך\nשיווי משקל דינמי: הליכת טנדם בבסיס רחב ← בסיס צר ← הליכה לצדדים ← מעברים מעל מוט הסמית׳\nשיווי משקל סטטי: עמידה על רגל אחת ליד עמוד או קיר (המאמן בצד השני, צמוד וידיים קרובות) ← פרטורבציות קלות לכיוונים שונים';
 const TEMPLATES=[
- {id:'intro',name:'מפגש היכרות',desc:'לפי תסריט מפגש היכרות: חימום ושיווי משקל, ואז 3 סופר סטים של 2×8',warm:INTRO_WARM,ex:[
-  ['סקוואט','1',2,8,8,'אם קשה – בוקס סקוואט\nלימוד ברייסינג וטמפו של 2 שנ׳ ירידה. קל? נוסיף שנייה עצירה בחלק הקשה'],['שכיבות סמיכה בסמית משין','1',2,8,8,'אם קל – יורדים שלב אחד בלבד\nשאיפה בירידה + 2 שניות ירידה, נשיפה בעלייה (קל? + שנייה עצירה בחלק הקשה)',null,7],
-  ["הינג' בדאמבלים",'2',2,8,8,"קודם לימוד הינג' בלי משקל\n"+T_INTRO,'1-2'],['משיכה מפולי עליון','2',2,8,8,'או חתירה בפולי תחתון בישיבה\n'+T_INTRO],
-  ['לחיצת כתפיים בישיבה בדאמבלים','3',2,8,8,T_INTRO,'1-2'],['כפיפות בטן אלכסוניות','3',2,8,8,'בשיפוע גבוה בהתחלה']]},
+ {id:'intro',name:'מפגש היכרות',desc:'לפי תסריט מפגש היכרות: חימום ושיווי משקל, ואז 3 סופר סטים של 2×6–8',warm:INTRO_WARM,ex:[
+  ['סקוואט','1',2,6,8,'אם קשה – בוקס סקוואט\nלימוד ברייסינג וטמפו של 2 שנ׳ ירידה. קל? נוסיף שנייה עצירה בחלק הקשה'],['שכיבות סמיכה בסמית משין','1',2,6,8,'אם קל – יורדים שלב אחד בלבד\nשאיפה בירידה + 2 שניות ירידה, נשיפה בעלייה (קל? + שנייה עצירה בחלק הקשה)',null,7],
+  ["הינג' בדאמבלים",'2',2,6,8,"קודם לימוד הינג' בלי משקל\n"+T_INTRO,'1-2'],['משיכה מפולי עליון','2',2,6,8,'או חתירה בפולי תחתון בישיבה\n'+T_INTRO],
+  ['לחיצת כתפיים בישיבה בדאמבלים','3',2,6,8,T_INTRO,'1-2'],['כפיפות בטן אלכסוניות','3',2,6,8,'בשיפוע גבוה בהתחלה']]},
  {id:'falls',name:'מניעת נפילות – שלב א׳',desc:'קימה, מדרגה, שוקיים, הליכה ושיווי משקל',ex:[
   ['בוקס סקוואט','1',2,6,10,''],['עמידה על רגל אחת','1',2,10,20,''],
   ['סטפ אפ','2',2,6,8,''],['קאף רייז בדאמבלים','2',2,6,10,''],
@@ -1362,7 +1362,7 @@ function pairTable(d,ms,exs,tags){
   const nSets=d.intro?0:Math.max(2,...exs.map(e=>Number(e.targetSets)||0));const bl=pairBlocks(exs,tags);const now=pairNow(d,ms,bl);
   const lab=b=>b?(b.ss?'סופר סט ':'תרגיל ')+b.n:'';
   const nowOf=(cid,i)=>{if(!now)return false;const b=cid===ms[0].id?now.A:now.B;return b.idx.includes(i)};
-  const strip=now?`<div class="pnow"><span>🔄 עכשיו:</span><span class="pn p0"><b>${esc(String(ms[0].name).split(' ')[0])}</b> ${lab(now.A)}</span><span class="pn p1"><b>${esc(String(ms[1].name).split(' ')[0])}</b> ${lab(now.B)}</span><button class="btn primary sm" data-act="gRot" data-write>החלפה ←</button></div>`:'';
+  const strip='';
   const head=`<thead><tr><th colspan="4" class="grp-plan">תוכנית</th><th colspan="2"></th>${nSets?`<th colspan="${nSets}" class="grp-res">תוצאות</th>`:''}<th colspan="2"></th></tr>
    <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>הערות / טמפו</th><th>מי</th><th>משקל עבודה</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>התאמה אישית</th><th>סדר</th></tr></thead>`;
   let body='';
@@ -1387,7 +1387,8 @@ function pairTable(d,ms,exs,tags){
   return strip+`<div class="tbl-wrap"><table class="gtable ptab">${head}<tbody>${body}</tbody></table></div>`;
 }
 
-function introDocDefault(c){return `מפגש היכרות עם ${String(c.name||'').split(' ')[0]}${ageOf(c)?` (${ageOf(c)})`:''}:\n🎯 מה הכי חשוב ${c.sex==='F'?'לה':c.sex==='M'?'לו':'לו/לה'} ולמה: \n🔍 מה ראינו באימון: \n📝 ההמלצה שלי: `}
+function introDocDefault(c,partner){if(partner){return `מפגש היכרות זוגי עם ${String(c.name||'').split(' ')[0]} ו${String(partner.name||'').split(' ')[0]}:\n🎯 מה הכי חשוב להם ולמה (כל אחד בנפרד): \n🔍 מה ראינו באימון (לכל אחד): \n📝 ההמלצה שלי: `}
+  return `מפגש היכרות עם ${String(c.name||'').split(' ')[0]}${ageOf(c)?` (${ageOf(c)})`:''}:\n🎯 מה הכי חשוב ${c.sex==='F'?'לה':c.sex==='M'?'לו':'לו/לה'} ולמה: \n🔍 מה ראינו באימון: \n📝 ההמלצה שלי: `}
 function introCard(list){const pair=list.length>1;return `<details class="card" open style="border:2px solid #ffe08a;background:#fffbea"><summary><b>⭐ תסריט מפגש היכרות${pair?' זוגי':''} – תזכורת</b></summary><ol class="small" style="margin:8px 0 0;padding-inline-start:18px;line-height:1.7">
    <li><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.</li>
    <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים (גיל, ניסיון, מטרה, כאבים), שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.</li>
@@ -1396,10 +1397,21 @@ function introCard(list){const pair=list.length>1;return `<details class="card" 
    <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
 </ol><div style="margin:12px 0 4px;padding:10px 12px;border:2px solid #e8590c;border-radius:10px;background:#fff4e6;font-size:19px;font-weight:800;line-height:1.5">⭐ חובה: ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד" וזה עובר אוטומטית לשקד כמשימה בארבוקס.</div>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
 </details>`}
-function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b> – זה עובר אוטומטית לשקד כמשימה בארבוקס. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
-   ${list.map(c=>`<div style="margin-top:10px">${pair?`<b>${esc(c.name)}</b>`:''}${sent[c.id]?` <span class="chip up">נשלח לשקד ✓</span>`:''}
+function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};
+  if(pair){
+    // זוגי: הערה אחת משותפת — נשמרת על הלקוח הראשון
+    const c0=list[0],c1=list[1];const pairSent=sent[c0.id];
+    const defText=c0.introDoc||introDocDefault(c0,c1);
+    return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">הערה אחת לשני בני הזוג. כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b> – זה עובר אוטומטית לשקד כמשימה בארבוקס.</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלהם</div>
+   <div style="margin-top:10px">${pairSent?`<span class="chip up">נשלח לשקד ✓</span>`:''}
+   <textarea rows="7" style="width:100%;margin-top:6px" data-introdoc="${c0.id}">${esc(defText)}</textarea>
+   <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c0.id}" data-write>${pairSent?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}</button></div></div></div>`}
+  // יחיד
+  const c=list[0];const isSent=sent[c.id];
+  return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b> – זה עובר אוטומטית לשקד כמשימה בארבוקס. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
+   <div style="margin-top:10px">${isSent?`<span class="chip up">נשלח לשקד ✓</span>`:''}
    <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea>
-   <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c.id}" data-write>${sent[c.id]?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}${pair?' – '+esc(String(c.name).split(' ')[0]):''}</button></div></div>`).join('')}</div>`}
+   <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c.id}" data-write>${isSent?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}</button></div></div></div>`}
 const INTRO_HOOK='https://hook.eu1.make.com/t6mxy6fufk4w34z0xnkste5mah910fj1';
 async function introSend(c,d){const t=document.querySelector(`[data-introdoc="${c.id}"]`);const text=(t?t.value:(c.introDoc||'')).trim();
   if(t&&t.value!==c.introDoc){c.introDoc=t.value;updClient(c.id,{introDoc:t.value})}
@@ -1413,7 +1425,7 @@ function vGroup(){
   const coachId=ms[0]?ms[0].coachId:S.meId;
   const back=`<div><button class="btn ghost sm" data-act="gBack" data-coach-id="${esc(coachId||'')}">→ המתאמנים של ${esc(coachName(coachId))}</button></div>`;
   const PR=isPairKey(G.name);
-  const head=`${back}<div class="spread"><h1>👥 ${esc(gTitle(G.name))}${PR?' <small class="muted">אימון זוגי · תוכנית משותפת</small>':''}</h1></div>
+  const head=`${back}<div class="spread"><h1>👥 ${esc(gTitle(G.name))}</h1></div>
    <div class="row gmembers">${ms.map(c=>`<button class="chip" data-open="${c.id}">${esc(c.name)}</button>`).join('')||'<span class="muted">אין משתתפים פעילים בקבוצה</span>'}</div>
    ${ms.map(c=>(c.limits?`<div class="safety small"><b>⚠ ${esc(c.name)}:</b><span>${esc(c.limits)}</span></div>`:'')+(c.medHistory||c.conditions?`<div class="safety med small"><b>🩺 ${esc(c.name)}:</b><span>${esc(c.medHistory||c.conditions)}</span></div>`:'')).join('')}`;
   if(!G.loaded) return head+`<div class="empty">טוען…</div>`;
@@ -2166,6 +2178,7 @@ function tProfile(c){
 
    <span class="muted small">תחומי מיקוד (קובעים אילו מבדקים מומלצים):</span>
    <div class="row" id="p_goals">${Object.entries(GOALS).map(([k,n])=>`<button class="chip" type="button" aria-pressed="${(c.goals||[]).includes(k)}" data-goal="${k}">${n}</button>`).join('')}</div></div>
+  ${c.arboxNotes?`<div class="card" style="border-color:#a3c4f3;background:color-mix(in srgb,#3b82f6 5%,var(--surface))"><h2 style="color:#1d4ed8">📋 הערות כלליות מארבוקס</h2><p class="muted small" style="margin:0 0 8px">מולא אוטומטית ממפגש ההיכרות · לא לעריכה כאן — ערוך בשדות למטה</p><pre style="white-space:pre-wrap;font:inherit;margin:0;line-height:1.6">${esc(c.arboxNotes)}</pre></div>`:''}
   <div class="card"><h2>היסטוריה רפואית</h2>
    <label class="f" for="p_medhist" style="display:block">
     <span class="f-label">אבחנות / פציעות הווה ועבר / ניתוחים</span>
@@ -2274,7 +2287,7 @@ async function act(name,el){
     const by=$('#p_by')?num($('#p_by').value):(c.birthYear??null); const ttyp=$('#p_type').value; const newP=ttyp==='pair'?$('#p_partner').value:'', oldP=c.partnerId||'';
     const ok=await updClient(c.id,{name:$('#p_name').value.trim()||c.name,sex:$('#p_sex').value,birthYear:by??'',coachId:$('#p_coach').value,freq:Number($('#p_freq').value),trainingType:ttyp,remote:ttyp==='remote',groupName:c.groupName||'',partnerId:newP,startDate:$('#p_start').value,status:$('#p_status').value,goals,
       goalsShort:$('#p_gshort').value.trim(),goalsLong:$('#p_glong').value.trim(),
-      medHistory:$('#p_medhist').value.trim(),limits:$('#p_limits').value.trim(),meds:$('#p_meds').value.trim(),
+      medHistory:$('#p_medhist').value.trim(),limits:$('#p_limits').value.trim(),meds:$('#p_meds').value.trim(),arboxNotes:c.arboxNotes||'',
       emergency:{name:$('#p_em_name').value.trim(),rel:$('#p_em_rel').value.trim(),phone:$('#p_em_phone').value.trim()},phone:$('#p_phone').value.trim(),updatedAt:Date.now()});
     if(ok&&newP!==oldP){
       if(oldP) await updClient(oldP,{partnerId:''});
