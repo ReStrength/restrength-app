@@ -69,6 +69,9 @@ h3{font-size:15px;font-weight:700}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spread{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.arbox-notes-card{border-color:#f59e0b;border-width:2px;background:color-mix(in srgb,#f59e0b 6%,var(--surface))}
+.arbox-notes-card h2{color:#b45309}
+.arbox-hint{font-size:13px;color:var(--muted);margin-top:-4px}
 .card > * + *{margin-top:12px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:18px}
 .grid2 > *{min-width:0}
@@ -2148,7 +2151,11 @@ function tProfile(c){
   const em=c.emergency||{};
   const v=k=>esc(c[k]??'');
   const partnerOpts=activeClients().filter(x=>x.id!==c.id&&(!x.partnerId||x.partnerId===c.id)).sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'));
-  return `<div class="card"><h2>פרטים אישיים</h2><div class="form-grid">
+  return `<div class="card arbox-notes-card"><h2>📋 הערות כלליות מארבוקס</h2>
+   <p class="arbox-hint">העתיקו מארבוקס ← כרטיס לקוח ← הערות כלליות, והדביקו כאן</p>
+   <label class="f" for="p_hist"><textarea id="p_hist" rows="4" placeholder="הדביק כאן את תוכן שדה &quot;הערות כלליות&quot; מארבוקס…">${v('history')}</textarea></label>
+  </div>
+  <div class="card"><h2>פרטים אישיים</h2><div class="form-grid">
    <label class="f" for="p_name">שם מלא<input id="p_name" value="${v('name')}"></label>
    <label class="f" for="p_phone">טלפון (לשליחה בווטסאפ)<input id="p_phone" inputmode="tel" dir="ltr" value="${v('phone')}" placeholder="05X-XXXXXXX"></label>
    <label class="f" for="p_sex">מין<select id="p_sex"><option value="">—</option><option value="F"${c.sex==='F'?' selected':''}>אישה</option><option value="M"${c.sex==='M'?' selected':''}>גבר</option></select></label>
@@ -2170,7 +2177,6 @@ function tProfile(c){
    <label class="f" for="p_cond">מצבים רפואיים ואבחנות<textarea id="p_cond">${v('conditions')}</textarea></label>
    <label class="f" for="p_surg">ניתוחים ופציעות עבר<textarea id="p_surg">${v('surgeries')}</textarea></label>
    <label class="f" for="p_meds">תרופות רלוונטיות<textarea id="p_meds" placeholder="למשל: חוסמי בטא – לשים לב לדופק">${v('meds')}</textarea></label>
-   <label class="f" for="p_hist">היסטוריה והערות כלליות<textarea id="p_hist">${v('history')}</textarea></label>
   </div></div>
   <div class="card"><h2>איש קשר לחירום</h2><div class="form-grid">
    <label class="f" for="p_em_name">שם<input id="p_em_name" value="${esc(em.name||'')}"></label>
