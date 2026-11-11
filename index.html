@@ -1198,7 +1198,7 @@ function render(){
   S.deferred=false;
 }
 /* ---------- מוזיקה לסטודיו (נגן ספוטיפיי) ---------- */
-const MUSIC_DEF=[['אנגלית של פעם','0Gds8XKqNx6Q3eQhRk6RAy'],['רוק קלאסי','6WD7pdD92M9v3CZ4yDUOfK'],['עברית של פעם','4w5H2VkDovrPrA9khl8Vv4'],['מזרחית','1mqV7W6k7QUKtyPvYrsAcI']];
+const MUSIC_DEF=[['אנגלית של פעם','0Gds8XKqNx6Q3eQhRk6RAy'],['רוק קלאסי','6WD7pdD92M9v3CZ4yDUOfK'],['עברית של פעם','4w5H2VkDovrPrA9khl8Vv4'],['מזרחית','1mqV7W6k7QUKtyPvYrsAcI'],['יוונית של פעם','5qs9RJRbQJRxyZnen64qMa'],['פופ ישראלי','70AgfI9TZrIvhqPtkEWf1I'],['70s & 80s','1nZpLA56VbyXsEG2VqRonU'],['סול','72HIyFmFZeFjgBcUqyKLBy']];
 const MU={list:MUSIC_DEF.map(([n,id])=>({n,id})),cur:null};
 function muPid(v){const m=String(v||'').match(/playlist[\/:]([A-Za-z0-9]{22})/)||String(v||'').match(/^([A-Za-z0-9]{22})$/);return m?m[1]:null}
 function muSpConn(){
