@@ -1330,9 +1330,9 @@ function freqTxt(n){n=Number(n)||1;return n===1?'פעם בשבוע':n===2?'פע�
 function pairsOfCoach(coachId){const seen={},o=[];S.clients.filter(c=>ttype(c)==='pair'&&c.partnerId&&(c.status||'active')==='active'&&c.coachId===coachId).forEach(c=>{const k=pairKey(c);if(!seen[k]&&clientById(c.partnerId)){seen[k]=1;o.push(k)}});return o}
 function groupMembers(name){if(isPairKey(name))return String(name).split(':').slice(1).map(id=>clientById(id)).filter(Boolean);return S.clients.filter(c=>ttype(c)==='group'&&(c.groupName||'קבוצה')===name&&(c.status||'active')==='active').sort((a,b)=>String(a.name).localeCompare(String(b.name),'he'))}
 function groupsOfCoach(coachId){const m={};S.clients.filter(c=>ttype(c)==='group'&&c.coachId===coachId&&(c.status||'active')==='active').forEach(c=>{const n=c.groupName||'קבוצה';m[n]=(m[n]||0)+1});return Object.entries(m)}
-function openGroup(name){
+function openGroup(name,isIntro){
   closeClient(); closeGroup();
-  const G={name,id:gid(name),sessions:[],loaded:false,msess:[],edit:null};
+  const G={name,id:gid(name),sessions:[],loaded:false,msess:[],edit:null,isIntro:!!isIntro};
   S.G=G; S.view='group';
   G.unsub=S.db.collection('sessions').where('clientId','==',G.id).onSnapshot(snap=>{try{snap.docChanges().forEach(ch=>{if(ch.type==='removed'){DELETED.add('sessions/'+ch.doc.id);if(G.edit&&G.edit.id===ch.doc.id)G.edit=null}})}catch(e){}G.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));G.loaded=true;scheduleRender()},dbErr);
   const ids=groupMembers(name).map(c=>c.id).slice(0,10);
@@ -1439,8 +1439,17 @@ function vGroup(){
   const done=G.sessions.filter(s=>s.status==='done').sort((a,b)=>(b.seq||0)-(a.seq||0));
   if(G.edit&&!G.sessions.some(s=>s.id===G.edit.id)&&!G.edit.local) G.edit=null;
   if(G.edit&&G.edit.local&&G.sessions.some(s=>s.id===G.edit.id)) G.edit.local=false;
-  if(!G.edit&&(planned[0]||done[0])){const s=planned[0]||done[0]; G.edit={id:s.id,doc:gEnsureMembers(clone(s))};}
-  if(!G.edit){const cp=PR?ms.filter(c=>G.msess.some(x=>x.clientId===c.id&&(x.exercises||[]).some(e=>e.name))).map(c=>`<button class="btn" data-act="gCopy" data-cid="${c.id}">להעתיק מהתוכנית של ${esc(c.name)}</button>`).join(''):'';
+  // אם זה מפגש היכרות מארבוקס — לא לטעון תוכנית ישנה, לפתוח תוכנית חדשה
+  const allIntro=ms.length>0&&ms.every(c=>c.intro);
+  if(!G.isIntro&&!allIntro&&!G.edit&&(planned[0]||done[0])){const s=planned[0]||done[0]; G.edit={id:s.id,doc:gEnsureMembers(clone(s))};}
+  if(!G.edit){
+    // אם זה מפגש היכרות (מארבוקס עם "היכרות" או כל חברי הזוג/קבוצה מסומנים intro) — פותחים ישר תבנית היכרות
+    if(G.isIntro||allIntro){
+      if(!G._autoIntroTriggered){G._autoIntroTriggered=true;
+        setTimeout(()=>{const btn=document.querySelector('[data-act="gStart"][data-tpl="intro"]');if(btn)btn.click();},80);}
+      const tpl=allTemplates().find(x=>x.id==='intro');
+      return head+`<div class="card" style="text-align:center;border-color:#ffe08a;background:#fffbea"><p class="muted small">מפגש היכרות${PR?' זוגי':''} — פותח תוכנית לפי התסריט…</p><button class="btn primary big" data-act="gStart" data-tpl="intro" data-write>⭐ ${tpl?tpl.name:'מפגש היכרות'} – פתיחה</button></div>`;}
+    const cp=PR?ms.filter(c=>G.msess.some(x=>x.clientId===c.id&&(x.exercises||[]).some(e=>e.name))).map(c=>`<button class="btn" data-act="gCopy" data-cid="${c.id}">להעתיק מהתוכנית של ${esc(c.name)}</button>`).join(''):'';
     return head+(cp?`<div class="card"><h2>יש כבר תוכנית אישית</h2><div class="row">${cp}</div><p class="muted small">התרגילים עוברים לתוכנית המשותפת, ולכל אחד נשמרים המשקלים שלו.</p></div>`:'')+modeChooser('gStart',PR?'איך לבנות את התוכנית של הזוג?':'איך לבנות את תוכנית הקבוצה?',tplButtons('gStart'))}
   const d=G.edit.doc, isDone=d.status==='done';
   gEnsureMembers(d);
@@ -1700,7 +1709,7 @@ function abHtml(k){
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
   const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
-      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}"`:`data-open="${c.id}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-abpair="${/זוגי/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
+      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}" data-abintro="${/היכרות/.test(r.w||'')?1:''}"`:`data-open="${c.id}" data-abintro="${/היכרות/.test(r.w||'')?1:''}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-abpair="${/זוגי/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
   return `<div class="abbox"><div class="abh"><h2>🗓️ לו"ז הסטודיו ${off?'מחר':'היום'}</h2>${tabs}</div>${body}</div>`}
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-abnew]');if(!a)return;e.preventDefault();e.stopPropagation();const nm=a.dataset.abnew.trim();S.newIntro=!!a.dataset.abintro;S.newPair=!!a.dataset.abpair;const cid=(S.coaches.find(k=>{try{return abCoachMatch(k,a.dataset.abc)}catch(_){return false}})||{}).id||S.meId;closeClient();S.view='coaches';S.coachView=cid;S.showNew=true;render();setTimeout(()=>{const i=$('#n_name');if(i){i.value=nm;i.focus()}window.scrollTo(0,0)},0)},true);
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-openc]');if(a){e.preventDefault();e.stopPropagation();openClient(a.dataset.openc);return}});
@@ -1826,6 +1835,9 @@ function paneHtml(ctx,c,pane,pair){
   if(!ctx.edit&&planned.length) ctx.edit={id:planned[0].id,doc:clone(planned[0])};
   if(!ctx.edit&&done.length) ctx.edit={id:done[0].id,doc:clone(done[0])};
   if(false) return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}<div class="card empty"><strong>התוכנית של ${esc(c.name)} תועבר בקרוב מהגוגל שיטס</strong><span>אין צורך לבנות אותה מחדש.</span><button class="linkbtn" data-act="forceNew">בכל זאת לבנות תוכנית חדשה</button></div></section>`;
+  // פתיחה אוטומטית של תבנית היכרות כשמגיעים מארבוקס עם "היכרות" (גם אם יש sessions)
+  const isArboxIntro=S.pendingOpenIntro===c.id;
+  if(isArboxIntro&&ctx.loaded){S.pendingOpenIntro=null;if(!S.autoIntro['arbox_'+c.id]){S.autoIntro['arbox_'+c.id]=1;setTimeout(()=>{const b=document.querySelector(`[data-pane="${pane}"] [data-act="startPlan"][data-tpl="intro"]`);if(b)b.click();},80);}}
   if(!ctx.edit&&ctx.loaded&&!ctx.sessions.length&&S.db){
     if(S.canWrite&&!c.remote&&ttype(c)!=='group'&&!S.autoIntro[c.id]&&!c.lastSessionDate&&Date.now()-(c.createdAt||0)<30*864e5){S.autoIntro[c.id]=1;setTimeout(()=>{const b=document.querySelector(`[data-pane="${pane}"] [data-act="startPlan"][data-tpl="intro"]`);if(b)b.click()},50)}
     return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}<div class="card" style="text-align:center"><button class="btn primary big" data-act="startPlan" data-tpl="intro" data-write>⭐ מפגש היכרות – תוכנית מוכנה לפי התסריט</button></div>${modeChooser('startPlan','או לבנות תוכנית אחרת ל'+c.name+':',tplButtons('startPlan'))}</section>`;}
@@ -2568,12 +2580,12 @@ function bind(){
     const t=e.target;
     const navg=t.closest('[data-nav-go]'); if(navg){ closeClient(); S.view=navg.dataset.navGo; render(); return;}
     const a=t.closest('[data-act]'); if(a&&!a.disabled){act(a.dataset.act,a);return}
-    const o=t.closest('[data-open]'); if(o){S.showNew=false;openClient(o.dataset.open);return}
+    const o=t.closest('[data-open]'); if(o){S.showNew=false;if(o.dataset.abintro)S.pendingOpenIntro=o.dataset.open;openClient(o.dataset.open);return}
     const qb=t.closest('[data-qfill]'); if(qb){doQfill(qb);return}
     const wdb=t.closest('[data-wday]'); if(wdb){const c=client();if(c){const w=Number(wdb.dataset.wday);const ds=new Set(c.days||[]);ds.has(w)?ds.delete(w):ds.add(w);c.days=[...ds].sort();updClient(c.id,{days:c.days});wdb.setAttribute('aria-pressed',String(ds.has(w)))}return}
     const st=t.closest('[data-step]'); if(st){const td=st.closest('td'); const inp=td&&td.querySelector('input.si'); if(inp&&!inp.disabled){const ctx=ctxOf(inp); const card=inp.closest('[data-ex]'); const ex=ctx&&ctx.edit&&card?ctx.edit.doc.exercises[Number(card.dataset.ex)]:null;
       let v=inp.value===''?(Number(st.dataset.step)>0?(num(ex&&ex.repMin)??8):0):Math.max(0,Number(inp.value)+Number(st.dataset.step)); inp.value=String(v); inp.dispatchEvent(new Event('input',{bubbles:true}));} return}
-    const gc=t.closest('[data-group]'); if(gc){openGroup(gc.dataset.group);return}
+    const gc=t.closest('[data-group]'); if(gc){openGroup(gc.dataset.group,!!gc.dataset.abintro);return}
     const mc=t.closest('[data-mgrcoach]'); if(mc){S.view='coaches';S.coachView=mc.dataset.mgrcoach;render();window.scrollTo(0,0);return}
     const kc=t.closest('[data-coach]'); if(kc){S.coachView=kc.dataset.coach;S.showNew=false;render();window.scrollTo(0,0);return}
     const cf=t.closest('[data-coachfilter]'); if(cf){S.view='clients';S.filterCoach=cf.dataset.coachfilter;render();return}
