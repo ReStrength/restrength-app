@@ -1210,7 +1210,7 @@ function muChips(){const b=$('#mChips');if(!b)return;
   const conn=lsGet('rs_sp_conn');
   const chips=MU.list.map((p,i)=>`<button type="button" data-mi="${i}" aria-pressed="${MU.cur===p.id}">${esc(p.n)}</button>`).join('')+`<button type="button" data-mother aria-pressed="${!!MU.other}">🔎 אחר</button>`+(MU.other?`<form id="mOtherF" style="flex-basis:100%;display:flex;gap:6px"><input id="mOther" placeholder="שם של שיר או זמר, או קישור מספוטיפיי" style="flex:1;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px"><button class="btn sm primary">חיפוש</button></form>`:'');
   const banner=conn?`<span class="sp-reconn" id="spReconn">⚙ לא עובד? חבר מחדש</span>`:
-    `<button type="button" class="sp-connect" id="spConn">🎵 התחבר לספוטיפיי — שמיעת שירים מלאה</button>`;
+    `<button type="button" class="sp-connect" id="spConn">🎵 התחבר לספוטיפיי — שמיעת שירים מלאה</button><a href="https://www.spotify.com/signup" target="_blank" rel="noopener" style="font-size:12px;color:var(--muted);text-align:center;display:block;margin-bottom:4px">אין חשבון? פתיחת חשבון חינמי ב-30 שניות ↗</a>`;
   b.innerHTML=chips+banner;
   const a=$('#mAdmin');if(a)a.innerHTML=false?`<details><summary class="muted small">עריכת הרשימה (רק לך)</summary><div class="small">${MU.list.map((p,i)=>`<div class="spread"><span>${esc(p.n)}</span><button type="button" class="btn ghost sm" data-mdel="${i}">הסרה</button></div>`).join('')}<input id="mNewN" placeholder="שם הסגנון (למשל: שירי ארץ ישראל)"><input id="mNewL" placeholder="קישור לפלייליסט מספוטיפיי"><button type="button" class="btn sm" id="mAdd" style="margin-top:6px">+ הוספה</button></div></details>`:'';
   const cb=$('#spConn');if(cb)cb.onclick=muSpConn;
