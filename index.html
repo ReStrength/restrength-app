@@ -491,6 +491,15 @@ td.res input.si{-moz-appearance:textfield;padding-right:24px!important}td.res in
  .gplan .gacts{margin-inline-start:0}
  .stp{display:flex!important;justify-content:space-between;gap:4px;padding:4px}
  .stp button{flex:1;min-height:40px;font-size:22px;font-weight:700;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+ /* profile + cards on mobile */
+ .form-grid{grid-template-columns:1fr!important}
+ .grid2{grid-template-columns:1fr!important}
+ .card{padding:14px 12px}
+ .rotc{flex-direction:column;align-items:flex-start!important}
+ .rotc button{width:100%;justify-content:center}
+ .gmembers{flex-wrap:wrap;gap:6px}
+ .gmembers .btn.ghost.sm{padding:4px 8px;font-size:18px}
+ details[open] ol.small{padding-inline-start:14px}
 }
 
 /* תא כאב בולט */
@@ -1431,9 +1440,24 @@ function pairTable(d,ms,exs,tags){
 
 function introDocDefault(c,partner){if(partner){return `מפגש היכרות זוגי עם ${String(c.name||'').split(' ')[0]} ו${String(partner.name||'').split(' ')[0]}:\n🎯 מה הכי חשוב להם ולמה (כל אחד בנפרד): \n🔍 מה ראינו באימון (לכל אחד): \n📝 ההמלצה שלי: `}
   return `מפגש היכרות עם ${String(c.name||'').split(' ')[0]}${ageOf(c)?` (${ageOf(c)})`:''}:\n🎯 מה הכי חשוב ${c.sex==='F'?'לה':c.sex==='M'?'לו':'לו/לה'} ולמה: \n🔍 מה ראינו באימון: \n📝 ההמלצה שלי: `}
-function introCard(list){const pair=list.length>1;return `<details class="card" open style="border:2px solid #ffe08a;background:#fffbea"><summary><b>תזכורת לתסריט מפגש היכרות${pair?' זוגי':''}</b></summary><ol class="small" style="margin:8px 0 0;padding-inline-start:18px;line-height:1.7">
+function clientKnownHtml(c,withName){
+  const ag=ageOf(c);const rows=[];
+  if(ag) rows.push({l:'גיל',v:String(ag)});
+  if(c.goalsShort) rows.push({l:'מטרה',v:c.goalsShort});
+  if(c.medHistory) rows.push({l:'רקע רפואי',v:c.medHistory});
+  if(c.limits) rows.push({l:'מגבלות',v:c.limits});
+  if(c.meds) rows.push({l:'תרופות',v:c.meds});
+  if(!rows.length&&c.arboxNotes) rows.push({l:'הערות',v:c.arboxNotes.slice(0,300)});
+  if(!rows.length) return '';
+  const nm=withName?`<b style="display:block;margin-bottom:4px">${esc(String(c.name).split(' ')[0])}</b>`:'';
+  return `<div style="margin-top:8px;padding:10px 12px;background:rgba(255,224,0,.18);border-radius:8px;font-size:15px;line-height:1.65">${nm}${rows.map(r=>`<span><b>${esc(r.l)}:</b> ${esc(r.v)}</span>`).join('<br>')}</div>`;
+}
+function introCard(list){const pair=list.length>1;
+  const knownBlocks=list.map(c=>clientKnownHtml(c,pair)).join('');
+  const hasKnown=knownBlocks.trim().length>0;
+  return `<details class="card" open style="border:2px solid #ffe08a;background:#fffbea"><summary><b>תזכורת לתסריט מפגש היכרות${pair?' זוגי':''}</b></summary><ol class="small" style="margin:8px 0 0;padding-inline-start:18px;line-height:1.7">
    <li><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.</li>
-   <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים (גיל, ניסיון, מטרה, כאבים), שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.</li>
+   <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים${hasKnown?' (ראו למטה)':' (גיל, ניסיון, מטרה, כאבים)'}${pair?'':''}${hasKnown?':':','} שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.${hasKnown?knownBlocks:''}</li>
    <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
    <li><b>עבודת כוח:</b> טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
    <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
@@ -2246,7 +2270,8 @@ function tProfile(c){
 
    <span class="muted small">תחומי מיקוד (קובעים אילו מבדקים מומלצים):</span>
    <div class="row" id="p_goals">${Object.entries(GOALS).map(([k,n])=>`<button class="chip" type="button" aria-pressed="${(c.goals||[]).includes(k)}" data-goal="${k}">${n}</button>`).join('')}</div></div>
-  ${c.arboxNotes?`<div class="card" style="border-color:#a3c4f3;background:color-mix(in srgb,#3b82f6 5%,var(--surface))"><h2 style="color:#1d4ed8">📋 הערות כלליות מארבוקס</h2><p class="muted small" style="margin:0 0 8px">מולא אוטומטית ממפגש ההיכרות · לא לעריכה כאן — ערוך בשדות למטה</p><pre style="white-space:pre-wrap;font:inherit;margin:0;line-height:1.6">${esc(c.arboxNotes)}</pre></div>`:''}
+  ${c.arboxNotes?`<div class="card" style="border-color:#a3c4f3;background:color-mix(in srgb,#3b82f6 5%,var(--surface))"><div class="spread" style="flex-wrap:wrap;gap:8px"><h2 style="color:#1d4ed8;margin:0">📋 הערות כלליות מארבוקס</h2><button class="btn ghost sm" data-act="spreadArboxNotes" data-write title="מפזר את הטקסט לשדות המתאימים בתיק">🪄 פיזר לשדות</button></div><p class="muted small" style="margin:4px 0 8px">מולא אוטומטית מארבוקס · לחצו על "פיזר לשדות" כדי לחלק לשדות הנכונים, אחר כך לחצו שמירת התיק</p><pre style="white-space:pre-wrap;font:inherit;margin:0;line-height:1.6;font-size:14px">${esc(c.arboxNotes)}</pre></div>`:''}
+  ${!c.arboxNotes&&!c.goalsShort&&!c.medHistory?`<div class="card" style="border-color:var(--warn);background:color-mix(in srgb,var(--warn) 5%,var(--surface))"><p class="small" style="margin:0;color:var(--warn-text,#854d0e)">ℹ️ אין הערות כלליות מארבוקס לעדיין. לאחר ביצוע מפגש ההיכרות ומילוי "📲 התיעוד לשקד", ישלח אוטומטית המידע לתיק.</p></div>`:''}
   <div class="card"><h2>היסטוריה רפואית</h2>
    <label class="f" for="p_medhist" style="display:block">
     <span class="f-label">אבחנות / פציעות הווה ועבר / ניתוחים</span>
@@ -2365,6 +2390,36 @@ async function act(name,el){
     }
     if(ok) toast('התיק נשמר'); break;}
   case 'renameClient': {const rc=el.dataset.cid?clientById(el.dataset.cid):c;if(!rc)break;const nn=prompt('שם המתאמן:',rc.name);if(nn&&nn.trim()&&nn.trim()!==rc.name){await updClient(rc.id,{name:nn.trim()});toast('השם עודכן');}break;}
+  case 'spreadArboxNotes': {
+    if(!c||!c.arboxNotes) break;
+    const raw=c.arboxNotes;
+    // Simple parser: looks for key patterns in the Hebrew free text
+    const extract=(pats,text)=>{for(const p of pats){const m=text.match(p);if(m&&m[1]&&m[1].trim())return m[1].trim();}return ''};
+    // Age: גיל X or בן/בת X
+    const ageM=raw.match(/(?:גיל|בן|בת)\s*(\d{2,3})/);
+    const birthY=ageM?new Date().getFullYear()-Number(ageM[1]):null;
+    // Goals: מטרה/רצון/רוצה
+    const goals=extract([/מטרה[^::\n]*[::\s]+([^\n\.]{5,200})/i,/(?:רצון|רוצה|מה חשוב)[^::\n]*[::\s]+([^\n\.]{5,200})/i],raw);
+    // Medical: רקע/אבחנ/פציעה/ניתוח/כאב
+    const med=extract([/(?:רקע רפואי|היסטוריה רפואית|אבחנ)[^::\n]*[::\s]+([^\n]{5,300})/i,/(?:פציעות?|ניתוחים?|כאבים?)[^::\n]*[::\s]+([^\n]{5,300})/i],raw);
+    // Limits: מגבלה/אסור/לא להרים
+    const lim=extract([/(?:מגבלות?|התוויות? נגד|אסור|לא ל)[^::\n]*[::\s]+([^\n]{5,300})/i],raw);
+    // Meds: תרופות
+    const meds=extract([/(?:תרופות?)[^::\n]*[::\s]+([^\n]{5,300})/i],raw);
+    // Sex: אישה/גבר
+    const sexM=raw.match(/\b(אישה|גבר|נשי|זכר|זכרי)\b/i);
+    const sex=sexM?(sexM[1].match(/אישה|נשי/i)?'F':'M'):'';
+    // Fill the form fields
+    const fill=(id,val)=>{const el=$('#'+id);if(el&&val&&!el.value.trim())el.value=val};
+    if(birthY&&$('#p_by')&&!$('#p_by').value) $('#p_by').value=birthY;
+    if(sex&&$('#p_sex')&&!$('#p_sex').value) $('#p_sex').value=sex;
+    fill('p_gshort',goals);
+    fill('p_medhist',med);
+    fill('p_limits',lim);
+    fill('p_meds',meds);
+    toast('הוזנו הנתונים לשדות — בדקו ואז לחצו שמירת התיק');
+    break;}
+
   case 'mergeInto': {
     const keepId=el.dataset.keep, delId=el.dataset.del;
     const keepC=clientById(keepId), delC=clientById(delId);
