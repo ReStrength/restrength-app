@@ -13,6 +13,11 @@ service cloud.firestore {
       allow read: if verified() && (email() == e || isAdmin());
       allow write: if isAdmin();
     }
+    // Make.com automation: pre-populate client files when an intro session is booked in Arbox
+    // Only allows writes to documents with IDs matching arbox_<number> (no reads, no other docs)
+    match /clients/{id} {
+      allow write: if id.matches('arbox_[0-9]+');
+    }
     // studio data: every signed-in staff member (coaches cover for each other)
     match /{col}/{id} {
       allow read, write: if isStaff() && col in ['coaches', 'clients', 'sessions', 'assessments', 'settings'];
