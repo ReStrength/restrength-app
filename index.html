@@ -1838,10 +1838,13 @@ function paneHtml(ctx,c,pane,pair){
   // פתיחה אוטומטית של תבנית היכרות כשמגיעים מארבוקס עם "היכרות" (גם אם יש sessions)
   const isArboxIntro=S.pendingOpenIntro===c.id;
   if(isArboxIntro&&ctx.loaded){S.pendingOpenIntro=null;if(!S.autoIntro['arbox_'+c.id]){S.autoIntro['arbox_'+c.id]=1;setTimeout(()=>{const b=document.querySelector(`[data-pane="${pane}"] [data-act="startPlan"][data-tpl="intro"]`);if(b)b.click();},80);}}
+  // אם זה מפגש היכרות מארבוקס וכבר יש sessions — מציגים כפתור פתיחת תבנית היכרות ללא שאלות
+  if(isArboxIntro&&ctx.loaded&&!ctx.edit){
+    return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}<div class="card" style="text-align:center;border-color:#ffe08a;background:#fffbea"><p class="muted small">מפגש היכרות${pair?' זוגי':''} – כנראה מתאמן חוזר</p><button class="btn primary big" data-act="startPlan" data-tpl="intro" data-write>⭐ מפגש היכרות – תוכנית לפי התסריט</button></div>${modeChooser('startPlan','או לבנות תוכנית אחרת ל'+c.name+':',tplButtons('startPlan'))}</section>`;}
   if(!ctx.edit&&ctx.loaded&&!ctx.sessions.length&&S.db){
     if(S.canWrite&&!c.remote&&ttype(c)!=='group'&&!S.autoIntro[c.id]&&!c.lastSessionDate&&Date.now()-(c.createdAt||0)<30*864e5){S.autoIntro[c.id]=1;setTimeout(()=>{const b=document.querySelector(`[data-pane="${pane}"] [data-act="startPlan"][data-tpl="intro"]`);if(b)b.click()},50)}
     return `<section data-pane="${pane}">${pair?`<div class="pane-head"><h2>${esc(c.name)}</h2></div>`:''}<div class="card" style="text-align:center"><button class="btn primary big" data-act="startPlan" data-tpl="intro" data-write>⭐ מפגש היכרות – תוכנית מוכנה לפי התסריט</button></div>${modeChooser('startPlan','או לבנות תוכנית אחרת ל'+c.name+':',tplButtons('startPlan'))}</section>`;}
-  const ph=pair?`<div class="pane-head"><h2>${esc(c.name)}</h2>${pane===1&&c.limits?`<div class="safety small"><b>⚠ מגבלות:</b><span>${esc(c.limits)}</span></div>`:''}</div>`:'';
+  const ph=pair?`<div class="pane-head"><h2>${esc(c.name)} <button class="btn ghost sm" data-act="renameClient" data-cid="${c.id}" data-write title="עריכת שם">✏️</button></h2>${pane===1&&c.limits?`<div class="safety small"><b>⚠ מגבלות:</b><span>${esc(c.limits)}</span></div>`:''}</div>`:'';
   if(!ctx.loaded) return `<section data-pane="${pane}">${ph}<div class="empty">טוען…</div></section>`;
   const lastByLbl={}; ctx.sessions.forEach(s=>{const l=String(s.label);const cur=lastByLbl[l];if(s.status==='planned'||!cur||(cur.status!=='planned'&&(s.date||'')>(cur.date||'')))lastByLbl[l]=s});
   const lbls=Object.keys(lastByLbl).sort();
@@ -2325,7 +2328,7 @@ async function act(name,el){
       if(newP){S.Q=mkCtx(newP);subSessions(S.Q);S.pairMode=true;}
     }
     if(ok) toast('התיק נשמר'); break;}
-  case 'renameClient': {if(!c)break;const nn=prompt('שם המתאמן:',c.name);if(nn&&nn.trim()&&nn.trim()!==c.name){await updClient(c.id,{name:nn.trim()});toast('השם עודכן');}break;}
+  case 'renameClient': {const rc=el.dataset.cid?clientById(el.dataset.cid):c;if(!rc)break;const nn=prompt('שם המתאמן:',rc.name);if(nn&&nn.trim()&&nn.trim()!==rc.name){await updClient(rc.id,{name:nn.trim()});toast('השם עודכן');}break;}
   case 'mergeInto': {
     const keepId=el.dataset.keep, delId=el.dataset.del;
     const keepC=clientById(keepId), delC=clientById(delId);
