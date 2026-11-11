@@ -203,7 +203,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .ex-side textarea{min-height:60px}
 .ex-name{font-family:inherit}
 .add-menu{gap:6px}
-.sheet-wrap{overflow-x:auto;overflow-y:auto;max-height:80vh;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.sheet-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
 .sheet{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:16px}
 .sheet th{background:var(--band);color:#fff;font-weight:600;font-size:15px;padding:10px 8px;white-space:nowrap;text-align:center;border:1px solid #2E2A29}
 .sheet thead{position:sticky;top:0;z-index:2}
@@ -1864,7 +1864,7 @@ function progTable(ctx,doc){
     const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
-    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
+    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
      <td class="name"><span class="nmwrap"><span class="nmview">${esc(dn(ex.name))||'<span class="muted">שם התרגיל</span>'}</span><input list="lib" data-f="name" value="${esc(dn(ex.name))}" placeholder="שם התרגיל"></span>${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!doc.intro&&doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
@@ -2455,7 +2455,11 @@ async function act(name,el){
     const doc={clientId:ctx.clientId,label,seq:1,status:'planned',approved:true,date:'',coach:'',notes:'',warmup:'',exercises,createdAt:Date.now()};
     ctx.edit={id:ref.id,doc,local:true}; await saveDoc('sessions/'+ref.id,doc); updClient(ctx.clientId,{hasPlan:true}); render(); break;}
   case 'addEx': {const a=ctx.edit.doc.exercises; const ss=el.dataset.ss||''; const ne={...newExercise(),ss};
-    if(ss){let last=-1;a.forEach((e,i)=>{if(String(e.ss)===String(ss))last=i}); a.splice(last+1,0,ne);} else a.push(ne);
+    if(ss){// Find the end of the consecutive run starting at data-i (not global last)
+      const startI=el.dataset.i!=null?Number(el.dataset.i):0;
+      let last=startI;
+      for(let k=startI;k<a.length&&String(a[k].ss)===String(ss);k++) last=k;
+      a.splice(last+1,0,ne);} else a.push(ne);
     saveEdit(ctx,0); render(); break;}
   case 'joinEx': {const a=ctx.edit.doc.exercises; const i=Number(el.dataset.i); const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a[i].ss=k; a.splice(i+1,0,{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
   case 'prog': {const ex=ctx.edit.doc.exercises[Number(el.closest('[data-ex]').dataset.ex)]; const k=el.dataset.k;
