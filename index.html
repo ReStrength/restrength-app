@@ -1367,7 +1367,23 @@ function pairNow(d,ms,bl){if(ms.length!==2||bl.length<2)return null;const k=((d.
 function pairTable(d,ms,exs,tags){
   const nSets=d.intro?0:Math.max(2,...exs.map(e=>Number(e.targetSets)||0));const bl=pairBlocks(exs,tags);const now=pairNow(d,ms,bl);
   const lab=b=>b?(b.ss?'סופר סט ':'תרגיל ')+b.n:'';
-  const nowOf=(cid,i)=>{if(!now)return false;const b=cid===ms[0].id?now.A:now.B;return b.idx.includes(i)};
+  const nowOf=(cid,i)=>{
+    if(d.intro&&ms.length===2){
+      const rot=d.rot||0;
+      const totalSS=Math.ceil(exs.length/2);
+      if(rot>=totalSS*2) return false;
+      const blockIdx=Math.floor(rot/2);
+      const swapped=rot%2===1;
+      const tg=tags[i];
+      if(!tg||tg.n!==String(blockIdx+1)) return false;
+      const blockExIdxs=exs.map((_,j)=>j).filter(j=>tags[j]&&tags[j].n===tg.n);
+      const posInBlock=blockExIdxs.indexOf(i);
+      if(posInBlock===-1) return false;
+      const isA=cid===ms[0].id;
+      return swapped?(isA?posInBlock===1:posInBlock===0):(isA?posInBlock===0:posInBlock===1);
+    }
+    if(!now)return false;const b=cid===ms[0].id?now.A:now.B;return b.idx.includes(i);
+  };
   const strip='';
   const head=`<thead><tr><th colspan="4" class="grp-plan">תוכנית</th><th colspan="2"></th>${nSets?`<th colspan="${nSets}" class="grp-res">תוצאות</th>`:''}<th colspan="2"></th></tr>
    <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>הערות / טמפו</th><th>מי</th><th>משקל עבודה</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>התאמה אישית</th><th>סדר</th></tr></thead>`;
@@ -1386,11 +1402,31 @@ function pairTable(d,ms,exs,tags){
       else { const kgc=isSmithPush(ex.name)?`<select data-gm="height" data-ei="${i}" data-cid="${c.id}" class="hsel">${[7,6,5,4,3,2,1].map(h=>`<option value="${h}"${(Number(mm.height)||7)===h?' selected':''}>גובה ${h}</option>`).join('')}</select>`:`<input type="text" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'משקל גוף'}">${first&&isDumbbell(ex.name)?`<div class="dumbtog"><button type="button" class="dumbbtn${(ex.dumbSide||'each')==='each'?' on':''}" data-act="dumbSideG" data-v="each" data-ei="${i}" data-write>כל יד</button><button type="button" class="dumbbtn${ex.dumbSide==='total'?' on':''}" data-act="dumbSideG" data-v="total" data-ei="${i}" data-write>בסה״כ</button></div>`:''}`;
         const L=mm.sets.length;
         rest=`<td class="gkg">${kgc}</td>${Array.from({length:nSets},(_,j)=>j<L?`<td class="res"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}" aria-label="${esc(c.name)} סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===L-1&&first?`${L<6?`<button type="button" class="addset" data-act="gSetAdd" data-ei="${i}" data-tip="הוספת סט" data-write>+</button>`:''}${L>1?`<button type="button" class="addset delset" data-act="gSetDel" data-ei="${i}" data-tip="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>').join('')}
-         <td class="gadapt"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt||'')}" placeholder="למשל: מדרגה נמוכה"></td>`}
+         <td class="gadapt"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt||'')}" placeholder="מדרגה נמוכה"></td>`}
       body+=`<tr class="prow p${k}${nowOf(c.id,i)?' now':''}${k===ms.length-1?' plast':''}" data-gex="${i}">${shared}${who}${rest}${acts}</tr>`});
     if(S.gPain===i)body+=`<tr class="painrow"><td colspan="${nSets+8}"><div class="banner bad" style="margin:4px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום ב"התאמה אישית" מה שונה.</span></span></div></td></tr>`;
   });
-  return strip+`<div class="tbl-wrap"><table class="gtable ptab">${head}<tbody>${body}</tbody></table></div>`;
+  let introSwapUI='';
+  if(d.intro&&ms.length===2){
+    const rot=d.rot||0;
+    const totalSS=Math.ceil(exs.length/2);
+    const blockIdx=Math.min(Math.floor(rot/2),totalSS-1);
+    const swapped=rot%2===1;
+    const ssNum=String(blockIdx+1);
+    const blockExIdxs=exs.map((_,j)=>j).filter(j=>tags[j]&&tags[j].n===ssNum);
+    const ex0=blockExIdxs[0]!=null?esc(exs[blockExIdxs[0]].name||''):'';
+    const ex1=blockExIdxs[1]!=null?esc(exs[blockExIdxs[1]].name||''):'';
+    const A=esc(String(ms[0].name||'').split(' ')[0]);
+    const B=esc(String(ms[1].name||'').split(' ')[0]);
+    const [aEx,bEx]=swapped?[ex1,ex0]:[ex0,ex1];
+    const done=rot>=totalSS*2;
+    const btnLabel=swapped?'➡ סופר סט הבא':'🔄 החלפה';
+    introSwapUI=`<div class="card rotc" style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="line-height:1.6"><span style="background:#ffe08a;border-radius:6px;padding:2px 8px;font-weight:700">${A}</span> → ${aEx} &nbsp;•&nbsp; <span style="background:#ffe08a;border-radius:6px;padding:2px 8px;font-weight:700">${B}</span> → ${bEx}</div>
+      ${done?'<span style="font-size:1.2em">✅ סיום</span>':`<button class="btn primary sm" data-act="gRot" data-write>${btnLabel}</button>`}
+    </div>`;
+  }
+  return strip+`<div class="tbl-wrap"><table class="gtable ptab">${head}<tbody>${body}</tbody></table></div>${introSwapUI}`;
 }
 
 function introDocDefault(c,partner){if(partner){return `מפגש היכרות זוגי עם ${String(c.name||'').split(' ')[0]} ו${String(partner.name||'').split(' ')[0]}:\n🎯 מה הכי חשוב להם ולמה (כל אחד בנפרד): \n🔍 מה ראינו באימון (לכל אחד): \n📝 ההמלצה שלי: `}
@@ -1399,9 +1435,9 @@ function introCard(list){const pair=list.length>1;return `<details class="card" 
    <li><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.</li>
    <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים (גיל, ניסיון, מטרה, כאבים), שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.</li>
    <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
-   <li><b>עבודת כוח:</b> סופר סטים 2×8, טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
+   <li><b>עבודת כוח:</b> טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
    <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
-</ol><div style="margin:12px 0 4px;padding:10px 12px;border:2px solid #e8590c;border-radius:10px;background:#fff4e6;font-size:19px;font-weight:800;line-height:1.5">⭐ חובה: ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד".</div>${pair?`<div class="small" style="margin-top:6px"><b>👥 בזוג:</b> שואלים כל אחד בנפרד מה חשוב לו, מתחלפים בסופר סטים (כפתור "החלפה" בטבלה), ושמים לב שאף אחד לא מחכה הרבה. מתעדים לכל אחד בנפרד.</div>`:''}
+</ol><div style="margin:12px 0 4px;padding:10px 12px;border:2px solid #e8590c;border-radius:10px;background:#fff4e6;font-size:19px;font-weight:800;line-height:1.5">⭐ חובה: ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד".</div>
 </details>`}
 function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};
   if(pair){
@@ -1432,7 +1468,7 @@ function vGroup(){
   const back=`<div><button class="btn ghost sm" data-act="gBack" data-coach-id="${esc(coachId||'')}">→ המתאמנים של ${esc(coachName(coachId))}</button></div>`;
   const PR=isPairKey(G.name);
   const head=`${back}<div class="spread"><h1>👥 ${esc(gTitle(G.name))}</h1></div>
-   <div class="row gmembers">${ms.map(c=>`<button class="chip" data-open="${c.id}">${esc(c.name)}</button>`).join('')||'<span class="muted">אין משתתפים פעילים בקבוצה</span>'}</div>
+   <div class="row gmembers">${ms.map(c=>`<button class="chip" data-open="${c.id}">${esc(c.name)}</button><button class="btn ghost sm" data-act="renameClient" data-cid="${c.id}" data-write title="עריכת שם">✏️</button>`).join('')||'<span class="muted">אין משתתפים פעילים בקבוצה</span>'}</div>
    ${ms.map(c=>(c.limits?`<div class="safety small"><b>⚠ ${esc(c.name)}:</b><span>${esc(c.limits)}</span></div>`:'')+(c.medHistory||c.conditions?`<div class="safety med small"><b>🩺 ${esc(c.name)}:</b><span>${esc(c.medHistory||c.conditions)}</span></div>`:'')).join('')}`;
   if(!G.loaded) return head+`<div class="empty">טוען…</div>`;
   const planned=G.sessions.filter(s=>s.status==='planned').sort((a,b)=>(a.seq||0)-(b.seq||0));
@@ -1470,7 +1506,7 @@ function vGroup(){
       return `<tr><td class="gname"><b>${esc(c.name)}</b>${PR?` <button class="linkbtn tiny" data-act="gOff" data-ei="${i}" data-cid="${c.id}" title="התרגיל לא בתוכנית שלו/ה" data-write>לא עושה</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>
        <td class="gkg" data-l="${isDumbbell(ex.name)?(ex.dumbSide==='total'?'משקל בסה״כ':'משקל כל יד'):'משקל'}"><input type="text" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
        ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}"><input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
-       <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="למשל: מדרגה נמוכה"></td></tr>`}).join('');
+       <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder="מדרגה נמוכה"></td></tr>`}).join('');
     return `${sep}<div class="gex card ${tg.ss?'ssr':''}" data-gex="${i}">
      <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(dn(ex.name))}" placeholder="שם התרגיל">${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}
       <label>סטים<input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></label>
