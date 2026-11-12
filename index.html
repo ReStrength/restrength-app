@@ -182,6 +182,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:16px;font-variant-numeri
 .sets tr[data-st="in"] .dot{background:var(--info)}
 .sets tr[data-st="low"] .dot{background:var(--warn)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--line);margin-inline-end:4px}
+.sets td.set-res .ki{width:50px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:2px;font-size:13px;color:var(--muted);background:transparent;-moz-appearance:textfield;appearance:textfield;margin-inline-end:4px}
+.sets td.set-res .ki:focus{outline:2px solid var(--accent);outline-offset:-1px;color:var(--ink);background:var(--surface)}
+.sets td.set-res .ki::placeholder{color:var(--line);font-size:12px}
 .sets .addset{display:inline-block!important;width:28px;height:28px;padding:0;border:1.5px solid var(--line);border-radius:50%;background:var(--surface);color:var(--accent);font-weight:800;font-size:18px;line-height:24px;cursor:pointer;vertical-align:middle;margin:0 2px;text-align:center}
 .sets .addset:hover{border-color:var(--accent)}.sets .addset.delset{color:var(--muted)}
 .sets .stp{position:absolute;right:3px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;z-index:1}
