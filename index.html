@@ -259,10 +259,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .weekttl h2{font-family:var(--f-display);font-weight:400;font-size:30px}
 .sheet td.notes textarea{border:0;border-radius:0;background:transparent;width:100%;min-height:54px;resize:vertical;padding:6px 8px;font-size:15px;line-height:1.35;color:var(--ink)}
 .sheet td.notes textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
-.sheet td.res{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px!important}
-.sheet td.res .ki{width:46px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:2px 2px;font-size:13px;color:var(--muted);background:transparent;-moz-appearance:textfield;appearance:textfield}
-.sheet td.res .ki:focus{outline:2px solid var(--accent);outline-offset:-1px;color:var(--ink);background:var(--surface)}
-.sheet td.res .ki::placeholder{color:var(--line);font-size:12px}
+.sheet td.res .ki{display:none}
 .sheet tr.gsep td{background:var(--surface-2);color:var(--accent-text);font-weight:700;font-size:15px;text-align:start;padding:7px 14px;border-top:4px solid var(--band);border-left:0;border-right:0}
 .sheet thead + tbody tr.gsep:first-child td{border-top:0}
 .warmup textarea{min-height:56px;font-size:16px}.sheet td.notes textarea,.ptab td.pnotes textarea,label.warmup textarea,textarea[data-introdoc]{overflow:hidden}
@@ -295,9 +292,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .addnote{margin:8px 0}
 .cm .nflag{color:#a07800;font-weight:700}
 .stp{display:flex;justify-content:space-between;gap:4px;padding:3px 3px 0}
-.sheet td.res{position:relative}.sheet td.res input.si{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:4px 0;box-sizing:border-box;padding-right:6px!important}
-.sheet td.res .stp{opacity:0;pointer-events:none;transition:opacity .15s}.sheet td.res:hover .stp,.sheet td.res:focus-within .stp{opacity:1;pointer-events:auto}
-.sheet td.res .ki{display:none}.addset{position:absolute;top:-6px;left:-6px;width:30px;height:30px;padding:0;border:1.5px solid var(--line);border-radius:50%;background:var(--surface);color:var(--accent);font-weight:800;font-size:20px;line-height:26px;cursor:pointer;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.12)}.addset:hover{border-color:var(--accent)}.addset.delset{left:26px;color:var(--muted)}
+.sheet td.res{position:relative}.sheet td.res input.si{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:4px 0;box-sizing:border-box}.addset{position:absolute;top:-6px;left:-6px;width:30px;height:30px;padding:0;border:1.5px solid var(--line);border-radius:50%;background:var(--surface);color:var(--accent);font-weight:800;font-size:20px;line-height:26px;cursor:pointer;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.12)}.addset:hover{border-color:var(--accent)}.addset.delset{left:26px;color:var(--muted)}
 td.res input.si{-moz-appearance:textfield;padding-right:24px!important}td.res input.si::-webkit-inner-spin-button,td.res input.si::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .stp{position:absolute;right:3px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;z-index:1}.stp button{width:24px;height:22px;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--muted);font-size:12px;line-height:20px;cursor:pointer}.stp button:hover{color:var(--accent);border-color:var(--accent)}.stp button:active{background:var(--accent);color:#fff}
 .stp button{flex:1;min-height:30px;font-size:19px;font-weight:700;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);cursor:pointer;line-height:1}
@@ -493,7 +488,6 @@ td.res input.si{-moz-appearance:textfield;padding-right:24px!important}td.res in
  .gplan .gacts{margin-inline-start:0}
  .stp{display:flex!important;justify-content:space-between;gap:4px;padding:4px}
  .stp button{flex:1;min-height:40px;font-size:22px;font-weight:700;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
- .sheet td.res .stp{opacity:0!important;pointer-events:none!important}.sheet td.res:focus-within .stp{opacity:1!important;pointer-events:auto!important}
  /* profile + cards on mobile */
  .form-grid{grid-template-columns:1fr!important}
  .grid2{grid-template-columns:1fr!important}
