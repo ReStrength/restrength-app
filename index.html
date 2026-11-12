@@ -142,24 +142,54 @@ table.tbl{width:100%;border-collapse:collapse;font-size:16px;font-variant-numeri
 /* session editor */
 .sess-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .labels{display:flex;gap:6px;flex-wrap:wrap}
+.exercises-list{display:flex;flex-direction:column;gap:10px}
 .ex{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.ex-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ex-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ex-top .nmwrap{flex:1 1 180px;min-width:120px}
+.ex-top .nmwrap .nmview{font-weight:700;font-size:15px;cursor:text}
+.ex-top .nmwrap input{width:100%;font-weight:700;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface)}
+.ex-top .f.sm{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}
+.ex-top .f.sm input{width:56px;text-align:center;font-size:16px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 4px;background:var(--surface)}
+.ex-top .rngc{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}
+.ex-top .rngc::before{content:'חזרות'}
+.ex-top .rng{display:flex;align-items:center;color:var(--muted);direction:ltr}
+.ex-top .rng input{width:44px;text-align:center;font-size:16px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 2px;background:var(--surface)}
+.ex-top .ex-kg{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}
+.ex-top .ex-kg::before{content:'משקל'}
+.ex-top .ex-kg input,.ex-top .ex-kg select{width:90px;font-size:15px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 6px;background:var(--surface);text-align:center}
+.ex-top .ex-tempo{flex:1 1 120px;min-width:80px;max-width:240px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;resize:vertical;background:var(--surface)}
+.ex-top .acts{display:flex;gap:2px;align-items:center;margin-inline-start:auto;flex-shrink:0}
+.ex-hints{padding:4px 14px 2px;font-size:13px}
+.ex-hints .prevline{font-size:14px;color:var(--muted);padding:2px 0;white-space:nowrap}
 .ex-num{font-family:var(--f-display);font-size:20px;color:var(--accent-text);width:26px;text-align:center}
 .ex-name{flex:1 1 220px;font-weight:700;font-size:15px}
-.ex-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px}
-@media (max-width:820px){.ex-body{grid-template-columns:1fr}}
+.ex-body{padding:10px 14px}
 .targets{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .targets label.f{width:96px}
 .targets .range{display:flex;gap:4px;align-items:center}
 .targets .range input{width:52px}
 .sets{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .sets th{font-size:12px;color:var(--muted);font-weight:600;text-align:start;padding:4px 6px}
-.sets td{padding:3px 6px}
+.sets td{padding:4px 8px;vertical-align:middle}
+.sets td:first-child{color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap;width:50px}
+.sets td.set-res{position:relative}
+.sets input.si{width:100%;max-width:110px;font-size:18px;font-weight:700;text-align:center;padding:7px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);-moz-appearance:textfield}
+.sets input.si::-webkit-inner-spin-button,.sets input.si::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.sets input.si[data-st="top"]{background:var(--up-soft);color:var(--up)}
+.sets input.si[data-st="low"]{background:var(--warn-soft);color:var(--warn)}
 .sets input{width:100%;max-width:110px;font-size:16px;font-weight:600;text-align:center;padding:7px 6px}
 .sets tr[data-st="top"] .dot{background:var(--up)}
 .sets tr[data-st="in"] .dot{background:var(--info)}
 .sets tr[data-st="low"] .dot{background:var(--warn)}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--line);margin-inline-end:4px}
+.sets .addset{display:inline-block!important;width:28px;height:28px;padding:0;border:1.5px solid var(--line);border-radius:50%;background:var(--surface);color:var(--accent);font-weight:800;font-size:18px;line-height:24px;cursor:pointer;vertical-align:middle;margin:0 2px;text-align:center}
+.sets .addset:hover{border-color:var(--accent)}.sets .addset.delset{color:var(--muted)}
+.sets .stp{position:absolute;right:3px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;z-index:1}
+.ex .swaprow{padding:8px 14px;background:var(--surface-2);text-align:start;font-size:15px}
+.ex .swaprow .chip{cursor:pointer;margin:2px}
+.ex .painrow{padding:10px 14px;background:#fff6f6;text-align:start}
+.ex .progrow{padding:4px 14px 10px;background:var(--surface)}
+.gsep-card{font-weight:700;color:var(--accent-text);padding:10px 14px;margin-top:6px;display:flex;align-items:center;gap:10px}
 .prev{font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:8px 10px;font-variant-numeric:tabular-nums}
 .prev b{color:var(--ink);font-weight:600}
 .sugg{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:8px 10px;border-radius:8px}
@@ -193,7 +223,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:16px;font-variant-numeri
 .ss-head{font-weight:700;color:var(--accent-text);padding:2px 6px}
 .pairgrid{display:grid;grid-template-columns:1fr;gap:36px;align-items:start}
 .pairgrid > section{min-width:0}
-.pairgrid .ex-body{grid-template-columns:1fr}
+.pairgrid .ex-body{padding:8px 10px}
 .pairgrid .sess-foot{position:static;background:transparent}
 section[data-pane]{display:flex;flex-direction:column;gap:14px}
 .pane-head{display:flex;flex-direction:column;gap:8px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
@@ -940,7 +970,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   const dir=Number(b.dataset.step);let v=num(i.value);if(v==null){const row=i.closest('[data-ex]');let ex=null;try{if(i.dataset.ei!=null)ex=S.G.edit.doc.exercises[Number(i.dataset.ei)];else{const c=ctxOf(i);ex=c.edit.doc.exercises[Number(row.dataset.ex)]}}catch(_){}
     v=dir>0?(num(ex&&ex.repMax)??num(ex&&ex.repMin)??8):(num(ex&&ex.repMin)??8)}else v=Math.max(0,v+dir);
   i.value=v;i._step=true;i.dispatchEvent(new Event('input',{bubbles:true}));i._step=false},true);
-function siNext(t){const scope=t.closest('[data-pane]')||t.closest('table')||document.getElementById('main');const all=[...scope.querySelectorAll('input.si')];
+function siNext(t){const scope=t.closest('[data-pane]')||t.closest('.exercises-list')||t.closest('table')||document.getElementById('main');const all=[...scope.querySelectorAll('input.si')];
   const tc=new Map(),cids=[];const exsOf=x=>{if(x.dataset.ei!=null)return (S.G&&S.G.edit&&S.G.edit.doc.exercises)||[];const c=ctxOf(x);return c&&c.edit?c.edit.doc.exercises||[]:[]};
   const key=x=>{const row=x.closest('[data-ex]');const ei=Number(x.dataset.ei!=null?x.dataset.ei:row?row.dataset.ex:0);const si=Number(x.dataset.si!=null?x.dataset.si:x.dataset.set)||0;
     const exs=exsOf(x);let tg=tc.get(exs);if(!tg){try{tg=groupTags(exs)}catch(e){tg=[]}tc.set(exs,tg)}const n=Number((tg[ei]||{}).n);const cid=x.dataset.cid||'';if(!cids.includes(cid))cids.push(cid);
@@ -952,7 +982,7 @@ function adjRange(ctx,ex,t){if(!ex||unitOf(ex)==='sec')return;
   const r=(ex.sets||[]).map(x=>num(x.reps)).filter(x=>x!=null&&x>0);let mn=ex.rMin0,mx=ex.rMax0;
   if(r.length){const hi=Math.max(...r),lo=Math.min(...r);if(mn!=null)mn=Math.min(mn,lo);if(mx!=null)mx=Math.max(mx,hi)}
   if(mn==null&&mx==null)return; if(mn===num(ex.repMin)&&mx===num(ex.repMax))return;
-  if(mn!=null)ex.repMin=mn; if(mx!=null)ex.repMax=mx;saveEdit(ctx,0);const row=t&&t.closest('tr[data-ex]');
+  if(mn!=null)ex.repMin=mn; if(mx!=null)ex.repMax=mx;saveEdit(ctx,0);const row=t&&t.closest('[data-ex]');
   if(row){const a=row.querySelector('[data-f="repMin"]'),b=row.querySelector('[data-f="repMax"]');if(a)a.value=ex.repMin;if(b)b.value=num(ex.repMax)!==num(ex.repMin)?ex.repMax:'';}
   if(t){const st=ex.sets||[];(row||document).querySelectorAll('input.si[data-set]').forEach(i=>{const s=st[Number(i.dataset.set)];if(s)i.dataset.st=setState(ex,s)})}
   toast(`טווח החזרות עודכן ל־${ex.repMin}–${ex.repMax} לפי מה שבוצע`)}
@@ -1860,30 +1890,39 @@ const ARR={up:'↑',reps:'↗',same:'→',down:'↓',stall:'≈',flag:'!'};
 function prevReps(ctx,ex){const h=exHistory(ctx,ex.name).filter(x=>x.sid!==(ctx.edit&&ctx.edit.id));if(!h.length)return null;return (h[h.length-1].ex.sets||[]).map(s=>num(s.reps)).filter(v=>v!=null)}
 function qfillBtn(ctx,ex,i){return '';const pr=prevReps(ctx,ex);if(pr&&pr.length)return `<button type="button" class="qfill" data-qfill="${i}" data-src="prev" data-write>↺ כמו בפעם הקודמת (${ltr(pr.join(', '))})</button>`;
   const r=num(ex.repMax)??num(ex.repMin);return r!=null?`<button type="button" class="qfill" data-qfill="${i}" data-src="plan" data-write>✓ כל הסטים: ${r}</button>`:''}
-function doQfill(btn){const row=btn.closest('tr[data-ex]');const ctx=ctxOf(btn);if(!row||!ctx||!ctx.edit)return;const ex=ctx.edit.doc.exercises[Number(row.dataset.ex)];if(!ex)return;
+function doQfill(btn){const row=btn.closest('[data-ex]');const ctx=ctxOf(btn);if(!row||!ctx||!ctx.edit)return;const ex=ctx.edit.doc.exercises[Number(row.dataset.ex)];if(!ex)return;
   const pr=btn.dataset.src==='prev'?prevReps(ctx,ex):null,fb=num(ex.repMax)??num(ex.repMin);
   row.querySelectorAll('input.si').forEach((inp,j)=>{if(inp.value!==''||inp.disabled)return;const v=pr?(pr[j]??pr[pr.length-1]):fb;if(v==null)return;inp.value=String(v);inp.dispatchEvent(new Event('input',{bubbles:true}))});
   btn.remove()}
 function progTable(ctx,doc){
   const exs=doc.exercises||[]; const tags=groupTags(exs);
-  const nSets=doc.intro?0:Math.min(6,Math.max(2,...exs.map(e=>Number(e.targetSets)||0)));
   const showSugg=doc.status==='planned';
-  const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th>${nSets?`<th colspan="${nSets}" class="grp-res">תוצאות</th>`:''}<th></th></tr>
-   <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
-    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
+    const sg=showSugg&&ex.base&&ex.name?`<div class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}</div></div>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
-    const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
-    return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
-     <td class="name"><span class="nmwrap"><span class="nmview">${esc(dn(ex.name))||'<span class="muted">שם התרגיל</span>'}</span><input list="lib" data-f="name" value="${esc(dn(ex.name))}" placeholder="שם התרגיל"></span>${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!doc.intro&&doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
-     <td class="narrow" data-l="סטים"><input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></td>
-     <td class="rngc" data-l="חזרות"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום" data-autojump="repMax"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</td>
-     <td class="kg" data-l="${isSmithPush(ex.name)?'גובה הגבהה בסמית':isDumbbell(ex.name)?(ex.dumbSide==='total'?'משקל בסה״כ':'משקל כל יד'):ex.name==='סקוואט'?'טמפו / טווח תנועה':'משקל עבודה (בלי המוט)'}">${isSmithPush(ex.name)?`<select data-f="height" class="hsel" aria-label="גובה הגבהה בסמית">${(ex.height==='intro'?[7,6,5]:[7,6,5,4,3,2,1]).map(h=>`<option value="${h}"${(ex.height==='intro'?7:Number(ex.height)||7)===h?' selected':''}>גובה ${h}</option>`).join('')}</select><div class="muted small" style="font-size:12px;white-space:nowrap">7 קל ← ${ex.height==='intro'?5:1} קשה</div>`:`<input type="text" inputmode="decimal" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${ex.name==='סקוואט'?'טמפו/טווח תנועה':sec?'—':'משקל גוף'}" aria-label="${ex.name==='סקוואט'?'טמפו/טווח תנועה':'משקל עבודה בק׳׳ג'}">${isDumbbell(ex.name)?`<div class="dumbtog"><button type="button" class="dumbbtn${(ex.dumbSide||'each')==='each'?' on':''}" data-act="dumbSide" data-v="each" data-i="${i}" data-write>כל יד</button><button type="button" class="dumbbtn${ex.dumbSide==='total'?' on':''}" data-act="dumbSide" data-v="total" data-i="${i}" data-write>בסה״כ</button></div>`:''}`}</td>
-     <td class="notes"><textarea data-f="tempo" data-hint="1" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, ציוד'}">${esc(ex.tempo)}</textarea></td>
-     ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];const hasKg=!sec&&unitOf(ex)==='kg'&&ex.name!=='סקוואט';const kgPH=hasKg?(num(ex.targetKg)!=null?String(ex.targetKg):''):'';return s?`<td class="res" data-l="סט ${j+1}">${hasKg?`<input class="ki" type="text" inputmode="decimal" data-f="kg" data-set="${j}" value="${esc(num(s.kg)!=null?s.kg:'')}" placeholder="${esc(kgPH)}" aria-label="משקל סט ${j+1}" title="משקל (ריק = כמו יעד)">`:''}<input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===(ex.sets||[]).length-1?`${(ex.sets||[]).length<6?`<button type="button" class="addset" data-act="setAdd" title="הוספת סט לתרגיל הזה" aria-label="הוספת סט" data-write>+</button>`:''}${(ex.sets||[]).length>1?`<button type="button" class="addset delset" data-act="setDel" title="הורדת הסט האחרון" aria-label="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>'}).join('')}
-     <td class="acts"><button class="btn ghost sm${num(ex.pain)||S.painEx===ex.id?' painon':''}" data-act="painOpen" data-i="${i}" data-tip="כאב" aria-label="כאב">🤕${num(ex.pain)?' '+ex.pain:''}</button><button class="btn ghost sm${num(ex.rpe)||S.effEx===ex.id?' effon':''}" data-act="effOpen" data-i="${i}" data-tip="${num(ex.rpe)?'מאמץ: '+effName(ex.rpe):'מאמץ'}" aria-label="מאמץ">💪${num(ex.rpe)?' '+effName(ex.rpe):''}</button><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" data-tip="תרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄</button><span class="mvcol"><button class="btn ghost sm" data-act="exUp" data-tip="למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" data-tip="למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="exDel" data-tip="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${S.painEx!=null&&S.painEx===ex.id?painRow(ex,i,nSets):''}${S.effEx!=null&&S.effEx===ex.id?effRow(ex,i,nSets):''}${S.cmEx!=null&&S.cmEx===ex.id?cmRow(ctx,ex,i,nSets):''}${sg}`}).join('');
-  return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
+    const sep=tg.first&&(tg.ss||mixed)?`<div class="gsep-card"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</div>`:'';
+    const hints=[ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):'',barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:'',!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:'',!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:'',prev?`<div class="prevline">${esc(prev)}</div>`:'',cueHtml(ex.name)].filter(Boolean).join('');
+    const sList=ex.sets||[];
+    const hasKg=!sec&&unitOf(ex)==='kg'&&ex.name!=='סקוואט';const kgPH=hasKg?(num(ex.targetKg)!=null?String(ex.targetKg):''):'';
+    const setsHtml=!doc.intro&&sList.length?`<table class="sets"><tbody>${sList.map((s,j)=>`<tr data-st="${setState(ex,s)}"><td><span class="dot"></span>סט ${j+1}</td><td class="set-res">${hasKg?`<input class="ki" type="text" inputmode="decimal" data-f="kg" data-set="${j}" value="${esc(num(s.kg)!=null?s.kg:'')}" placeholder="${esc(kgPH)}" aria-label="משקל סט ${j+1}" title="משקל (ריק = כמו יעד)">`:''}<input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===sList.length-1?`${sList.length<6?`<button type="button" class="addset" data-act="setAdd" title="הוספת סט לתרגיל הזה" aria-label="הוספת סט" data-write>+</button>`:''}${sList.length>1?`<button type="button" class="addset delset" data-act="setDel" title="הורדת הסט האחרון" aria-label="הורדת סט" data-write>−</button>`:''}`:''}
+      </td></tr>`).join('')}</tbody></table>`:'';
+    return `${sep}<div class="ex ${tg.ss?'ssr':''} ${tg.first?'gfirst':''}" data-ex="${i}">
+     <div class="ex-top">
+       <span class="nmwrap"><span class="nmview">${esc(dn(ex.name))||'<span class="muted">שם התרגיל</span>'}</span><input list="lib" data-f="name" value="${esc(dn(ex.name))}" placeholder="שם התרגיל"></span>
+       <label class="f sm">סטים<input type="number" min="1" max="6" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"></label>
+       <div class="rngc"><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום" data-autojump="repMax"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}" aria-label="חזרות מקסימום"></div>${sec?'<div class="unitnote">שניות</div>':''}</div>
+       <div class="ex-kg">${isSmithPush(ex.name)?`<select data-f="height" class="hsel" aria-label="גובה הגבהה בסמית">${(ex.height==='intro'?[7,6,5]:[7,6,5,4,3,2,1]).map(h=>`<option value="${h}"${(ex.height==='intro'?7:Number(ex.height)||7)===h?' selected':''}>גובה ${h}</option>`).join('')}</select><div class="muted small" style="font-size:12px;white-space:nowrap">7 קל ← ${ex.height==='intro'?5:1} קשה</div>`:`<input type="text" inputmode="decimal" data-f="targetKg" value="${esc(ex.targetKg)}" placeholder="${ex.name==='סקוואט'?'טמפו/טווח תנועה':sec?'—':'משקל גוף'}" aria-label="${ex.name==='סקוואט'?'טמפו/טווח תנועה':'משקל עבודה בק׳׳ג'}">${isDumbbell(ex.name)?`<div class="dumbtog"><button type="button" class="dumbbtn${(ex.dumbSide||'each')==='each'?' on':''}" data-act="dumbSide" data-v="each" data-i="${i}" data-write>כל יד</button><button type="button" class="dumbbtn${ex.dumbSide==='total'?' on':''}" data-act="dumbSide" data-v="total" data-i="${i}" data-write>בסה״כ</button></div>`:''}`}</div>
+       <textarea class="ex-tempo" data-f="tempo" data-hint="1" rows="2" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, ציוד'}">${esc(ex.tempo)}</textarea>
+       <div class="acts">${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ סופר סט</button>`:''}
+         <button class="btn ghost sm${num(ex.pain)||S.painEx===ex.id?' painon':''}" data-act="painOpen" data-i="${i}" data-tip="כאב" aria-label="כאב">🤕${num(ex.pain)?' '+ex.pain:''}</button><button class="btn ghost sm${num(ex.rpe)||S.effEx===ex.id?' effon':''}" data-act="effOpen" data-i="${i}" data-tip="${num(ex.rpe)?'מאמץ: '+effName(ex.rpe):'מאמץ'}" aria-label="מאמץ">💪${num(ex.rpe)?' '+effName(ex.rpe):''}</button><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" data-tip="תרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄</button><span class="mvcol"><button class="btn ghost sm" data-act="exUp" data-tip="למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" data-tip="למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="exDel" data-tip="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button>
+       </div>
+     </div>
+     ${hints?`<div class="ex-hints">${hints}</div>`:''}
+     ${setsHtml?`<div class="ex-body">${setsHtml}${!doc.intro&&doc.status!=='done'&&ex.name&&sList.some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}</div>`:''}
+     ${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i):''}${S.painEx!=null&&S.painEx===ex.id?painRow(ex,i):''}${S.effEx!=null&&S.effEx===ex.id?effRow(ex,i):''}${S.cmEx!=null&&S.cmEx===ex.id?cmRow(ctx,ex,i):''}${sg}</div>`;
+  }).join('');
+  return `<div class="exercises-list">${rows}</div>`;
 }
 function pastWeeks(ctx,c,label,curId,limit,title){
   let done=doneSessions(ctx).filter(d=>String(d.label)===String(label)&&d.id!==curId); if(limit) done=done.slice(0,limit);
@@ -2126,19 +2165,19 @@ function gcalCard(k){if(!S.canWrite||k.gcal||S.gcalLater)return '';const em=esc(
 /* תמונה / סרטון למאמן לתרגיל מסוים (למשל זווית הספסל) – נשמר מוצפן, רק לצוות */
 function cmList(c,n){return ((c&&c.coachMedia)||{})[n]||[]}
 function cmBtn(ctx,ex,i){const c=ctx&&clientById(ctx.clientId);if(!c||!ex.name)return '';const L=cmList(c,ex.name);return `<button type="button" class="linkbtn tiny" data-act="cmOpen" data-i="${i}" title="תמונה או סרטון למאמן: איך הושבנו, זווית, גובה">📷 ${L.length?`תמונות למאמן (${L.length})`:'תמונה/סרטון למאמן'}</button>`}
-function cmRow(ctx,ex,i,nSets){const c=clientById(ctx.clientId);const L=cmList(c,ex.name);
-  return `<tr class="painrow cmrow" data-ex="${i}"><td colspan="${nSets+6}"><div class="ptip"><b>📷 תמונות וסרטונים למאמן – ${esc(dn(ex.name))}</b> <span class="muted small">(רק הצוות רואה. למשל: זווית הספסל, גובה, איך הושבנו)</span></div>
+function cmRow(ctx,ex,i){const c=clientById(ctx.clientId);const L=cmList(c,ex.name);
+  return `<div class="painrow cmrow" data-ex="${i}"><div class="ptip"><b>📷 תמונות וסרטונים למאמן – ${esc(dn(ex.name))}</b> <span class="muted small">(רק הצוות רואה. למשל: זווית הספסל, גובה, איך הושבנו)</span></div>
   <div class="cmgrid">${L.map((m,j)=>`<div class="cmitem"><div class="cmbox" id="cmb_${esc(m.k)}"><button class="btn sm" data-act="cmShow" data-i="${i}" data-j="${j}">${/^video/.test(m.t)?'▶ סרטון':'🖼 תמונה'}</button></div>
     <input class="cmcap" data-cmcap="${j}" data-i="${i}" value="${esc(m.cap||'')}" placeholder="מה רואים? (למשל: ספסל בשיפוע 3)"><div class="small muted">${m.by?esc(m.by)+' · ':''}${m.at?new Date(m.at).toLocaleDateString('he-IL'):''} <button class="linkbtn tiny" data-act="cmDel" data-i="${i}" data-j="${j}">מחיקה</button></div></div>`).join('')}</div>
-  <div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="cmAdd" data-i="${i}">+ צילום / העלאה</button><button class="btn ghost sm" data-act="cmOpen" data-i="${i}">סגירה</button></div></td></tr>`}
+  <div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="cmAdd" data-i="${i}">+ צילום / העלאה</button><button class="btn ghost sm" data-act="cmOpen" data-i="${i}">סגירה</button></div></div>`}
 const EFF=[['קל','1–4',3],['בינוני','5–6',5],['קשה','7–10',8]];
 function effName(v){v=num(v);return v==null?'':v<=4?'קל':v<=6?'בינוני':'קשה'}
-function effRow(ex,i,nSets){return `<tr class="painrow effrow" data-ex="${i}"><td colspan="${nSets+6}"><div class="ptip"><b>💪 איך היה המאמץ ב${esc(ex.name||'תרגיל')}?</b> <span class="muted small">(לא חובה. אנחנו עובדים רחוק מכשל, 3 חזרות ברזרבה)</span></div>
-  <div class="row" style="margin-top:8px">${EFF.map(([n,r,v])=>`<button class="btn sm${effName(ex.rpe)===n?' primary':''}" data-act="effSet" data-i="${i}" data-v="${v}">${n} <span class="small" dir="ltr">(${r})</span></button>`).join('')}${num(ex.rpe)?`<button class="btn ghost sm" data-act="effSet" data-i="${i}" data-v="">ניקוי</button>`:''}<button class="btn ghost sm" data-act="effOpen" data-i="${i}">סגירה</button></div></td></tr>`}
-function painRow(ex,i,nSets){return `<tr class="painrow" data-ex="${i}"><td colspan="${nSets+6}"><div class="ptip"><b>🤕 כאב ב${esc(dn(ex.name)||'תרגיל')}? קודם כל לנסות לשנות מנח, בלי להחליף תרגיל:</b><br>${painTip(ex.name)}</div>
-  <label class="plvl">רמת כאב (לא חובה) <input type="number" inputmode="numeric" dir="ltr" min="0" max="10" placeholder="0–10" data-f="pain" value="${esc(ex.pain)}" aria-label="רמת כאב 0–10"></label> <button class="btn ghost sm" data-act="painOpen" data-i="${i}">סגירה</button></td></tr>`}
-function swapRow(ex,i,nSets){const subs=subsFor(ex.name);
-  return `<tr class="swaprow" data-ex="${i}"><td colspan="${nSets+6}"><b>תרגילים חלופיים ל${esc(dn(ex.name))}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></td></tr>`}
+function effRow(ex,i){return `<div class="painrow effrow" data-ex="${i}"><div class="ptip"><b>💪 איך היה המאמץ ב${esc(ex.name||'תרגיל')}?</b> <span class="muted small">(לא חובה. אנחנו עובדים רחוק מכשל, 3 חזרות ברזרבה)</span></div>
+  <div class="row" style="margin-top:8px">${EFF.map(([n,r,v])=>`<button class="btn sm${effName(ex.rpe)===n?' primary':''}" data-act="effSet" data-i="${i}" data-v="${v}">${n} <span class="small" dir="ltr">(${r})</span></button>`).join('')}${num(ex.rpe)?`<button class="btn ghost sm" data-act="effSet" data-i="${i}" data-v="">ניקוי</button>`:''}<button class="btn ghost sm" data-act="effOpen" data-i="${i}">סגירה</button></div></div>`}
+function painRow(ex,i){return `<div class="painrow" data-ex="${i}"><div class="ptip"><b>🤕 כאב ב${esc(dn(ex.name)||'תרגיל')}? קודם כל לנסות לשנות מנח, בלי להחליף תרגיל:</b><br>${painTip(ex.name)}</div>
+  <label class="plvl">רמת כאב (לא חובה) <input type="number" inputmode="numeric" dir="ltr" min="0" max="10" placeholder="0–10" data-f="pain" value="${esc(ex.pain)}" aria-label="רמת כאב 0–10"></label> <button class="btn ghost sm" data-act="painOpen" data-i="${i}">סגירה</button></div>`}
+function swapRow(ex,i){const subs=subsFor(ex.name);
+  return `<div class="swaprow" data-ex="${i}"><b>תרגילים חלופיים ל${esc(dn(ex.name))}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></div>`}
 
 /* ----- progress report ----- */
 function vReport(c){
