@@ -1752,11 +1752,21 @@ async function abOpen(k,e){const raw=await crypto.subtle.decrypt({name:'RSA-OAEP
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:abB64d(e.iv)},ak,abB64d(e.ct));return JSON.parse(new TextDecoder().decode(pt))}
 async function abLoad(force){
   if(!window.FB||!S.db||AB.busy)return;if(!force&&Date.now()-AB.t<120000)return;AB.busy=true;AB.t=Date.now();
-  try{const k=await abKey();const r=await fetch(ABURL+'studio/feed',{cache:'no-store'});const j=await r.json();
-    const L=await Promise.all(Object.values(j.appts||{}).map(e=>abOpen(k,e).catch(()=>null)));AB.list=L.filter(Boolean);
-    AB.sched=[];if(j.sched){try{const x=await abOpen(k,j.sched);AB.sched=Array.isArray(x)?x:[]}catch(e){}}
-    AB.book=null;if(j.book){try{const tx=await abOpenT(k,j.book);AB.book=tx.split('\u00b6').map(r=>r.split('\u00a6')).filter(a=>a.length>=5&&a[0]).map(a=>({d:a[0],t:a[1],n:a[2],c:a[3],w:a[4],g:a[5]||''}));AB.bookT=j.book.t}catch(e){}}
-    AB.ok=true;if(AB.err!=='keyclash')AB.err=''}catch(e){AB.err=String(e&&e.message||e)}
+  try{
+    /* Try Firestore first (clients/arbox_0 \u2014 written by Make without auth) */
+    const snap=await S.db.doc('clients/arbox_0').get();
+    if(snap.exists){const fd=snap.data();
+      AB.book=null;if(fd.book){try{const tx=String(fd.book);AB.book=tx.split('\u00b6').map(r=>r.split('\u00a6')).filter(a=>a.length>=5&&a[0]).map(a=>({d:a[0],t:a[1],n:a[2],c:a[3],w:a[4],g:a[5]||''}));AB.bookT=fd.t||0}catch(e){}}
+      AB.list=[];AB.sched=[];AB.ok=true;AB.err='';
+    } else {
+      /* Fallback: try encrypted PHP feed (legacy) */
+      try{const k=await abKey();const r=await fetch(ABURL+'studio/feed',{cache:'no-store'});const j=await r.json();
+        const L=await Promise.all(Object.values(j.appts||{}).map(e=>abOpen(k,e).catch(()=>null)));AB.list=L.filter(Boolean);
+        AB.sched=[];if(j.sched){try{const x=await abOpen(k,j.sched);AB.sched=Array.isArray(x)?x:[]}catch(e){}}
+        AB.book=null;if(j.book){try{const tx=await abOpenT(k,j.book);AB.book=tx.split('\u00b6').map(r=>r.split('\u00a6')).filter(a=>a.length>=5&&a[0]).map(a=>({d:a[0],t:a[1],n:a[2],c:a[3],w:a[4],g:a[5]||''}));AB.bookT=j.book.t}catch(e){}}
+        AB.ok=true;if(AB.err!=='keyclash')AB.err=''}catch(e2){AB.err=String(e2&&e2.message||e2)}
+    }
+  }catch(e){AB.err=String(e&&e.message||e)}
   AB.busy=false;scheduleRender()}
 setInterval(()=>{if(document.visibilityState==='visible')abLoad()},180000);
 function abDate(off){const d=new Date();d.setDate(d.getDate()+off);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
