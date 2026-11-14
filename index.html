@@ -1062,7 +1062,7 @@ function isUnilateral(name){return /מכרע|לאנצ|לאנג|בולגרי|בר
 function isIntroSquat(n){n=String(n||'').trim();return n==='סקוואט'||n==='טמפו בוקס סקוואט'}
 function isShPress(n){return String(n||'').trim()==='לחיצת כתפיים בישיבה בדאמבלים'}
 function tOnly(n,intro){return !!intro&&(isHinge(n)||isShPress(n))}
-function sideable(n){n=String(n||'');return isDumbbell(n)||isHinge(n)||/קטלבל|פארמר|קארי|הליכה עם|כבל|פולי|קרוס אובר|קרוסאובר/.test(n)}
+function sideable(n){n=String(n||'');const t=n+' '+dn(n);if(/ביד אחת|יד אחת|פאלוף/.test(t))return false;return isDumbbell(t)||isHinge(n)||/קטלבל|פארמר|קארי|הליכה עם|כבל|פולי|קרוס אובר|קרוסאובר/.test(t)}
 function isHinge(n){return /^לימוד הינג/.test(String(n||'').trim())}
 function isSmithPush(n){return /שכיבות ס[מש]יכה/.test(String(n||''))&&/סמית/.test(String(n||''))}
 function isDumbbell(n){return /דא?מבל|דאמבלים|דמבל|דמבלים/.test(String(n||''))}
@@ -3116,7 +3116,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114133000';
+const APP_V='20261114133500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
