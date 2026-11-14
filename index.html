@@ -631,10 +631,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .exsug button{text-align:start;border:0;background:transparent;font:inherit;font-size:17px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--ink)}
 .exsug button:hover,.exsug button:focus{background:var(--surface-2)}
 /* עמודת משקל רחבה יותר */
-.sheet td.kg{width:auto!important;min-width:104px!important}
-.sheet td.kg input{font-size:19px!important;padding:4px 2px!important}
-.ptab td.gkg{min-width:96px!important}
-.ptab td.gkg input{font-size:18px!important;padding:4px 2px!important;min-width:0}
+.sheet td.kg{width:84px!important;min-width:84px!important;max-width:96px}
+.sheet td.kg input{font-size:17px!important;padding:4px 1px!important}
+.ptab td.gkg{width:80px!important;min-width:80px!important;max-width:92px}
+.ptab td.gkg input{font-size:16px!important;padding:4px 1px!important;min-width:0}
 .sheet td.res,.ptab td.res{min-width:54px!important}
 .sheet td.res .ki,.ptab td.res .ki{font-size:14px!important}
 </style>
@@ -2866,6 +2866,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(w.dataset.stepk==='sets'){const el=w.querySelector('input');const mx=Number(el.max)||10;const v=Math.max(1,Math.min(mx,(Number(el.value)||0)+d));if(String(v)===el.value)return;el.value=v;fire(el);setTimeout(()=>{if(S.deferred&&!editorFocused())render()},0);return}
   const lo=w.querySelector('[data-f="repMin"],[data-gf="repMin"]'),hi=w.querySelector('[data-f="repMax"],[data-gf="repMax"]');const a=Number(lo.value);if(!lo.value||(d<0&&a<=1))return;
   lo.value=a+d;fire(lo);if(hi&&hi.value!==''){hi.value=Number(hi.value)+d;fire(hi)}},true);
+/* אחרי שינוי משקל עבודה – לרענן כדי שיופיעו שדות המשקל בכל סט */
+document.addEventListener('change',e=>{const t=e.target;if(!t.matches||!t.matches('[data-f="targetKg"],[data-gm="kg"]'))return;setTimeout(()=>{try{if(typeof editorFocused==='function'&&editorFocused())S.deferred=true;else render()}catch(err){}},400)});
 /* טווח משקל: עד 2.5 ק"ג */
 document.addEventListener('change',e=>{const t=e.target;if(!t.matches||!t.matches('[data-f="targetKg"],[data-gm="kg"]'))return;const m=String(t.value).match(/^\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*$/);if(!m)return;let a=Number(m[1]),b=Number(m[2]);if(b<a)[a,b]=[b,a];
   if(b-a>2.5){b=Math.round((a+2.5)*100)/100;toast('טווח משקל – עד 2.5 ק"ג. עודכן ל-'+a+'-'+b)}const nv=a+'-'+b;if(nv!==t.value.replace(/\s/g,'').replace('–','-')||b-a>2.5){t.value=nv;t.dispatchEvent(new Event('input',{bubbles:true}))}},true);
@@ -3123,7 +3125,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114140500';
+const APP_V='20261114142000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
