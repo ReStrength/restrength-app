@@ -1468,18 +1468,19 @@ function introCard(list){const pair=list.length>1;
   return `<details class="card iscript" open style="border:3px solid #f5b800;background:#fffbea;font-size:20px;line-height:1.75"><summary style="font-size:24px;font-weight:900;cursor:pointer">📋 תזכורת לתסריט מפגש היכרות${pair?' זוגי':''}</summary><ol style="margin:10px 0 0;padding-inline-start:24px">
    <li style="margin-bottom:10px"><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.
     <div style="margin-top:6px;display:grid;gap:4px">
-     <div style="color:#c92a2a;font-weight:700">✗ לא מדברים במונחים רפואיים ובשפה מקצועית</div>
-     <div style="color:#c92a2a;font-weight:700">✗ לא מדברים יותר מדי על עצמנו</div>
-     <div style="color:#c92a2a;font-weight:700">✗ לא מעלים עצימות – נצמדים לתוכנית</div>
+     <div style="display:flex;flex-wrap:wrap;gap:6px 22px;color:#c92a2a;font-weight:700"><span>✗ לא מדברים במונחים רפואיים ובשפה מקצועית</span><span>✗ לא מדברים יותר מדי על עצמנו</span><span>✗ לא מעלים עצימות – נצמדים לתוכנית</span></div>
      <div style="color:#2b8a3e;font-weight:700">✓ חיזוקים: "מצוין, הגוף שלך מגיב טוב"</div>
      <div style="color:#2b8a3e;font-weight:700">✓ חולשה שזיהינו: "מעולה שראינו את זה – אפשר לשפר את זה מהר יחסית"</div>
     </div></li>
-   <li style="margin-bottom:10px"><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים${hasKnown?' (ראו למטה)':' (גיל, ניסיון, מטרה, כאבים)'}, שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ואומרים שהאימון היום צריך להיות יחסית קל עבורם כדי לבנות בהדרגה.${hasKnown?knownBlocks:''}</li>
-   <li style="margin-bottom:10px"><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד למתאמן, ידיים קרובות, שיראה וירגיש שאנחנו איתו.</li>
-   <li style="margin-bottom:10px"><b>עבודת כוח:</b> טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא, שזה מה שאמרת שקשה לך").</li>
-   <li style="margin-bottom:10px"><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ובסוף: "אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
+   <li style="margin-bottom:10px"><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים${hasKnown?' (ראו למטה)':''} (גיל, ניסיון, מטרה, כאבים) בצורה הזו: <span style="color:#2b8a3e;font-weight:800">"הבנתי שאתה בן 67, התאמנת לאחרונה לפני 4 שנים, המטרה שלך להרגיש חזק יותר ביומיום, ויש לך כאבים בגב התחתון. לכן נעבוד בהדרגה ואשמח שתגיד לי אם ומתי אתה מרגיש את הגב, כדי שאדע להתאים לך כל תרגיל."</span>
+    <div style="margin-top:4px"><b>שואלים:</b> <span style="color:#2b8a3e;font-weight:800">"מה היית רוצה לשפר, בגוף או בהרגשה?"</span></div>
+    <div style="margin-top:4px"><b>מסבירים:</b> <span style="color:#2b8a3e;font-weight:800">"האימון היום לא אמור להיות קשה. אצלנו מתחילים קל ומתקדמים בהדרגה – כדי לבנות כוח לאורך זמן ולצאת מכל אימון בהרגשה טובה."</span></div>${hasKnown?knownBlocks:''}</li>
+   <li style="margin-bottom:10px"><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד למתאמן, ידיים קרובות, שיראה וירגיש שאנחנו שומרים עליו.</li>
+   <li style="margin-bottom:10px"><b>עבודת כוח:</b> טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו: <span style="color:#2b8a3e;font-weight:800">"זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא, שזה מה שאמרת שקשה לך"</span>.</li>
+   <li style="margin-bottom:10px"><b>סיום:</b> 3 דקות מתיחות, לשאול <span style="color:#2b8a3e;font-weight:800">"איך הרגשת באימון?"</span>, לאחר מכן לציין <span style="color:#2b8a3e;font-weight:800">"אולי מחר תרגיש את השרירים, זה נורמלי"</span>, ובסוף: <span style="color:#2b8a3e;font-weight:800">"היה לי כיף איתך! אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר עם כל הפרטים להמשך"</span>.</li>
 </ol><div style="margin:14px 0 4px;padding:12px 14px;border:3px solid #e8590c;border-radius:12px;background:#fff4e6;font-size:22px;font-weight:900;line-height:1.5">⭐ המפגש הוא 50 דקות. בסופו ממלאים את "📲 התיעוד לשקד" בתחתית העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד".</div>
 </details>`}
+function balHtml(t){const L=String(t||'').split('\n').filter(l=>/שיווי משקל/.test(l));return L.length?`<div style="margin:6px 0 8px;padding:10px 12px;border:3px solid #1c7ed6;border-radius:12px;background:#e7f5ff;font-size:19px;line-height:1.6"><div style="font-weight:900;font-size:21px;color:#1864ab">⚖️ שיווי משקל – חובה בכל מפגש היכרות</div>${L.map(l=>`<div style="font-weight:700">• ${esc(l)}</div>`).join('')}</div>`:''}
 function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};
   if(pair){
     // זוגי: הערה אחת משותפת — נשמרת על הלקוח הראשון
@@ -1570,7 +1571,7 @@ function vGroup(){
    ${gQuick(d)?`<div class="banner info small"><span>אחרי כל תרגיל לוחצים לכל משתתף <b>קל / בינוני / קשה</b> (או כאב). את המשקל והחזרות לשבוע הבא המערכת מחשבת לבד: <b>קל</b> מוסיף משקל, <b>בינוני</b> מוסיף חזרה ובתקרה (${'12'}, בחד־צדדי 8) מוסיף משקל, <b>קשה פעמיים</b> מוריד. מי שלא סומן לא הגיע.</span></div>`:''}`}
    ${isDone?`<div class="banner up"><span><b>האימון נשמר</b> – התוצאות נכנסו לתיק האישי של כל משתתף.</span></div>`:''}
    ${d.intro&&!isDone?introCard(ms):''}
-   <label class="f warmup">חימום<textarea data-gf="warmup" rows="2" placeholder="${isPairKey(S.G&&S.G.name)?'חימום משותף לזוג':'חימום משותף לקבוצה'}">${esc(d.warmup||'')}</textarea></label>
+   <label class="f warmup">${d.intro?`<span style="font-size:22px;font-weight:900">חימום ושיווי משקל</span>${balHtml(d.warmup)}`:'חימום'}<textarea data-gf="warmup" rows="2" placeholder="${isPairKey(S.G&&S.G.name)?'חימום משותף לזוג':'חימום משותף לקבוצה'}">${esc(d.warmup||'')}</textarea></label>
    ${blocks||'<div class="card empty"><strong>אין תרגילים</strong></div>'}
    <div class="row"><button class="btn" data-act="gAddSS" data-write>+ הוספת סופר סט</button><button class="btn" data-act="gAddEx" data-write>+ תרגיל בודד</button></div>
    ${d.intro?introDocBox(ms,d):`<label class="f">הערות לאימון<textarea data-gf="notes" placeholder="איך היה, מה לבדוק בפעם הבאה">${esc(d.notes||'')}</textarea></label>`}
@@ -1972,7 +1973,7 @@ function paneHtml(ctx,c,pane,pair){
     if(pe.length) painHtml=`<div class="banner bad painbanner"><span><b>⚠ דווח כאב באימון הקודם (${fmt(last.date)}):</b> ${pe.map(e=>`${esc(dn(e.name))} – ${e.pain}/10`).join(' · ')}. לשקול התאמה, טווח תנועה קטן יותר או החלפת תרגיל.</span></div>`;}
   const weekChip=`<div class="weekchip">${(d.programNo||1)>1?`תוכנית ${d.programNo} · `:''}${wk(d)}${isDone?` · בוצע ${fmt(d.date)}`:''}</div>`;
   const introHtml=d.intro&&!isDone?introCard([c]):'';
-  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${d.afterIntro&&!isDone?planBanner:''}${painHtml}${introHtml}<label class="f warmup"><span>חימום <span class="muted small">(נשמר קבוע)</span></span><textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row">${(()=>{const X=d.exercises||[];const L=X[X.length-1];return L&&!L.ss?'':'<button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button>'})()}<button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button></div>
+  return `<section data-pane="${pane}">${ph}${labelsBar}${weekChip}${d.afterIntro&&!isDone?planBanner:''}${painHtml}${introHtml}<label class="f warmup">${d.intro?`<span style="font-size:22px;font-weight:900">חימום ושיווי משקל</span>${balHtml(c.warmup!=null?c.warmup:(d.warmup||''))}`:`<span>חימום <span class="muted small">(נשמר קבוע)</span></span>`}<textarea data-f="client.warmup" rows="2" placeholder="למשל: סיבובי כתפיים, מעברים בסמית', ברכיים לחזה, עקבים לישבן">${esc(c.warmup!=null?c.warmup:(d.warmup||''))}</textarea></label>${list}<div class="row">${(()=>{const X=d.exercises||[];const L=X[X.length-1];return L&&!L.ss?'':'<button class="btn" data-act="addSS" data-write>+ הוספת סופר סט</button>'})()}<button class="btn" data-act="addEx" data-write>+ תרגיל בודד</button></div>
    ${d.intro?introDocBox([c],d):`<label class="f">הערות לאימון<textarea data-f="sess.notes" placeholder="איך הרגיש, אירועים חריגים, מה לבדוק בפעם הבאה">${esc(d.notes)}</textarea></label>`}<div class="plan-next"><button class="btn primary big" data-act="planNext" data-write>${nextPlanned?`למעבר לאימון הבא (${wk(nextPlanned)})`:'לתכנון האימון הבא'}</button></div></section>`;
 }
 function tSession(c){
@@ -2998,7 +2999,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114074500';
+const APP_V='20261114075000';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
