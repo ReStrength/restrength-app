@@ -147,9 +147,9 @@ var PC=(function(){
   function putBlob(k,blob,put,prog){var n=Math.max(1,Math.ceil(blob.size/CH)),i=0;
     function step(){if(i>=n)return Promise.resolve(n);return readAB(blob.slice(i*CH,(i+1)*CH)).then(function(ab){return encB(k,new Uint8Array(ab))}).then(function(ct){return put(i,ct,n)}).then(function(){i++;if(prog)prog(i/n);return step()})}
     return step()}
-  function getBlob(k,n,get,type,prog){var parts=[],i=0;
-    function step(){if(i>=n)return Promise.resolve(new Blob(parts,{type:type||''}));return get(i).then(function(ab){return decB(k,new Uint8Array(ab))}).then(function(pt){parts.push(pt);i++;if(prog)prog(i/n);return step()})}
-    return step()}
+  function getBlob(k,n,get,type,prog){var parts=new Array(n),next=0,done=0;
+    function worker(){if(next>=n)return Promise.resolve();var i=next++;return get(i).then(function(ab){return decB(k,new Uint8Array(ab))}).then(function(pt){parts[i]=pt;done++;if(prog)prog(done/n);return worker()})}
+    var W=[];for(var w=0;w<Math.min(4,n);w++)W.push(worker());return Promise.all(W).then(function(){return new Blob(parts,{type:type||''})})}
   function id(n){return b64u(rnd(n||12)).replace(/[^A-Za-z0-9]/g,'x')}
   function rid(){var a=rnd(10),s='',c='abcdefghijklmnopqrstuvwxyz0123456789';for(var i=0;i<a.length;i++)s+=c[a[i]%36];return s}
   return {b64:b64,unb64:unb64,b64u:b64u,unb64u:unb64u,rnd:rnd,key:key,wOf:wOf,wthOf:wthOf,encB:encB,decB:decB,encJ:encJ,decJ:decJ,putBlob:putBlob,getBlob:getBlob,id:id,rid:rid}
@@ -384,7 +384,7 @@ function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''
   else if(work>0){if(top||(rpUni(x.n)&&mx>=8)||mx>12){var st=work<10?1:2.5;x.kg=String(Math.round((work+st)*2)/2);m='מוסיפים '+st+' ק"ג: '+x.kg+' ק"ג (חוזרים לתחתית הטווח)'}
     else if(miss){x.kg=String(Math.max(0,Math.round(work*0.9*2)/2));m='היה קשה מדי: מורידים ל-'+x.kg+' ק"ג'}
     else{x.kg=String(work);m='אותו משקל ('+work+' ק"ג), לשאוף לחזרה אחת יותר בכל סט';same=true}}
-  else{if(top){if((+x.sets||1)<4){x.sets=(+x.sets||1)+1;m='מוסיפים סט: '+x.sets+' סטים'}else{x.min=+x.min+2;x.max=+x.max+2;m='יעד חזרות חדש: '+x.min+'–'+x.max+', או גרסה קשה יותר'}}else{m='לשאוף לחזרה אחת יותר בכל סט';same=true}}
+  else{if(top){if((+x.sets||1)<4){x.sets=(+x.sets||1)+1;m='מוסיפים סט: '+x.sets+' סטים'}else if(+x.max<15){x.max=Math.min(15,+x.max+2);x.min=Math.min(+x.min+2,x.max-1);m='יעד חזרות חדש: '+x.min+'–'+x.max+', או גרסה קשה יותר'}else{m='הגעת ל-15 חזרות, המקסימום. עכשיו מתקדמים בגרסה קשה יותר או במשקל';same=true}}else{m='לשאוף לחזרה אחת יותר בכל סט';same=true}}
   x.st=same?(x.st||0)+1:0;if(x.st>=3&&work>0)m+=' · תקוע 3 אימונים: לנסות טופ סט (סט כבד אחד ל-6–8 חזרות) ואחריו 2 סטים עם 10% פחות משקל';
   return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
 /* התקדמות בליווי מרחוק (שבועי), לפי הסדר: טמפו ← טווח תנועה ← משקל (קילו אחד) ← חזרות ← לעיתים רחוקות סט נוסף */
@@ -553,11 +553,14 @@ $('pick').addEventListener('change',function(){var f=this.files&&this.files[0];i
   window.PICKEX='';$('mc').onclick=unsheet;
   $('ms').onclick=function(){var note=$('mn').value.trim();sheet('<h3>שולח…</h3><div class="pbar"><i id="up"></i></div><p class="sub center">רגע אחד, לא לסגור את הדף.</p>');var r=PC.rid();
     shrink(f).then(function(blob){return PC.putBlob(K,blob,function(pi,ct){return fetch(BASE+'pa/rm?s='+SID+'&r='+r+'&i='+pi,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/octet-stream','X-RS-W':W},body:ct}).then(function(x){if(!x.ok)throw new Error(x.status)})},function(p){var u=$('up');if(u)u.style.width=Math.round(p*100)+'%'}).then(function(n){return sendRep({kind:'media',r:r,n:n,mt:blob.type||f.type,note:note})})}).then(function(){unsheet();toast('נשלח למאמן ✓ תודה!')},function(){unsheet();toast('לא נשלח. בדקו אינטרנט ונסו שוב.')})}});
-function play(key){var x=key[0]==='s'?sx((RP.w[+key.slice(1).split('_')[0]].ex[+key.split('_')[1]]||{}).n):key[0]==='h'?PLAN.home[+key.slice(1)]:PLAN.next[+key.slice(1).split('_')[0]].ex[+key.split('_')[1]];var box=$('md_'+key);if(!x||!x.m||!box)return;
-  function show(){box.innerHTML=/^video/.test(x.m.t)?'<video controls playsinline autoplay src="'+URLS[key]+'"></video>':'<img src="'+URLS[key]+'" alt="">'}
+function play(key,auto){var x=key[0]==='s'?sx((RP.w[+key.slice(1).split('_')[0]].ex[+key.split('_')[1]]||{}).n):key[0]==='h'?PLAN.home[+key.slice(1)]:PLAN.next[+key.slice(1).split('_')[0]].ex[+key.split('_')[1]];var box=$('md_'+key);if(!x||!x.m||!box)return;
+  function show(){box.innerHTML=/^video/.test(x.m.t)?'<video controls playsinline preload="metadata"'+(auto?'':' autoplay')+' src="'+URLS[key]+'#t=0.1"></video>':'<img src="'+URLS[key]+'" alt="">'}
   if(URLS[key]){show();return}
-  box.innerHTML='<div class="play">טוען…<div class="pbar" style="width:70%"><i id="mp_'+key+'"></i></div></div>';
-  PC.getBlob(K,x.m.n,function(pi){return post('m',{s:SID,k:x.m.k,i:pi})},x.m.t,function(f){var b=$('mp_'+key);if(b)b.style.width=Math.round(f*100)+'%'}).then(function(b){URLS[key]=URL.createObjectURL(b);show()},function(){box.innerHTML='<button class="play" data-play="'+key+'">לא נטען. לחצו לנסות שוב</button>'})}
+  box.innerHTML='<div class="play">🎬 יש כאן סרטון הדגמה – טוען…<div class="pbar" style="width:70%"><i id="mp_'+key+'"></i></div></div>';
+  return PC.getBlob(K,x.m.n,function(pi){return post('m',{s:SID,k:x.m.k,i:pi})},x.m.t,function(f){var b=$('mp_'+key);if(b)b.style.width=Math.round(f*100)+'%'}).then(function(b){URLS[key]=URL.createObjectURL(b);box=$('md_'+key)||box;show()},function(){box.innerHTML='<button class="play" data-play="'+key+'">לא נטען. לחצו לנסות שוב</button>'})}
+/* סרטונים נטענים לבד ומוצגים מראש (בלי ניגון אוטומטי), אחד אחרי השני */
+var MQ=false;function autoMedia(){if(MQ)return;var b=[].slice.call(document.querySelectorAll('.media button[data-play]')).filter(function(x){return !x.dataset.q})[0];if(!b)return;b.dataset.q='1';var key=b.dataset.play;MQ=true;var p=play(key,true);if(p&&p.then)p.then(function(){MQ=false;autoMedia()},function(){MQ=false});else MQ=false}
+setInterval(function(){try{autoMedia()}catch(e){}},1500);
 })();
 </script>
 </body>
