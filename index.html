@@ -2872,7 +2872,7 @@ async function exAddNew(name){if(/[A-Za-z]/.test(name)){toast('כותבים את
   if(!LIB.some(l=>l[0]===name))LIB.push([name,/פלאנק|החזקה|שניות/.test(name)?'sec':'kg',exGuessGrp(name)]);refreshLib();
   try{const ref=S.db.collection('settings').doc('exercisesExtra');const sn=await ref.get();const cur=(sn.exists&&sn.data().list)||[];if(!cur.some(x=>x.n===name)){cur.push({n:name,u:LIB.find(l=>l[0]===name)[1],g:LIB.find(l=>l[0]===name)[2],by:S.meId||'',at:Date.now()});await ref.set({list:cur},{merge:true})}}catch(e){}
   toast('התרגיל נוסף לרשימה ✓');return true}
-function exSugShow(inp){const q0=String(inp.value||'').trim();const isEn=/[A-Za-z]/.test(q0);const q=isEn?enToHe(q0):q0;const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
+function exSugShow(inp){const q0=String(inp.value||'').trim();const isEn=/[A-Za-z]/.test(q0);const q=isEn?enToHe(q0):q0;if(isEn&&!q){exSugHide();const bx=document.createElement('div');bx.className='exsug';bx.innerHTML='<div class="exsugh">כותבים את שם התרגיל בעברית</div>';document.body.appendChild(bx);const rr=inp.getBoundingClientRect();bx.style.top=(window.scrollY+rr.bottom+2)+'px';bx.style.left=Math.max(4,window.scrollX+rr.left)+'px';return}const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
   let A=toks.length?all.filter(n=>toks.every(t=>n.includes(t))):all.slice();if(q)A.sort((a,b)=>(a.startsWith(q)?0:1)-(b.startsWith(q)?0:1)||a.length-b.length);
   let B=[];if(q&&!A.length){const nz=x=>x.replace(/[׳`]/g,"'");const st=toks.filter(t=>t.length>=2).map(t=>nz(t).slice(0,Math.min(3,t.length)));const sc=n=>{const ws=nz(n).split(/\s+/);return st.filter(t=>ws.some(w=>w.startsWith(t))).length};B=all.filter(n=>sc(n)>0);B.sort((a,b)=>sc(b)-sc(a)||a.length-b.length)}
   let fx=null;try{const f=exNorm(q);if(f)fx=dn(f.n)}catch(e){}
@@ -3115,7 +3115,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114132000';
+const APP_V='20261114132500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
