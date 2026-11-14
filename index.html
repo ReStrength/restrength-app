@@ -865,7 +865,7 @@ function num(v){return v===''||v==null||isNaN(Number(v))?null:Number(v)}
 function r05(x){return Math.round(x*2)/2}
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-function dn(n){return (S.exNames&&S.exNames[n])||n||''}
+function dn(n){if(n==='אלכסונים בספסל עם קיבוע רגליים')n='אלכסונים בספסל שיפוע חיובי עם קיבוע רגליים';return (S.exNames&&S.exNames[n])||n||''}
 function libFind(name){const d=LIB.find(l=>l[0]===name);if(d)return d;const orig=S.exNames&&S.exNamesRev&&S.exNamesRev[name];return orig?LIB.find(l=>l[0]===orig):null}
 function coachName(id){const c=S.coaches.find(x=>x.id===id);return c?c.name:'—'}
 function clientById(id){return S.clients.find(c=>c.id===id)}
@@ -1486,13 +1486,19 @@ function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent|
     // זוגי: הערה אחת משותפת — נשמרת על הלקוח הראשון
     const c0=list[0],c1=list[1];const pairSent=sent[c0.id];
     const defText=c0.introDoc||introDocDefault(c0,c1);
-    return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">הערה אחת לשני בני הזוג. כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>.</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלהם</div>
+    return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">הערה אחת לשני בני הזוג. כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>.</div><div style="margin-top:8px;font-size:16px;line-height:1.7;border:1px solid #f5d76e;border-radius:10px;padding:8px 10px;background:#fff"><div style="color:#c92a2a;font-weight:800">❌ לא לכתוב: "רוצה להתחזק ולשפר יציבות"</div><div style="color:#2b8a3e;font-weight:800;margin-top:4px">✅ כן לכתוב:</div><div style="white-space:pre-line">מפגש היכרות עם יוסי (67):
+🎯 מה הכי חשוב לו: לחזק את הרגליים כדי ללכת בביטחון ולעמוד בקצב של החברים, בהליכות הוא תמיד נשאר מאחור. בנוסף, מפחד להרים את הנכדה בגלל כאבים בגב התחתון.
+🔍 מה ראינו באימון: שיווי משקל חלש – קשה לו להתייצב על רגל אחת כמה שניות. הגב התחתון כאב לו בתרגילי בטן.
+📝 ההמלצה שלי: דגש על חיזוק הרגליים, לשיפור מהירות ההליכה בצורה בטוחה ויציבה. חיזוק הגב והרמת משקל הדרגתית שתעזור לו לחזור להרים את הנכדה בלי כאב.</div></div>
    <div style="margin-top:10px">${pairSent?`<span class="chip up">נשלח לשקד ✓</span>`:''}
    <textarea rows="7" style="width:100%;margin-top:6px" data-introdoc="${c0.id}">${esc(defText)}</textarea>
    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c0.id}" data-write>${pairSent?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}</button></div></div></div>`}
   // יחיד
   const c=list[0];const isSent=sent[c.id];
-  return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div class="muted small" style="margin-top:4px">❌ לא: "רוצה להתחזק ולשפר יציבות" · ✅ כן: מחובר לסיטואציה מהחיים שלו – "בהליכות עם החברים הוא תמיד נשאר מאחור, ומפחד להרים את הנכדה בגלל הגב"</div>
+  return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div style="margin-top:8px;font-size:16px;line-height:1.7;border:1px solid #f5d76e;border-radius:10px;padding:8px 10px;background:#fff"><div style="color:#c92a2a;font-weight:800">❌ לא לכתוב: "רוצה להתחזק ולשפר יציבות"</div><div style="color:#2b8a3e;font-weight:800;margin-top:4px">✅ כן לכתוב:</div><div style="white-space:pre-line">מפגש היכרות עם יוסי (67):
+🎯 מה הכי חשוב לו: לחזק את הרגליים כדי ללכת בביטחון ולעמוד בקצב של החברים, בהליכות הוא תמיד נשאר מאחור. בנוסף, מפחד להרים את הנכדה בגלל כאבים בגב התחתון.
+🔍 מה ראינו באימון: שיווי משקל חלש – קשה לו להתייצב על רגל אחת כמה שניות. הגב התחתון כאב לו בתרגילי בטן.
+📝 ההמלצה שלי: דגש על חיזוק הרגליים, לשיפור מהירות ההליכה בצורה בטוחה ויציבה. חיזוק הגב והרמת משקל הדרגתית שתעזור לו לחזור להרים את הנכדה בלי כאב.</div></div>
    <div style="margin-top:10px">${isSent?`<span class="chip up">נשלח לשקד ✓</span>`:''}
    <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea>
    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c.id}" data-write>${isSent?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}</button></div></div></div>`}
