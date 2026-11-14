@@ -630,6 +630,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .exsug .exadd{color:var(--accent);font-weight:700;border-top:1px solid var(--line)!important;border-radius:0 0 8px 8px}
 .exsug button{text-align:start;border:0;background:transparent;font:inherit;font-size:17px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--ink)}
 .exsug button:hover,.exsug button:focus{background:var(--surface-2)}
+/* עמודת משקל רחבה יותר */
+.sheet td.kg{width:auto!important;min-width:104px!important}
+.sheet td.kg input{font-size:19px!important;padding:4px 2px!important}
+.ptab td.gkg{min-width:96px!important}
+.ptab td.gkg input{font-size:18px!important;padding:4px 2px!important;min-width:0}
+.sheet td.res,.ptab td.res{min-width:54px!important}
+.sheet td.res .ki,.ptab td.res .ki{font-size:14px!important}
 </style>
 
 <div class="app" dir="rtl">
@@ -3116,7 +3123,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114133500';
+const APP_V='20261114140500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
