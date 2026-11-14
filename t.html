@@ -372,7 +372,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
   if(!WK())h+='<button class="btn alt" data-radd="1">+ תרגיל</button>';
   if(WK()&&lastSS!==null)h+='</div>';
   if(WK())h+='<button class="btn alt" data-rall="1" style="margin-top:8px">✓ הצלחתי את כל האימון</button>';
-  h+='<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':'✓ סיימתי. לבנות את האימון הבא')+'</button></div>';
+  h+='<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':(PLAN.seed&&PLAN.seed.finLbl)||'✓ סיימתי. לבנות את האימון הבא')+'</button></div>';
   return h}
 function rpUni(n){return /רגל אחת|יד אחת|מכרע|לאנג|לאנצ|בולגרי|סטפ|עלייה על מדרגה|סינגל/.test(n)}
 function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''&&r.reps!=null&&!isNaN(+r.reps)});if(!done.length)return null;
