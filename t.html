@@ -110,6 +110,7 @@ textarea{width:100%;min-height:140px;font:inherit;font-size:21px;border:2px soli
 .prevl{margin-top:8px;font-size:17px;color:var(--muted)}
 .hist .it{border-top:1px solid var(--line);padding:10px 0;font-size:18px}.hist .it:first-child{border-top:0}
 .hist .d{color:var(--muted);font-size:16px}
+.cthread{max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px 10px}.cb{max-width:85%;padding:10px 14px;border-radius:16px;font-size:18px;line-height:1.45;white-space:pre-wrap;word-break:break-word}.cb.me{align-self:flex-start;background:#e7f0ff;border-bottom-right-radius:4px}.cb.co{align-self:flex-end;background:#fff4d6;border-bottom-left-radius:4px}.cb .d{display:block;color:var(--muted);font-size:13px;margin-top:4px}.cb b.w{display:block;font-size:14px;color:var(--muted)}.ctx{width:100%;min-height:80px;font-size:18px;padding:10px;border:2px solid var(--line);border-radius:12px;margin-top:6px;font-family:inherit}.cbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.cbtns .btn{flex:1;min-width:120px;margin:0}.cnew{position:fixed;top:10px;left:10px;right:10px;z-index:80;background:#1c64f2;color:#fff;border-radius:14px;padding:14px;font-size:19px;font-weight:700;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .reply{margin-top:6px;padding:8px 12px;border-radius:12px;background:var(--good-bg);font-size:18px}
 .big{width:100%;min-height:64px;font-size:22px}
 .sticky{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%)}
@@ -254,7 +255,7 @@ if(!DEMO){
 if(!SID||!KS){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
 if(!window.crypto||!crypto.subtle){fail('הדפדפן הזה ישן מדי. פתחו את הקישור בכרום או בספארי.');return}
 var raw;try{raw=PC.unb64u(KS)}catch(e){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
-Promise.all([PC.key(raw),PC.wOf(raw)]).then(function(a){K=a[0];W=a[1];return post('plan',{s:SID})}).then(function(r){return PC.decJ(K,r.blob)}).then(function(p){PLAN=p;TAB=Math.min(+(lsg('rs_tt_'+SID)||0),(p.next||[]).length-1);if(TAB<0)TAB=0;try{LOG=JSON.parse(lsg('rs_tl_'+SID)||'null')}catch(e){LOG=null}render();loadReps()},function(e){fail(String(e&&e.message)==='404'?'הדף הזה כבר לא פעיל. בקשו מהמאמן קישור חדש.':'לא הצלחנו לטעון. בדקו שיש אינטרנט ונסו שוב.<br><br><button class="btn alt" onclick="location.reload()">לנסות שוב</button>')});
+Promise.all([PC.key(raw),PC.wOf(raw)]).then(function(a){K=a[0];W=a[1];return post('plan',{s:SID})}).then(function(r){return PC.decJ(K,r.blob||r.plan)}).then(function(p){PLAN=p;TAB=Math.min(+(lsg('rs_tt_'+SID)||0),(p.next||[]).length-1);if(TAB<0)TAB=0;try{LOG=JSON.parse(lsg('rs_tl_'+SID)||'null')}catch(e){LOG=null}render();loadReps()},function(e){fail(String(e&&e.message)==='404'?'הדף הזה כבר לא פעיל. בקשו מהמאמן קישור חדש.':'לא הצלחנו לטעון. בדקו שיש אינטרנט ונסו שוב.<br><br><button class="btn alt" onclick="location.reload()">לנסות שוב</button>')});
 }
 function loadReps(){post('reps',{s:SID,w:W}).then(function(r){return Promise.all((r.reps||[]).map(function(x){return PC.decJ(K,x.blob).then(function(o){o.t=x.t*1000;return o},function(){return null})}))}).then(function(L){REPS=L.filter(Boolean).sort(function(a,b){return a.t-b.t});paintHist();paintDone()},function(){})}
 
@@ -289,6 +290,7 @@ function rpLoad(){if(RP)return;try{RP=JSON.parse(lsg(rpKey())||'null')}catch(e){
   if(PLAN.seed&&RP.w&&!RNG())RP.w.forEach(function(W){(W.ex||[]).forEach(fixT)});
   if(!RP){var N=(PLAN.next||[]).filter(function(s){return (s.ex||[]).length});
     RP={w:N.length?N.map(function(s){return {label:s.label||'',ex:s.ex.map(function(x){var r=String(x.reps||'').match(/(\d+)\D+(\d+)/);return {n:x.n,ss:x.ss||'',sets:+x.sets||2,min:r?+r[1]:(+x.reps||8),max:r?+r[2]:(+x.reps||10),kg:x.kg||'',sec:x.unit==='sec',res:[],st:0}})}}):[rpBlank('A'),rpBlank('B')],n:0};rpSave()}
+  if(PW()){var ch0=0;if(RP.deload){RP.deload=0;ch0=1}RP.w.forEach(function(W){if(W.pend){if(W.pend.ex&&W.ex)W.ex=W.pend.ex.map(function(x){x.res=[];x.ok=false;x.fail=false;return x});if(W.pend.run&&W.run){W.run=W.pend.run;W.run.res={}}W.pend=null;ch0=1}});if(ch0)rpSave()}
   RT=Math.min(+(lsg('rs_rpt_'+SID)||0),RP.w.length-1)}
 function rpSave(){lss(rpKey(),JSON.stringify(RP))}
 function secOf(t){var m=String(t||'').trim().match(/^(\d+)(?::(\d{1,2}))?(?::(\d{1,2}))?$/);if(!m)return NaN;var a=[+m[1],m[2]!=null?+m[2]:null,m[3]!=null?+m[3]:null];if(a[2]!=null)return a[0]*3600+a[1]*60+a[2];if(a[1]!=null)return a[0]*60+a[1];return a[0]*60}
@@ -311,6 +313,7 @@ function runStep(W){var r=W.run,x=r.res||{},km=+x.km,t=secOf(x.time);if(!km||!t)
     else if(done&&(!p1||pace<=p1+15)){r.km=Math.round((Math.min(gk||99,r.km+0.5))*10)/10;m='כל הכבוד! בשבוע הבא מוסיפים חצי ק"מ: '+runTarget(r,1)}else{m='נשארים על אותו יעד: '+runTarget(r,1)}}
   return {log:{n:(r.kind==='tempo'?'ריצת קצב':'ריצה ארוכה'),unit:'run',sets:[{km:String(km),time:x.time,pace:mmss(pace)}]},m:m}}
 function WK(){return !!(PLAN&&PLAN.seed)}
+function PW(){return !!(PLAN&&PLAN.seed&&PLAN.seed.pw)}
 function dlSets(x){return RP.deload?Math.max(2,(+x.sets||2)-1):(+x.sets||1)}
 function dlRun(r){if(!RP.deload)return r;var o=JSON.parse(JSON.stringify(r));if(o.kind==='tempo'){var a=secOf(o.p1),b=secOf(o.p2)||a;o.p1=mmss(a+10);o.p2=mmss(b+10)}else o.km=Math.max(2,Math.round(o.km*0.8*2)/2);return o}
 /* תכנון שבוע: מחיל את ההתקדמות של כל אימון שבוצע השבוע. כל שבוע רביעי הוא שבוע קל (פחות נפח), בלי העלאות */
@@ -336,13 +339,13 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
       '<button class="btn done" data-gsave>שמירת המטרות</button></div>';
       RP._gf=G.focus||RP._gf||''}
     else{var GF={str:'להרים יותר משקל',end:'יותר חזרות וסיבולת',hyp:'מראה ומסת שריר',mix:'שילוב'};h+='<div class="card" style="font-size:16px"><b>🎯 המטרות שלי:</b> '+esc([GF[G.focus],G.km?'ריצה ארוכה של '+G.km+' ק"מ':'',G.pace?'קצב '+G.pace+' לק"מ':'',G.txt].filter(Boolean).join(' · '))+' <button class="btn alt" data-gedit style="min-height:40px;font-size:15px;padding:6px 12px;margin-top:6px">עריכה</button></div>'}
-    if(!RP.planAt){RP.planAt=Date.now();RP.wk=1;rpSave()}var dn=RP.w.filter(function(w){return w.doneAt>RP.planAt}).length;
+    if(!RP.planAt){RP.planAt=Date.now();RP.wk=1;rpSave()}if(!PW()){var dn=RP.w.filter(function(w){return w.doneAt>RP.planAt}).length;
     h+='<div class="card" style="font-size:17px"><b>שבוע '+(RP.wk||1)+(RP.deload?' · שבוע קל 🌿':'')+'</b> · בוצעו '+dn+' מתוך '+RP.w.length+' אימונים'+
-     '<button class="btn '+(dn>=RP.w.length?'done':'alt')+'" data-wplan style="margin-top:10px">📅 תכנון שבוע האימונים הבא</button><div class="sub" style="margin-top:6px">לוחצים בסוף השבוע. ההתקדמות מתונה והדרגתית, וכל שבוע רביעי הוא שבוע קל.</div></div>'}
-  h+='<div class="card" style="font-size:17px"><b>איך זה עובד:</b> '+(WK()?'<ol style="text-align:right;display:inline-block;margin:6px 0;padding-inline-start:22px;line-height:1.55"><li>בכל תרגיל כתוב בדיוק מה לעשות. עשית הכל? מסמנים <b>✓ הצלחתי הכל</b>. לא הצלחת הכל? לוחצים <b>לא הכל</b> וכותבים כמה עשית באמת.</li>'+(HR?'<li>בריצה כותבים כמה ק"מ רצת ובכמה זמן.</li>':'')+'<li>בסוף כל אימון לוחצים <b>סיימתי</b>.</li><li>בסוף השבוע לוחצים <b>תכנון שבוע האימונים הבא</b>, והתוכנית מתקדמת לבד, בהדרגה ובמתינות: למשל עוד חזרה אחת בתרגיל או קילו אחד יותר'+(HR?', ובריצה קצת יותר מהר (5 שניות לק"מ) או חצי ק"מ יותר':'')+'. כל שבוע רביעי הוא שבוע קל.</li></ol><br><b>חשוב לסמן רק מה שבאמת עשית</b>, כי לפי זה נבנה השבוע הבא.':'כותבים את התרגילים פעם אחת. בכל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט, ולוחצים "סיימתי". הדף בונה לבד את האימון הבא.')+' <br>'+(WK()?'<b>לא להגיע עד כשל מוחלט.</b>':'עוצרים כל סט כשנשארות בערך 3 חזרות "בבנק", לא עד כשל.')+' <button class="btn alt" data-rhelp style="margin-top:8px">▶ סרטון הסבר קצר</button></div>';
+     '<button class="btn '+(dn>=RP.w.length?'done':'alt')+'" data-wplan style="margin-top:10px">📅 תכנון שבוע האימונים הבא</button><div class="sub" style="margin-top:6px">לוחצים בסוף השבוע. ההתקדמות מתונה והדרגתית, וכל שבוע רביעי הוא שבוע קל.</div></div>'}}
+  h+='<div class="card" style="font-size:17px"><b>איך זה עובד:</b> '+(WK()?'<ol style="text-align:right;display:inline-block;margin:6px 0;padding-inline-start:22px;line-height:1.55"><li>בכל תרגיל כתוב בדיוק מה לעשות. עשית הכל? מסמנים <b>✓ הצלחתי הכל</b>. לא הצלחת הכל? לוחצים <b>לא הכל</b> וכותבים כמה עשית באמת.</li>'+(HR?'<li>בריצה כותבים כמה ק"מ רצת ובכמה זמן.</li>':'')+''+(PW()?'<li>בסוף כל אימון לוחצים <b>📅 תכנון אימון הבא</b>, עונים איך היה האימון, והתוכנית מתקדמת לבד, בהדרגה ובמתינות:':'<li>בסוף כל אימון לוחצים <b>סיימתי</b>.</li><li>בסוף השבוע לוחצים <b>תכנון שבוע האימונים הבא</b>, והתוכנית מתקדמת לבד, בהדרגה ובמתינות:')+' למשל עוד חזרה אחת בתרגיל או קילו אחד יותר'+(HR?', ובריצה קצת יותר מהר (5 שניות לק"מ) או חצי ק"מ יותר':'')+'.'+(PW()?'':' כל שבוע רביעי הוא שבוע קל.')+'</li></ol><br><b>חשוב לסמן רק מה שבאמת עשית</b>, כי לפי זה נבנה השבוע הבא.':'כותבים את התרגילים פעם אחת. בכל אימון ממלאים כמה חזרות ובאיזה משקל עשית בכל סט, ולוחצים "סיימתי". הדף בונה לבד את האימון הבא.')+' <br>'+(WK()?'<b>לא להגיע עד כשל מוחלט.</b>':'עוצרים כל סט כשנשארות בערך 3 חזרות "בבנק", לא עד כשל.')+' <button class="btn alt" data-rhelp style="margin-top:8px">▶ סרטון הסבר קצר</button></div>';
   if(PLAN.seed&&PLAN.seed.rule)h+='<div class="card rules top"><p>📌 <b>בכל תרגיל:</b> '+esc(PLAN.seed.rule)+'</p></div>';
-  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">'+(WK()&&w.doneAt>(RP.planAt||0)?'✓ ':'')+(WK()?(w.run?'🏃 ':'💪 '):(w.run?'🏃 ':''))+'אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
-  if(W.run){h+=runHtml(W)+'<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את הריצה הבאה</button></div>';return h}
+  h+='<div class="tabs2">'+RP.w.map(function(w,i){return '<button data-rtab="'+i+'" aria-pressed="'+(i===RT)+'">'+(WK()&&!PW()&&w.doneAt>(RP.planAt||0)?'✓ ':'')+(WK()?(w.run?'🏃 ':'💪 '):(w.run?'🏃 ':''))+'אימון '+esc(w.label||(i+1))+'</button>'}).join('')+'</div>';
+  if(W.run){h+=runHtml(W)+'<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':'✓ סיימתי. לבנות את הריצה הבאה')+'</button></div>';return h}
   var lastSS=null;
   W.ex.forEach(function(x,i){var k=RT+'.'+i;
     if(WK()&&sx(x.n).info){if(lastSS!==null){h+='</div>';lastSS=null}var I=sx(x.n),mk='s'+k.replace('.','_');h+='<div class="card"><div class="t"><b style="font-size:20px;flex:1">'+esc(x.n)+'</b></div>'+(I.cue?'<div class="note" style="margin:8px 0 0;font-size:17px">'+esc(I.cue)+'</div>':'')+(I.how?'<div class="note" style="margin:8px 0 0;font-size:17px">📈 '+esc(I.how)+'</div>':'')+(I.m?'<div class="media" id="md_'+mk+'"><button class="play" data-play="'+mk+'">▶ לראות איך עושים</button></div>':'')+'</div>';return}
@@ -368,7 +371,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
   if(!WK())h+='<button class="btn alt" data-radd="1">+ תרגיל</button>';
   if(WK()&&lastSS!==null)h+='</div>';
   if(WK())h+='<button class="btn alt" data-rall="1" style="margin-top:8px">✓ הצלחתי את כל האימון</button>';
-  h+='<div class="sticky"><button class="btn done big" data-rfin="1">✓ סיימתי. לבנות את האימון הבא</button></div>';
+  h+='<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':'✓ סיימתי. לבנות את האימון הבא')+'</button></div>';
   return h}
 function rpUni(n){return /רגל אחת|יד אחת|מכרע|לאנג|לאנצ|בולגרי|סטפ|עלייה על מדרגה|סינגל/.test(n)}
 function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''&&r.reps!=null&&!isNaN(+r.reps)});if(!done.length)return null;
@@ -427,24 +430,28 @@ function rpFinish(){var W=RP.w[RT];
   if(WK()&&W.ex)W.ex.forEach(function(x){if(x.ok)x.res=Array.from({length:dlSets(x)},function(){return {reps:String(x.max),kg:x.kg||''}});else if(x.fail&&RNG())x.res=(x.fr!==''&&x.fr!=null&&!isNaN(+x.fr))?Array.from({length:dlSets(x)},function(){return {reps:String(+x.fr),kg:x.kg||''}}):[];else if(!x.fail)x.res=[]});
   var has=W.run?(W.run.res&&+W.run.res.km&&W.run.res.time):W.ex.some(function(x){return (x.res||[]).some(function(r){return r&&r.reps!==''&&r.reps!=null})});
   if(!has){toast(W.run?'כותבים כמה ק"מ רצת ואת הזמן הכולל.':(WK()?'מסמנים ✓ בכל תרגיל שהצלחת, או "לא הכל" וכותבים כמה עשית.':'עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.'));return}
+  if(PW()){sheet('<h3>איך היה האימון?</h3><div style="display:flex;gap:10px;margin:10px 0"><button class="btn alt" style="flex:1;min-height:64px;font-size:22px" data-fe="easy">😊 קל</button><button class="btn alt" style="flex:1;min-height:64px;font-size:22px" data-fe="hard">😮‍💨 קשה</button></div><div id="fem"></div>');
+   $('sbox').onclick=function(e){var c=e.target.closest('[data-fe]');if(c){var fe=c.getAttribute('data-fe');document.querySelectorAll('[data-fe]').forEach(function(b){b.className='btn '+(b===c?'done':'alt')});$('fem').innerHTML='<p style="font-size:21px;font-weight:700;text-align:center;margin:12px 0">'+(fe==='easy'?'מעולה!':'אין בעיה, נשאר על עצימות דומה')+'</p><button class="btn done big" data-feg="'+fe+'">📅 לתכנון אימון הבא</button>';return}var g=e.target.closest('[data-feg]');if(g){$('sbox').onclick=null;unsheet();rpFinish2(0,'',g.getAttribute('data-feg'))}};return}
   var pv=null;sheet('<h3>היו כאבים באימון?</h3><div class="pchips" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+[[0,'👍 בלי כאבים'],[3,'😐 כאב קל'],[7,'😣 כאב חזק']].map(function(o){return '<button class="btn alt" style="flex:1;min-width:110px" data-pv="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>'+
    '<div id="pwh" hidden><label class="sub" for="pwt">איפה כאב ובאיזה תרגיל?</label><input id="pwt" style="width:100%;font-size:18px;padding:10px;border:2px solid var(--line);border-radius:10px;margin:6px 0" placeholder="לדוגמה: כתף ימין בלחיצת כתפיים"></div><button class="btn done" id="pgo" disabled>המשך</button>');
   $('sbox').onclick=function(e){var c=e.target.closest('[data-pv]');if(!c)return;pv=+c.getAttribute('data-pv');document.querySelectorAll('[data-pv]').forEach(function(b){b.className='btn '+(b===c?'done':'alt')});$('pwh').hidden=!pv;$('pgo').disabled=false};
   $('pgo').onclick=function(){var tx=($('pwt')||{}).value||'';$('sbox').onclick=null;unsheet();rpFinish2(pv||0,tx.trim())}}
-function rpFinish2(pain,ptx){var W0=RP.w[RT],wk=WK(),W=wk?JSON.parse(JSON.stringify(W0)):W0,log=[],ch=[];
+function rpFinish2(pain,ptx,feel){var W0=RP.w[RT],pw=PW(),wk=WK()&&!pw,W=(wk||pw)?JSON.parse(JSON.stringify(W0)):W0,log=[],ch=[];
   if(wk&&RP.deload){W.ex&&W.ex.forEach(function(x){x.st=x.st||0});}
   if(W.run){var rr=runStep(W);if(!rr){toast('כותבים כמה ק"מ רצת ואת הזמן הכולל.');return}log.push(rr.log);ch.push([rr.log.n,rr.m]);W.run.msg=rr.m;W.run.res={}}
-  else W.ex.forEach(function(x,i){if(!x.n||sx(x.n).info)return;var kp=(x.kp===''||x.kp==null)?(x.fail&&x.why==='pain'?4:null):+x.kp,o=W0.ex[i];var r=wk?rpStepWk(x):rpStep(x);if(!r)return;
+  else W.ex.forEach(function(x,i){if(!x.n||sx(x.n).info)return;var kp=(x.kp===''||x.kp==null)?(x.fail&&x.why==='pain'?4:null):+x.kp,o=W0.ex[i];var r=WK()?rpStepWk(x):rpStep(x);if(!r)return;
     if(kp!=null&&kp>=4&&o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc;
       if(kp>=6){var wkg=parseFloat(o.kg)||0;if(wkg>INC(x)){x.kg=String(Math.round((wkg-INC(x))*2)/2);r.m='כאב חזק בתרגיל: מורידים קילו, '+x.kg+' ק"ג. אם עדיין כואב: טווח קצר יותר'}else r.m='כאב חזק בתרגיל: אותו יעד בטווח קצר יותר, ולדווח לי'}
       else r.m='כאב בינוני בתרגיל: נשארים על אותו יעד עד שהכאב יורד ל-3 ומטה'}
     log.push({n:x.n,unit:(+x.kg>0)?'kg':(x.sec?'sec':'bw'),sets:r.sets,kp:(x.kp===''||x.kp==null)?null:+x.kp,ok:!!x.ok,why:x.fail?(x.why||''):'',note:x.fail?(x.fnote||''):''});ch.push([x.n,r.m]);x.msg=r.m;x.res=[];x.kp='';x.fr='';x.why='';x.fnote=''});
   if(!log.length){toast('עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.');return}
-  if(wk&&pain>=7){ch=ch.map(function(c){return [c[0],'בגלל הכאב לא מעלים, נשארים על אותו יעד']});W.ex&&W.ex.forEach(function(x,i){var o=W0.ex[i];if(o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc}});if(W.run)W.run=JSON.parse(JSON.stringify(W0.run))}
+  if((wk||pw)&&(pain>=7||feel==='hard')){ch=ch.map(function(c){return [c[0],feel==='hard'?'נשארים על עצימות דומה':'בגלל הכאב לא מעלים, נשארים על אותו יעד']});W.ex&&W.ex.forEach(function(x,i){var o=W0.ex[i];if(o){x.kg=o.kg;x.min=o.min;x.max=o.max;x.sets=o.sets;x.tp=o.tp;x.rom=o.rom;x.cyc=o.cyc}});if(W.run)W.run=JSON.parse(JSON.stringify(W0.run))}
   if(wk){W0.doneAt=Date.now();if(RP.deload){ch=ch.map(function(c){return [c[0],'שבוע קל, בלי העלאות. ממשיכים להתקדם בשבוע הבא']})}else{W.pend=null;var up=ch.filter(function(c){return !/^אותו|^נשארים|^לשאוף|^כמעט|^בגלל/.test(c[1])});W0.pend={ex:W.ex,run:W.run,sum:W.run?(up.length?up[0][1].replace(/^[^:]*! /,'').replace('בשבוע הבא ','').replace(/^מוסיפים/,'מוסיפים'):'אותו יעד'):(up.length?'עולים ב'+up.map(function(c){return c[0]}).join(', ')+'. בשאר אותו יעד':'אותו יעד, לשאוף לעוד חזרה')}}
     if(W0.run)W0.run.res={};else W0.ex.forEach(function(x){x.res=[];x.ok=false;x.fail=false;x.kp=''})}
+  if(pw){if(feel==='hard'){(W.ex||[]).forEach(function(x){x.msg='אותה עצימות כמו באימון הקודם'});if(W.run)W.run.msg='אותו יעד כמו בריצה הקודמת'}
+    (W.ex||[]).forEach(function(x){x.res=[];x.ok=false;x.fail=false;x.kp='';x.fr='';x.why='';x.fnote=''});if(W.run)W.run.res={};W.doneAt=Date.now();W.pend=null;RP.w[RT]=W}
   RP.n=(RP.n||0)+1;rpSave();
-  var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log,pain:pain,note:ptx}).catch(function(){});
+  var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log,pain:pain,note:ptx,feel:feel||''}).catch(function(){});
   if(pain>0)sendRep({kind:'pain',r:PC.rid?PC.rid():String(Date.now()+1),pain:pain,text:'אחרי אימון '+(W.label||'')+(ptx?': '+ptx:'')}).catch(function(){});
   sheet('<h3>💪 כל הכבוד! '+(wk?'ככה ייראה האימון הזה בשבוע הבא':'ככה נראה האימון הבא')+'</h3><ul style="margin:6px 0;padding-inline-start:20px;font-size:18px">'+ch.map(function(c){return '<li style="margin:6px 0"><b>'+esc(c[0])+':</b> '+esc(c[1])+'</li>'}).join('')+'</ul>'+(pain>=7?'<p style="font-size:17px">😣 קיבלתי את הדיווח על הכאב. לא מעלים עומס עד שירגע. אם זה לא עובר, כדאי לדבר איתי.</p>':pain>0?'<p style="font-size:17px">תודה על הדיווח. אם הכאב חוזר או מתגבר, מורידים משקל או טווח באותו תרגיל.</p>':'')+'<button class="btn done" id="rok">מעולה</button>');
   $('rok').onclick=function(){unsheet();if(RP.w.length>1){RT=(RT+1)%RP.w.length;lss('rs_rpt_'+SID,RT)}render();window.scrollTo(0,0)}}
@@ -486,13 +493,20 @@ function render(){
     h+=lg?'<div class="sticky"><button class="btn done big" data-act="sendlog">✓ סיימתי. שליחה למאמן</button><button class="btn alt" data-act="cancellog">ביטול התיעוד</button></div>':'<button class="btn done big" data-act="startlog">▶ מתאמן/ת עכשיו? לתיעוד האימון</button>';
   }
   if((p.home||[]).length){h+='<h2>תרגילים שהמאמן נתן לך</h2>';p.home.forEach(function(x,i){h+=exCard(x,'h'+i,i,false)})}
-  h+='<h2>רוצה לשלוח משהו ל'+esc(p.coach||'מאמן')+'?</h2><div class="card"><div class="more" style="margin-top:0"><button class="btn alt" data-act="media"><span>📷</span>צילום / סרטון</button><button class="btn alt" data-act="pain"><span>🤕</span>כאב לי משהו</button><button class="btn alt" data-act="text"><span>✍️</span>הודעה</button></div></div>';
+  h+='<h2>💬 הצ\'אט עם '+esc(p.coach||'המאמן')+'</h2><div class="card chat"><div id="chat" class="cthread"><p class="sub center">עוד אין הודעות. אפשר לכתוב כאן כל דבר.</p></div><textarea id="ctx" class="ctx" placeholder="כותבים ל'+esc(p.coach||'מאמן')+'…"></textarea><div class="cbtns"><button class="btn done" data-act="csend">שליחה</button><button class="btn alt" data-act="media">📷 צילום / סרטון</button><button class="btn alt" data-act="pain">🤕 כאב</button></div></div>';
   if((p.home||[]).length)h+='<div class="card"><b>⏰ תזכורת יומית לתרגל בבית</b><p class="sub" style="margin:4px 0 10px">בוחרים שעה, והטלפון יזכיר כל יום.</p><div class="more" style="grid-template-columns:repeat(3,1fr)">'+['08:00','10:00','12:00','16:00','18:00','20:00'].map(function(t){return '<button class="btn alt" data-rem="'+t+'" style="font-size:22px;min-height:56px">'+t+'</button>'}).join('')+'</div><div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap"><label for="remt" style="font-size:20px">שעה אחרת:</label><input type="time" id="remt" step="300" style="font-size:22px;min-height:56px;padding:6px 10px;border-radius:12px;border:2px solid #ddd;direction:ltr"><button class="btn alt" data-remc="1" style="font-size:22px;min-height:56px;width:auto;padding:0 18px">קבע</button></div></div>';
-  h+='<h2>מה שלחתי</h2><div class="card hist" id="hist"><p class="sub">עוד לא נשלח כלום.</p></div>';
   h+='<p class="sub center" style="margin-top:24px">כוח מחודש</p>';
   $('app').innerHTML=h;paintHist();paintDone();
 }
-function paintHist(){var el=$('hist');if(!el)return;var L=REPS.slice().reverse().slice(0,15),ak=PLAN.acks||{};if(!L.length)return;
+function paintChat(){var el=$('chat');if(!el||!PLAN)return;var co=(PLAN.coach||'המאמן'),ak=PLAN.acks||{},L=[];
+  REPS.forEach(function(o){var t=o.kind==='text'?esc(o.text||''):o.kind==='media'?((o.mt&&o.mt.indexOf('video')===0)?'🎥 סרטון':'📷 תמונה')+(o.note?': '+esc(o.note):''):o.kind==='pain'?'🤕 כאב '+o.pain+'/10'+(o.text?': '+esc(o.text):''):o.kind==='log'?'🏋️ סיימתי אימון'+(o.label?' '+esc(o.label):'')+(o.feel==='easy'?' · היה קל':o.feel==='hard'?' · היה קשה':''):o.kind==='done'?'✓ עשיתי: '+esc(o.ex||''):'';if(!t)return;L.push({t:o.t||0,me:1,h:t});if(ak[o.r])L.push({t:(o.t||0)+1,h:esc(ak[o.r])})});
+  (PLAN.msgs||[]).forEach(function(m){L.push({t:m.t,h:esc(m.text||'')})});
+  L.sort(function(a,b){return a.t-b.t});if(!L.length)return;var atB=el.scrollHeight-el.scrollTop-el.clientHeight<60;
+  el.innerHTML=L.slice(-80).map(function(x){return '<div class="cb '+(x.me?'me':'co')+'">'+(x.me?'':'<b class="w">'+esc(co)+'</b>')+x.h+'<span class="d">'+dt(x.t)+'</span></div>'}).join('');if(atB||!paintChat.done){el.scrollTop=el.scrollHeight;paintChat.done=1}}
+function chatPoll(){if(DEMO||!SID||!K)return;post('plan',{s:SID}).then(function(r){return PC.decJ(K,r.plan||r.blob)}).then(function(p){if(!p||!PLAN)return;PLAN.msgs=p.msgs||[];PLAN.acks=p.acks||{};var n=(PLAN.msgs||[]).length+Object.keys(PLAN.acks).filter(function(k){return PLAN.acks[k]}).length,seen=+(lsg('rs_cs_'+SID)||-1);if(seen<0){lss('rs_cs_'+SID,n)}else if(n>seen){lss('rs_cs_'+SID,n);chatNew()}paintChat()},function(){});loadReps()}
+function chatNew(){var d=document.createElement('div');d.className='cnew';d.textContent='💬 הודעה חדשה מ'+(PLAN.coach||'המאמן');d.onclick=function(){d.remove();var c=$('chat');if(c){c.scrollIntoView({behavior:'smooth',block:'center'});c.scrollTop=c.scrollHeight}};document.body.appendChild(d);setTimeout(function(){d.remove()},9000);try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+setInterval(function(){if(document.visibilityState==='visible')chatPoll()},20000);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chatPoll()});
+function paintHist(){paintChat();var el=$('hist');if(!el)return;var L=REPS.slice().reverse().slice(0,15),ak=PLAN.acks||{};if(!L.length)return;
   el.innerHTML=L.map(function(o){var t=o.kind==='done'?'✓ עשיתי: '+esc(o.ex||'')+(o.pain!=null?' · '+FACES.filter(function(f){return f[0]===o.pain})[0][1]:''):o.kind==='pain'?'🤕 כאב '+o.pain+'/10'+(o.text?': '+esc(o.text):''):o.kind==='log'?'🏋️ תיעוד אימון'+(o.label?' '+esc(o.label):'')+' · '+(o.ex||[]).length+' תרגילים':o.kind==='media'?(o.mt&&o.mt.indexOf('video')===0?'🎥 סרטון':'📷 תמונה')+(o.note?': '+esc(o.note):''):'✍️ '+esc(o.text||'');
     return '<div class="it"><div class="d">'+dt(o.t)+'</div>'+t+(ak[o.r]!=null?'<div class="reply">✓ המאמן ראה'+(ak[o.r]?': '+esc(ak[o.r]):'')+'</div>':'')+'</div>'}).join('')}
 function saveLog(){lss('rs_tl_'+SID,JSON.stringify(LOG))}
@@ -513,6 +527,7 @@ document.addEventListener('click',function(e){
   else if(a==='cancellog'){if(confirm('לבטל את התיעוד?')){LOG=null;saveLog();render()}}
   else if(a==='sendlog')sendLog(b);
   else if(a==='text')askText();
+  else if(a==='csend'){var v=($('ctx')||{}).value||'';v=v.trim();if(!v)return;b.disabled=true;sendRep({kind:'text',r:PC.rid(),text:v}).then(function(){$('ctx').value='';b.disabled=false;paintChat();var c=$('chat');if(c)c.scrollTop=c.scrollHeight},function(){b.disabled=false;toast('לא נשלח. בדקו אינטרנט ונסו שוב.')})}
   else if(a==='pain')askPainWhere();
   else if(a==='media'){$('pick').value='';$('pick').click()}
 });

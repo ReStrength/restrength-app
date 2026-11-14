@@ -524,6 +524,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .rotc h3{margin:0 0 4px}.rott{width:100%;border-collapse:collapse;margin-top:8px}.rott th{background:var(--band);color:#fff;padding:7px;font-size:15px}.rott td{border:1px solid var(--line);padding:8px 10px;vertical-align:top}.rott td:first-child{text-align:center;font-weight:800;width:56px}.rott small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
 .pcard{border-inline-start-color:#1c7ed6}
 
+.tpthread{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px}.tpb{max-width:80%;padding:8px 12px;border-radius:14px;font-size:16px;white-space:pre-wrap;word-break:break-word}.tpb.him{align-self:flex-start;background:#e7f0ff}.tpb.me{align-self:flex-end;background:#fff4d6}
 #music{position:fixed;bottom:14px;left:14px;z-index:60}
 #mBtn{font:inherit;font-weight:700;font-size:15px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer}
 #mBtn.on{border-color:var(--accent);color:var(--accent)}
@@ -2817,7 +2818,7 @@ async function tpBuild(c){
   const next=planned.map(s=>({label:String(s.label||''),warmup:s.warmup||'',ex:(s.exercises||[]).filter(e=>e.name).map(e=>{const u=unitOf(e),tp=String(e.tempo||'').trim(),heb=/[א-ת]/.test(tp);
     return {n:e.name,ss:e.ss||'',unit:u,sets:String(e.targetSets||''),reps:tpReps2(e),kg:u==='kg'&&num(e.targetKg)?String(e.targetKg):'',tempo:heb?'':tp,note:heb?tp:'',m:V[e.name]||null,last:lastOf(e.name)}})}));
   const home=(c.homeEx||[]).filter(x=>x.n).map(x=>({n:x.n,unit:x.unit||'bw',sets:x.sets||'',reps:x.reps||'',kg:x.kg||'',note:x.note||'',m:x.m||null}));
-  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,remote:!!c.remote,seed:c.remote&&c.remoteSeed?rtSeedOut(c):null,u:Date.now()};
+  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,msgs:(c.portalMsgs||[]).slice(-80),remote:!!c.remote,seed:c.remote&&c.remoteSeed?rtSeedOut(c):null,u:Date.now()};
 }
 function tpKeep(c){const k={...(S.cmKeep||{})};Object.values(c.coachMedia||{}).forEach(L=>(L||[]).forEach(m=>{if(m&&m.k)k[m.k]=m.n}));Object.values(c.exVideos||{}).forEach(m=>{if(m&&m.k)k[m.k]=m.n});(c.homeEx||[]).forEach(x=>{if(x.m&&x.m.k)k[x.m.k]=x.m.n});return k}
 async function tpPublish(cid,quiet){
@@ -2865,6 +2866,13 @@ function tpDesc(o){
   if(o.kind==='pain') return `<b style="color:var(--bad)">🤕 דיווח כאב ${o.pain}/10</b>${o.text?`: ${esc(o.text)}`:''}`;
   return `<b>✍️ הודעה:</b> ${esc(o.text||'')}`;
 }
+function tpChat(c,L){const first=esc(String(c.name).split(' ')[0]),A=c.portalAck||{};const it=[];
+  (L||[]).forEach(o=>{let t='';if(o.kind==='text')t=esc(o.text||'');else if(o.kind==='media')t=(/^video/.test(o.mt||'')?'🎥 סרטון':'📷 תמונה')+(o.note?': '+esc(o.note):'')+' <span class="muted small">(פתיחה ברשימה למטה)</span>';else if(o.kind==='pain')t='🤕 כאב '+o.pain+'/10'+(o.text?': '+esc(o.text):'');else if(o.kind==='log')t='🏋️ סיים אימון'+(o.label?' '+esc(o.label):'')+(o.feel==='easy'?' · היה קל':o.feel==='hard'?' · היה קשה':'');if(!t)return;it.push({t:o.t*1000,me:0,h:t});if(A[o.r])it.push({t:o.t*1000+1,me:1,h:esc(A[o.r])})});
+  (c.portalMsgs||[]).forEach(m=>it.push({t:m.t,me:1,h:esc(m.text||'')}));it.sort((a,b)=>a.t-b.t);
+  const f=t=>new Date(t).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'});
+  return `<div class="card"><h2 style="margin:0 0 8px">💬 צ'אט עם ${first}</h2><div class="tpthread" id="tpthread">${it.length?it.slice(-60).map(x=>`<div class="tpb ${x.me?'me':'him'}">${x.h}<span class="muted small" style="display:block;margin-top:2px">${f(x.t)}</span></div>`).join(''):`<p class="muted">עוד אין הודעות.</p>`}</div>
+   <div class="row" style="margin-top:8px;align-items:stretch"><textarea id="tpmsg" rows="2" placeholder="כותבים ל${first}…" style="flex:1;min-width:200px;font:inherit;font-size:17px;padding:8px;border:1px solid var(--line);border-radius:10px"></textarea><button class="btn primary" data-act="tpMsg" data-write ${S.tpBusy[c.id]==='pub'?'disabled':''}>שליחה</button></div>
+   <p class="muted small" style="margin:6px 0 0">${first} רואה את ההודעה בדף שלו תוך כחצי דקה, עם התראה.</p></div>`}
 function tPortal(c){
   if(!c.portal) return `<div class="card"><h2>📱 דף אישי למתאמן</h2>
     <p>דף פרטי בטלפון של ${esc(c.name)}: התוכנית שלו עם המשקלים והחזרות, סרטוני הדגמה, ותרגילים שתיתנו לבית. כשהוא לא מגיע לסטודיו (למשל בחו"ל), הוא יכול להתאמן לפי התוכנית, לתעד את התוצאות ולשלוח לכם תמונה או סרטון.</p>
@@ -2887,6 +2895,7 @@ function tPortal(c){
     <p class="muted small" style="margin:8px 0 0">כל שינוי באימון המתוכנן מתעדכן בדף לבד אחרי כמה שניות.</p>
     <label class="row small" style="margin-top:8px;gap:8px;cursor:pointer"><input type="checkbox" data-act="tpRemote" data-write ${c.remote?'checked':''}> <b>🌍 ליווי מרחוק:</b> המתאמן כותב בעצמו את התרגילים והתוצאות (2 אימונים, סופר סטים), והדף בונה לו לבד את האימון הבא. התוצאות מגיעות לכאן.</label>
     <p class="small" style="margin:6px 0 0">📩 מה שהמתאמן שולח מגיע לתיבה של <b>${esc(coachName(tpOwner(c)))}</b>${tpMine(c)?'':` <button class="btn ghost sm" data-act="tpOwn" data-write>להעביר אליי</button>`}</p></div>
+  ${tpChat(c,L)}
   <div class="card"><div class="spread"><h2 style="margin:0">📩 מה ${esc(String(c.name).split(' ')[0])} שלח/ה</h2><span class="row"><button class="btn ghost sm" data-act="tpRefresh">רענון</button>${L.some(o=>o.t>seen)?`<button class="btn ghost sm" data-act="tpSeen" data-write>סימון הכל כנקרא</button>`:''}</span></div>${repsHtml}</div>
   <div class="card"><h2>🎥 סרטוני הדגמה לתרגילים בתוכנית</h2>
     ${names.length?`<p class="muted small">צלמו את התרגיל פעם אחת, והמתאמן יראה אותו בדף שלו ליד התרגיל.</p><div class="tpgrid">${names.map(n=>`<div class="tpex"><span>${esc(n)}</span>${V[n]?`<span class="row"><span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpVid" data-ex="${esc(n)}" data-write>החלפה</button><button class="btn ghost sm" data-act="tpVidDel" data-ex="${esc(n)}" data-write>מחיקה</button></span>`:`<button class="btn sm" data-act="tpVid" data-ex="${esc(n)}" data-write>📷 צילום הדגמה</button>`}</div>`).join('')}</div>`:'<p class="muted">אין עדיין אימון מתוכנן. בונים אימון בלשונית "תוכנית אימונים", והתרגילים יופיעו כאן.</p>'}</div>
@@ -2948,6 +2957,7 @@ async function tpAct(name,el){
     const rr=document.getElementById('rtRule');if(rr)sd.rule=rr.value.trim();const rg=document.getElementById('rtRng');if(rg)sd.rng=rg.checked;sd.v='v'+Date.now();const ok=await updClient(c.id,{remoteSeed:sd,remote:true,trainingType:'remote'});if(ok){c.remoteSeed=sd;S.rtEdit=null;if(c.portal)await tpPublish(c.id,true);toast('התוכנית נשמרה והדף עודכן ✓');render()}break;}
   case 'tpGoHome': {S.tab='portal'; if(!c.portal) await tpPublish(c.id,true); render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},300); break;}
   case 'tpPub': await tpPublish(c.id); break;
+  case 'tpMsg': {const ta=document.getElementById('tpmsg'); const v=(ta&&ta.value||'').trim(); if(!v) break; const M=[...(c.portalMsgs||[]),{t:Date.now(),text:v}].slice(-150); c.portalMsgs=M; await updClient(c.id,{portalMsgs:M}); if(ta) ta.value=''; const ok=await tpPublish(c.id,true); toast(ok?'נשלח ✓':'ההודעה נשמרה, אבל הדף לא התעדכן. נסו "עדכון הדף"'); render(); setTimeout(()=>{const t=document.getElementById('tpthread');if(t)t.scrollTop=t.scrollHeight},50); break;}
   case 'tpCopy': try{await navigator.clipboard.writeText(tpLink(c));toast('הקישור הועתק')}catch(e){prompt('העתיקו את הקישור:',tpLink(c))} break;
   case 'tpRefresh': S.tpReps[c.id]=null; await tpLoad(c,true); break;
   case 'tpSeen': await updClient(c.id,{portalSeen:Math.floor(Date.now()/1000)}); S.tpNew[c.id]=0; render(); break;
@@ -3005,7 +3015,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114075000';
+const APP_V='20261114083000';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
