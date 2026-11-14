@@ -988,7 +988,7 @@ function carryTempo(ctx,d,ex,old){if(!ctx||!ctx.sessions||d.status!=='done')retu
   ne.tempo=ex.tempo;saveDoc('sessions/'+nx.id,{exercises:nx.exercises},{merge:true,delay:300});}
 function barHint(n){if(isSmithPush(n)||/שכיבות ס[מש]יכה/.test(String(n||'')))return '';n=String(n||'');const b=/סמית/.test(n)?['מוט הסמית',7]:/סייפטי|safety/i.test(n)?['מוט הסייפטי בר',17.5]:/טראפ|trap/i.test(n)?['הטראפ בר',20]:/מוט/.test(n)?['המוט האולימפי',20]:null;return b?`המשקל = פלטות בלבד (${b[0]} ${b[1]} ק"ג לא נספר)`:''}
 function isBW(n){const l=libFind(n);return !!(l&&l[1]==='bw'&&!/גומי|שכיבות סמיכה בסמית/.test(String(n)))}
-function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
+function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!/\d/.test(String(ex.targetKg??''))&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
 function stepFor(group,kg){ const st=S.settings||{}; return num(st.step)??1; }
 function exStats(ex){
   const done=(ex.sets||[]).filter(s=>num(s.reps)!=null);
@@ -3079,7 +3079,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114124000';
+const APP_V='20261114124500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
