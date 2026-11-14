@@ -598,6 +598,9 @@ input::placeholder{font-size:13px}
 /*all*/@media all{.ptab td.pnotes{position:relative;padding:0;height:64px;cursor:text}.ptab td.pnotes textarea{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:2em;max-height:100%;overflow:hidden;font-size:15px;padding:2px 8px}.ptab td.pnotes textarea.full{overflow:auto}}
 .sheet td.name .nmview{padding:4px 8px}.sheet td.name .nmwrap input{padding:0 8px}
 .rng input[data-f="repMax"]:placeholder-shown,.rng input[data-gf="repMax"]:placeholder-shown{opacity:.6}
+
+/* no spin arrows on any number field; wheel never changes a value */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 </style>
 
 <div class="app" dir="rtl">
@@ -3020,7 +3023,8 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114090500';
+const APP_V='20261114110500';
+document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
