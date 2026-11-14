@@ -640,6 +640,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .kiw{display:flex;align-items:center;justify-content:center;gap:3px;border-bottom:1px dashed var(--line);margin:0 2px 2px;cursor:text}
 .kiw span{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap}
 .kiw .ki{border:0!important;width:100%!important;min-width:0}
+/* הערות/טמפו: שדה הכתיבה ממלא את המשבצת, והמשבצת עצמה קטנה יותר */
+.sheet td.notes,.ptab td.pnotes{height:auto!important;padding:2px!important;vertical-align:middle}
+.sheet td.notes textarea,.ptab td.pnotes textarea{position:static!important;transform:none!important;display:block;width:100%!important;min-height:40px!important;max-height:none!important;margin:0;padding:4px 6px!important;font-size:15px!important;line-height:1.3;text-align:center;border:1px solid transparent!important;border-radius:8px!important;background:var(--surface-2)!important;box-sizing:border-box}
+.sheet td.notes textarea:focus,.ptab td.pnotes textarea:focus{border-color:var(--accent)!important;background:var(--surface)!important;outline:none}
 </style>
 
 <div class="app" dir="rtl">
@@ -1280,8 +1284,7 @@ function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
     if(e.target.closest('[data-mustop]')){const A=muA();A.pause();A.removeAttribute('src');A.load();MU.cur=null;muPaint()}});
   box.addEventListener('input',e=>{if(e.target.hasAttribute('data-muvol')){const A=muA();A.volume=+e.target.value;lsSet('rs_mu_vol',String(A.volume))}})}
 function muShow(){const box=$('#music');if(!box)return;const on=!!(S.meId&&S.db);box.hidden=!on;if(on)muInit()}
-function fitNote(ta){const td=ta.closest('td');if(!td){autoGrow(ta);return}td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;
-  if(need+8>td.clientHeight)td.style.height=(need+8)+'px';ta.style.height=Math.max(need,24)+'px';ta.classList.remove('full')}
+function fitNote(ta){const td=ta.closest('td');if(td)td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;ta.style.height=Math.max(need+2,40)+'px';ta.classList.remove('full')}
 function autoGrow(ta){ta.style.height='auto';ta.style.height=(ta.scrollHeight+2)+'px'}
 const GROW_SEL='label.warmup textarea, textarea[data-introdoc], textarea[data-f="sess.notes"], textarea[data-gf="notes"]';
 function fitNotes(root){(root||document).querySelectorAll('.sheet td.notes textarea, .ptab td.pnotes textarea').forEach(fitNote);(root||document).querySelectorAll(GROW_SEL).forEach(autoGrow)}
@@ -3128,7 +3131,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114150000';
+const APP_V='20261114151000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
