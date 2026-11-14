@@ -625,6 +625,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .ptab td.res .ki{display:block;width:100%;font-size:13px;min-height:26px!important;padding:2px!important;border:0;border-bottom:1px dashed var(--line);background:transparent;text-align:center;color:var(--muted)}
 .ptab td.res .ki:not(:placeholder-shown){color:var(--ink);font-weight:700}
 .exsug{position:absolute;z-index:300;max-height:320px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.2);padding:4px;display:flex;flex-direction:column}
+.exsugh{font-size:13px;color:var(--muted);padding:4px 12px}
+.exsug .exadd{color:var(--accent);font-weight:700;border-top:1px solid var(--line)!important;border-radius:0 0 8px 8px}
 .exsug button{text-align:start;border:0;background:transparent;font:inherit;font-size:17px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--ink)}
 .exsug button:hover,.exsug button:focus{background:var(--surface-2)}
 </style>
@@ -2858,11 +2860,20 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 /* הצעות שמות תרגילים מהמאגר (עובד גם באייפד, במקום ה-datalist) */
 const EXSUG_SEL='[data-f="name"],[data-gf="name"],input[data-rte$=".n"],#cueName,input[data-th$=".n"]';
 function exSugHide(){const b=document.querySelector('.exsug');if(b)b.remove()}
+function exGuessGrp(n){return /שיווי|רגל אחת|טנדם|הליכת/.test(n)?'balance':/בטן|פלאנק|פאלוף|דד באג|בירד|קראנץ|אלכסונים|ליבה|קארי|ווק/.test(n)?'core':/סקוואט|ירך|דדליפט|מכרע|לאנג|סטפ|היפ|גשר|גלוט|תאומים|רגליים|ברך|קימה|טיבאליס/.test(n)?'lower':'upper'}
+async function exAddNew(name){if(/[A-Za-z]/.test(name)){toast('כותבים את שם התרגיל בעברית');return false}
+  if(!LIB.some(l=>l[0]===name))LIB.push([name,/פלאנק|החזקה|שניות/.test(name)?'sec':'kg',exGuessGrp(name)]);refreshLib();
+  try{const ref=S.db.collection('settings').doc('exercisesExtra');const sn=await ref.get();const cur=(sn.exists&&sn.data().list)||[];if(!cur.some(x=>x.n===name)){cur.push({n:name,u:LIB.find(l=>l[0]===name)[1],g:LIB.find(l=>l[0]===name)[2],by:S.meId||'',at:Date.now()});await ref.set({list:cur},{merge:true})}}catch(e){}
+  toast('התרגיל נוסף לרשימה ✓');return true}
 function exSugShow(inp){const q=String(inp.value||'').trim();const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
-  let L=toks.length?all.filter(n=>toks.every(t=>n.includes(t))):all.slice();if(q)L.sort((a,b)=>(a.startsWith(q)?0:1)-(b.startsWith(q)?0:1)||a.length-b.length);L=L.filter(n=>n!==q).slice(0,14);
-  exSugHide();if(!L.length)return;const box=document.createElement('div');box.className='exsug';box.innerHTML=L.map(n=>`<button type="button" data-exsug="${esc(n)}">${esc(n)}</button>`).join('');document.body.appendChild(box);
-  const r=inp.getBoundingClientRect();box.style.top=(window.scrollY+r.bottom+2)+'px';box.style.width=Math.max(240,r.width)+'px';box.style.left=Math.max(4,Math.min(window.scrollX+r.right-Math.max(240,r.width),window.scrollX+innerWidth-Math.max(240,r.width)-4))+'px';
-  box.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-exsug]');if(!b)return;e.preventDefault();inp.value=b.dataset.exsug;exSugHide();inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.blur()})}
+  let A=toks.length?all.filter(n=>toks.every(t=>n.includes(t))):all.slice();if(q)A.sort((a,b)=>(a.startsWith(q)?0:1)-(b.startsWith(q)?0:1)||a.length-b.length);
+  let B=[];if(q){const st=toks.filter(t=>t.length>=2).map(t=>t.slice(0,Math.min(3,t.length)));B=all.filter(n=>!A.includes(n)&&st.some(t=>n.includes(t)));B.sort((a,b)=>st.filter(t=>b.includes(t)).length-st.filter(t=>a.includes(t)).length||a.length-b.length)}
+  let fx=null;try{const f=exNorm(q);if(f)fx=dn(f.n)}catch(e){}
+  let L=[...(fx?[fx]:[]),...A,...B].filter((n,k,a)=>n&&n!==q&&a.indexOf(n)===k).slice(0,14);const exact=all.includes(q);
+  exSugHide();if(!L.length&&(!q||exact))return;const box=document.createElement('div');box.className='exsug';
+  box.innerHTML=(q&&!exact&&!A.length&&L.length?`<div class="exsugh">אולי התכוונת ל:</div>`:'')+L.map(n=>`<button type="button" data-exsug="${esc(n)}">${esc(n)}</button>`).join('')+(q&&!exact?`<button type="button" class="exadd" data-exadd="1">➕ להוספה: «${esc(q)}»</button>`:'');document.body.appendChild(box);
+  const r=inp.getBoundingClientRect();const w=Math.max(260,r.width);box.style.top=(window.scrollY+r.bottom+2)+'px';box.style.width=w+'px';box.style.left=Math.max(4,Math.min(window.scrollX+r.right-w,window.scrollX+innerWidth-w-4))+'px';
+  box.addEventListener('pointerdown',async e=>{const b=e.target.closest('[data-exsug],[data-exadd]');if(!b)return;e.preventDefault();let v=b.dataset.exsug;if(b.dataset.exadd){if(!await exAddNew(q))return;v=q}inp.value=v;exSugHide();inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.blur()})}
 document.addEventListener('focusin',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)){if(t.hasAttribute('list'))t.removeAttribute('list');exSugShow(t)}});
 document.addEventListener('input',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)&&document.activeElement===t)exSugShow(t)});
 document.addEventListener('focusout',e=>{if(e.target.matches&&e.target.matches(EXSUG_SEL))setTimeout(exSugHide,150)});
@@ -3084,6 +3095,7 @@ async function boot(){
   db.doc('settings/templates').onSnapshot(sn=>{S.tpls=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
   db.doc('settings/cues').onSnapshot(sn=>{S.cues=sn.exists?(sn.data()||{}):{};scheduleRender()},()=>{});
   db.doc('settings/progression').onSnapshot(sn=>{if(sn.exists)S.settings={step:1,...sn.data()};scheduleRender()},()=>{});
+  db.doc('settings/exercisesExtra').onSnapshot(sn=>{const L=(sn.exists&&sn.data().list)||[];L.forEach(x=>{if(x&&x.n&&!LIB.some(l=>l[0]===x.n))LIB.push([x.n,x.u||'kg',x.g||'upper'])});refreshLib()},()=>{});
   db.doc('settings/exercises').onSnapshot(sn=>{const d=sn.exists?(sn.data()||{}):{};S.exNames=d;S.exNamesRev={};Object.entries(d).forEach(([o,c])=>{if(c&&c!==o)S.exNamesRev[c]=o;});refreshLib();},()=>{});
   let linked=false;
   db.collection('clients').onSnapshot(snap=>{S.clients=snap.docs.map(d=>({id:d.id,...d.data()}));S.loaded.k=true;
@@ -3096,7 +3108,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114130000';
+const APP_V='20261114130500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
