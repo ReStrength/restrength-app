@@ -2867,7 +2867,7 @@ async function exAddNew(name){if(/[A-Za-z]/.test(name)){toast('כותבים את
   toast('התרגיל נוסף לרשימה ✓');return true}
 function exSugShow(inp){const q=String(inp.value||'').trim();const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
   let A=toks.length?all.filter(n=>toks.every(t=>n.includes(t))):all.slice();if(q)A.sort((a,b)=>(a.startsWith(q)?0:1)-(b.startsWith(q)?0:1)||a.length-b.length);
-  let B=[];if(q){const st=toks.filter(t=>t.length>=2).map(t=>t.slice(0,Math.min(3,t.length)));B=all.filter(n=>!A.includes(n)&&st.some(t=>n.includes(t)));B.sort((a,b)=>st.filter(t=>b.includes(t)).length-st.filter(t=>a.includes(t)).length||a.length-b.length)}
+  let B=[];if(q&&!A.length){const nz=x=>x.replace(/[׳`]/g,"'");const st=toks.filter(t=>t.length>=2).map(t=>nz(t).slice(0,Math.min(3,t.length)));const sc=n=>{const ws=nz(n).split(/\s+/);return st.filter(t=>ws.some(w=>w.startsWith(t))).length};B=all.filter(n=>sc(n)>0);B.sort((a,b)=>sc(b)-sc(a)||a.length-b.length)}
   let fx=null;try{const f=exNorm(q);if(f)fx=dn(f.n)}catch(e){}
   let L=[...(fx?[fx]:[]),...A,...B].filter((n,k,a)=>n&&n!==q&&a.indexOf(n)===k).slice(0,14);const exact=all.includes(q);
   exSugHide();if(!L.length&&(!q||exact))return;const box=document.createElement('div');box.className='exsug';
@@ -3108,7 +3108,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114130500';
+const APP_V='20261114131000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
