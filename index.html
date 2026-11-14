@@ -601,6 +601,17 @@ input::placeholder{font-size:13px}
 
 /* no spin arrows on any number field; wheel never changes a value */
 input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+/* no inner scrollbars in the program: only the page scrolls */
+.sheet-wrap,.tbl-wrap{overflow:visible!important}
+.sheet,.ptab{min-width:0!important;width:100%;table-layout:auto}
+.sheet th,.ptab th{white-space:normal!important}
+.sheet td.name,.ptab td.pname{position:static!important;min-width:110px!important;max-width:none!important;box-shadow:none!important}
+.sheet td.notes,.ptab td.pnotes{min-width:90px!important}
+.ptab td.pwho{min-width:90px!important}
+.sheet td.tag{min-width:34px!important}
+.sheet thead th:first-child,.ptab thead tr:last-child th:first-child{position:static!important}
+.sheet td.notes textarea.full,.ptab td.pnotes textarea.full{overflow:hidden!important}
+@media (max-width:700px){.sheet th,.ptab th{font-size:12px!important;padding:6px 3px!important}.sheet input,.sheet select{padding:4px 2px!important;font-size:16px}.sheet td.kg{width:auto!important}.sheet td.res{width:auto!important}.sheet th.setcol{min-width:0!important}}
 </style>
 
 <div class="app" dir="rtl">
