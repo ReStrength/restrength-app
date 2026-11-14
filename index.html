@@ -608,7 +608,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet th,.ptab th{white-space:normal!important}
 .sheet td.name,.ptab td.pname{position:static!important;min-width:90px!important;max-width:0!important;box-shadow:none!important}
 .sheet td.notes,.ptab td.pnotes{min-width:76px!important}
-.sheet td.acts,.ptab td.acts{white-space:normal!important;width:1%;min-width:0!important}.sheet td.acts .btn,.ptab td.acts .btn{margin:1px!important}
+.sheet td.acts,.ptab td.acts{white-space:normal!important;width:1%;min-width:124px!important}.sheet td.acts .btn,.ptab td.acts .btn{margin:1px!important}
 .prevline{white-space:normal!important}
 .sheet td input,.sheet td select,.ptab td input,.ptab td select{min-width:0!important;max-width:100%}
 .ptab td.pwho{min-width:90px!important}
@@ -1284,7 +1284,7 @@ function muInit(){const box=$('#music');if(!box||MU.init)return;MU.init=1;
     if(e.target.closest('[data-mustop]')){const A=muA();A.pause();A.removeAttribute('src');A.load();MU.cur=null;muPaint()}});
   box.addEventListener('input',e=>{if(e.target.hasAttribute('data-muvol')){const A=muA();A.volume=+e.target.value;lsSet('rs_mu_vol',String(A.volume))}})}
 function muShow(){const box=$('#music');if(!box)return;const on=!!(S.meId&&S.db);box.hidden=!on;if(on)muInit()}
-function fitNote(ta){const td=ta.closest('td');if(td)td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;ta.style.height=Math.max(need+2,40)+'px';if(td&&td.rowSpan>1){const h=td.clientHeight-6;if(h>need+2)ta.style.height=h+'px'}ta.classList.remove('full')}
+function fitNote(ta){const td=ta.closest('td');if(td)td.style.height='';ta.style.height='0px';const need=ta.scrollHeight;ta.style.height=Math.max(need+2,40)+'px';if(td){const h=td.clientHeight-6;if(h>need+2)ta.style.height=h+'px'}ta.classList.remove('full')}
 function autoGrow(ta){ta.style.height='auto';ta.style.height=(ta.scrollHeight+2)+'px'}
 const GROW_SEL='label.warmup textarea, textarea[data-introdoc], textarea[data-f="sess.notes"], textarea[data-gf="notes"]';
 function fitNotes(root){(root||document).querySelectorAll('.sheet td.notes textarea, .ptab td.pnotes textarea').forEach(fitNote);(root||document).querySelectorAll(GROW_SEL).forEach(autoGrow)}
@@ -3131,7 +3131,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114151500';
+const APP_V='20261114152000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
