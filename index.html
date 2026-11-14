@@ -605,8 +605,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet-wrap,.tbl-wrap{overflow:visible!important}
 .sheet,.ptab{min-width:0!important;width:100%;table-layout:auto}
 .sheet th,.ptab th{white-space:normal!important}
-.sheet td.name,.ptab td.pname{position:static!important;min-width:110px!important;max-width:none!important;box-shadow:none!important}
-.sheet td.notes,.ptab td.pnotes{min-width:90px!important}
+.sheet td.name,.ptab td.pname{position:static!important;min-width:90px!important;max-width:0!important;box-shadow:none!important}
+.sheet td.notes,.ptab td.pnotes{min-width:76px!important}
+.sheet td.acts,.ptab td.acts{white-space:normal!important;width:1%;min-width:0!important}.sheet td.acts .btn,.ptab td.acts .btn{margin:1px!important}
+.prevline{white-space:normal!important}
+.sheet td input,.sheet td select,.ptab td input,.ptab td select{min-width:0!important;max-width:100%}
 .ptab td.pwho{min-width:90px!important}
 .sheet td.tag{min-width:34px!important}
 .sheet thead th:first-child,.ptab thead tr:last-child th:first-child{position:static!important}
@@ -3034,7 +3037,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114110500';
+const APP_V='20261114112000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
