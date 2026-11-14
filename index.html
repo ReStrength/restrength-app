@@ -615,6 +615,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet thead th:first-child,.ptab thead tr:last-child th:first-child{position:static!important}
 .sheet td.notes textarea.full,.ptab td.pnotes textarea.full{overflow:hidden!important}
 @media (max-width:700px){.sheet th,.ptab th{font-size:12px!important;padding:6px 3px!important}.sheet input,.sheet select{padding:4px 2px!important;font-size:16px}.sheet td.kg{width:auto!important}.sheet td.res{width:auto!important}.sheet th.setcol{min-width:0!important}}
+.stepv{display:flex;flex-direction:column;align-items:center;gap:0}
+.stepv .stp-a{border:0;background:transparent;color:var(--accent);font-size:15px;line-height:1;padding:3px 10px;cursor:pointer;border-radius:6px}
+.stepv .stp-a:hover{background:var(--surface-2)}
+.stepv input{min-height:34px!important}
 </style>
 
 <div class="app" dir="rtl">
@@ -1444,8 +1448,8 @@ function pairTable(d,ms,exs,tags){
     if(tg.first&&(tg.ss||exs.some(e=>e.ss)))body+=`<tr class="gsep"><td colspan="${nSets+8}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span></td></tr>`;
     ms.forEach((c,k)=>{const mm=ex.m[c.id]||{sets:[]};const first=k===0;const prev=mm.off?'':prevShort(gMemCtx(c.id),ex,null);
       const shared=first?`<td class="pname" rowspan="${ms.length}"><span class="nmwrap"><span class="nmview">${esc(dn(ex.name))||'<span class="muted">שם התרגיל</span>'}</span><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(dn(ex.name))}" placeholder="שם התרגיל"></span>${barHint(ex.name)&&!isSmithPush(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}</td>
-        <td class="narrow" rowspan="${ms.length}">${d.intro?`<b>2</b>`:`<input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}">`}</td>
-        <td class="rngc" rowspan="${ms.length}">${d.intro?`<b dir="ltr">6–8</b>`:`<span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}"></span>`}${sec?'<div class="muted small">שניות</div>':''}</td>
+        <td class="narrow" rowspan="${ms.length}">${d.intro?`<b>2</b>`:`<div class="stepv" data-stepk="sets"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}</td>
+        <td class="rngc" rowspan="${ms.length}">${d.intro?`<b dir="ltr">6–8</b>`:`<div class="stepv" data-stepk="rng"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}"></span><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}${sec?'<div class="muted small">שניות</div>':''}</td>
         <td class="pnotes" rowspan="${ms.length}"><textarea data-gf="tempo" data-ei="${i}" rows="2" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, דגשים'}">${esc(ex.tempo||'')}</textarea></td>`:'';
       const acts=first?`<td class="acts" rowspan="${ms.length}"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" data-tip="כאב – הצעה לשינוי מנח">🤕</button><span class="mvcol"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" data-tip="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" data-tip="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-tip="מחיקת התרגיל" data-write>✕</button></td>`:'';
       const who=`<td class="pwho p${k}"><b>${esc(String(c.name).split(' ')[0])}</b>${mm.off?'':` <button class="linkbtn tiny padaptbtn${S.gAdapt===`${i}-${c.id}`?' on':''}" data-act="gAdapt" data-ei="${i}" data-cid="${c.id}" data-tip="התאמת תרגיל עבור ${esc(String(c.name).split(' ')[0])}">✎</button>`}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!mm.off&&mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${i}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>`;
@@ -1472,6 +1476,7 @@ function clientKnownHtml(c,withName){
   const ag=ageOf(c);const rows=[];
   if(ag) rows.push({l:'גיל',v:String(ag)});
   if(c.goalsShort) rows.push({l:'מטרה',v:c.goalsShort});
+  if(c.goalStart) rows.push({l:'נקודת פתיחה',v:c.goalStart});
   if(c.medHistory) rows.push({l:'רקע רפואי',v:c.medHistory});
   if(c.limits) rows.push({l:'מגבלות',v:c.limits});
   if(c.meds) rows.push({l:'תרופות',v:c.meds});
@@ -1504,7 +1509,7 @@ function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent|
     // זוגי: הערה אחת משותפת — נשמרת על הלקוח הראשון
     const c0=list[0],c1=list[1];const pairSent=sent[c0.id];
     const defText=c0.introDoc||introDocDefault(c0,c1);
-    return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">הערה אחת לשני בני הזוג. כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>.</div><div style="margin-top:8px;font-size:16px;line-height:1.7;border:1px solid #f5d76e;border-radius:10px;padding:8px 10px;background:#fff"><div style="color:#c92a2a;font-weight:800">❌ לא לכתוב: "רוצה להתחזק ולשפר יציבות"</div><div style="color:#2b8a3e;font-weight:800;margin-top:4px">✅ כן לכתוב:</div><div style="white-space:pre-line">מפגש היכרות עם יוסי (67):
+    return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">הערה אחת לשני בני הזוג. כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>.</div><div style="margin-top:8px;font-size:16px;line-height:1.7;border:1px solid #f5d76e;border-radius:10px;padding:8px 10px;background:#fff"><div style="color:#c92a2a;font-weight:800">❌ לא לכתוב: "רוצה להתחזק ולשפר יציבות"</div><div style="color:#2b8a3e;font-weight:800;margin-top:4px">✅ כן לכתוב (זו רק דוגמה, כותבים על המתאמן שלכם):</div><div style="white-space:pre-line">מפגש היכרות עם יוסי (67):
 🎯 מה הכי חשוב לו: לחזק את הרגליים כדי ללכת בביטחון ולעמוד בקצב של החברים, בהליכות הוא תמיד נשאר מאחור. בנוסף, מפחד להרים את הנכדה בגלל כאבים בגב התחתון.
 🔍 מה ראינו באימון: שיווי משקל חלש – קשה לו להתייצב על רגל אחת כמה שניות. הגב התחתון כאב לו בתרגילי בטן.
 📝 ההמלצה שלי: דגש על חיזוק הרגליים, לשיפור מהירות ההליכה בצורה בטוחה ויציבה. חיזוק הגב והרמת משקל הדרגתית שתעזור לו לחזור להרים את הנכדה בלי כאב.</div></div>
@@ -1513,18 +1518,31 @@ function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent|
    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c0.id}" data-write>${pairSent?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}</button></div></div></div>`}
   // יחיד
   const c=list[0];const isSent=sent[c.id];
-  return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div style="margin-top:8px;font-size:16px;line-height:1.7;border:1px solid #f5d76e;border-radius:10px;padding:8px 10px;background:#fff"><div style="color:#c92a2a;font-weight:800">❌ לא לכתוב: "רוצה להתחזק ולשפר יציבות"</div><div style="color:#2b8a3e;font-weight:800;margin-top:4px">✅ כן לכתוב:</div><div style="white-space:pre-line">מפגש היכרות עם יוסי (67):
+  return `<div class="card" style="border:2px solid #ffe08a;background:#fffbea"><h3 style="margin:0 0 4px">📲 התיעוד לשקד</h3><div class="muted small">כותבים כאן בסיום המפגש ולוחצים <b>"שליחה לשקד"</b>. לא צריך לכתוב בארבוקס. (שכחתם ללחוץ? זה יישלח לבד כשמסיימים את האימון.)</div><div style="margin-top:8px;font-size:16px;line-height:1.7;border:1px solid #f5d76e;border-radius:10px;padding:8px 10px;background:#fff"><div style="color:#c92a2a;font-weight:800">❌ לא לכתוב: "רוצה להתחזק ולשפר יציבות"</div><div style="color:#2b8a3e;font-weight:800;margin-top:4px">✅ כן לכתוב (זו רק דוגמה, כותבים על המתאמן שלכם):</div><div style="white-space:pre-line">מפגש היכרות עם יוסי (67):
 🎯 מה הכי חשוב לו: לחזק את הרגליים כדי ללכת בביטחון ולעמוד בקצב של החברים, בהליכות הוא תמיד נשאר מאחור. בנוסף, מפחד להרים את הנכדה בגלל כאבים בגב התחתון.
 🔍 מה ראינו באימון: שיווי משקל חלש – קשה לו להתייצב על רגל אחת כמה שניות. הגב התחתון כאב לו בתרגילי בטן.
 📝 ההמלצה שלי: דגש על חיזוק הרגליים, לשיפור מהירות ההליכה בצורה בטוחה ויציבה. חיזוק הגב והרמת משקל הדרגתית שתעזור לו לחזור להרים את הנכדה בלי כאב.</div></div>
    <div style="margin-top:10px">${isSent?`<span class="chip up">נשלח לשקד ✓</span>`:''}
    <textarea rows="6" style="width:100%;margin-top:6px" data-introdoc="${c.id}">${esc(c.introDoc||introDocDefault(c))}</textarea>
    <div class="row" style="margin-top:6px"><button class="btn primary" data-act="introSendNow" data-cid="${c.id}" data-write>${isSent?'📤 שליחה מחדש לשקד':'📤 שליחה לשקד'}</button></div></div></div>`}
+/* מהתיעוד לשקד → מטרות בתיק (למדידה לאורך התוכנית) */
+function introSec(text,emo){const L=String(text||'').split('\n');let on=false,out=[];for(const l of L){if(/^\s*(🎯|🔍|📝)/.test(l)){on=l.trim().startsWith(emo);if(on){out.push(l.replace(/^\s*\S+\s*[^:]*:\s*/,''))}continue}if(on)out.push(l)}return out.join('\n').trim()}
+function introPick(sec,first,other){if(!first||!other)return sec;const lines=sec.split(/\n|(?=\b[א-ת]+\s*:)/);const re=n=>new RegExp('(^|[\\s\\-–•(])'+n+'\\s*[:\\-–]');const mine=lines.filter(l=>re(first).test(l)),theirs=lines.filter(l=>re(other).test(l));if(mine.length)return mine.map(l=>l.replace(re(first),'$1').trim()).join(' ');if(theirs.length)return '';return sec}
+function introGoalCats(t){const m=[['falls',/שיווי|נפיל|יציב|מעיד/],['endurance',/הליכ|קצב|מדרג|סיבולת|עייפ|נשימ/],['function',/לקום|כיסא|עצמא|נכד|להרים|קניות|לסחוב|להתכופף|רצפה/],['shoulder',/כתף/],['back',/גב/],['kneehip',/ברך|ברכיים|ירך|אגן/],['bone',/עצם|אוסטאו/]];const r=m.filter(x=>x[1].test(t)).map(x=>x[0]);return r.length?r:['general']}
+async function introToGoals(c,text,partner){if(!c)return;const first=String(c.name||'').trim().split(/\s+/)[0],oth=partner?String(partner.name||'').trim().split(/\s+/)[0]:'';
+  const g=introPick(introSec(text,'🎯'),first,oth),st=introPick(introSec(text,'🔍'),first,oth);if(!g&&!st)return;
+  const bullets=g.split(/(?<=[.!?])\s+|\n|\s*בנוסף,?\s*/).map(x=>x.replace(/^[•\-\s]+/,'').trim()).filter(x=>x.length>3);
+  const cur=String(c.goalsShort||c.goalText||'');const add=bullets.filter(b=>!cur.includes(b));const patch={};
+  if(add.length)patch.goalsShort=(cur?cur.trim()+'\n':'')+add.map(b=>'• '+b).join('\n');
+  if(st&&!c.goalStart)patch.goalStart=st;
+  const old=c.goals||[];let cats=[...new Set([...old,...introGoalCats(g)])];if(cats.length>1&&!old.includes('general'))cats=cats.filter(k=>k!=='general');if(cats.join()!==(c.goals||[]).join())patch.goals=cats;
+  if(!c.goalDate&&add.length){const d=new Date();d.setMonth(d.getMonth()+3);patch.goalDate=d.toISOString().slice(0,10)}
+  if(Object.keys(patch).length&&await updClient(c.id,patch))Object.assign(c,patch)}
 const INTRO_HOOK='https://hook.eu1.make.com/t6mxy6fufk4w34z0xnkste5mah910fj1';
 async function introSend(c,d){const t=document.querySelector(`[data-introdoc="${c.id}"]`);const text=(t?t.value:(c.introDoc||'')).trim();
   if(t&&t.value!==c.introDoc){c.introDoc=t.value;updClient(c.id,{introDoc:t.value})}
   if(!text||text===introDocDefault(c).trim()) return false;
-  try{const r=await fetch(INTRO_HOOK,{method:'POST',body:new URLSearchParams({k:'rs-intro-7f3k',name:c.name||'',phone:c.phone||'',coach:coachName(S.meId),date:d.date||today(),text})});if(!r.ok)return false;return true}catch(e){return false}}
+  try{const r=await fetch(INTRO_HOOK,{method:'POST',body:new URLSearchParams({k:'rs-intro-7f3k',name:c.name||'',phone:c.phone||'',coach:coachName(S.meId),date:d.date||today(),text})});if(!r.ok)return false;try{const p=partnerOf(c);await introToGoals(c,text,p);if(p&&text.includes(String(p.name||'').trim().split(/\s+/)[0]))await introToGoals(p,text,c)}catch(e){}return true}catch(e){return false}}
 function introFill(d){(d.exercises||[]).forEach(ex=>{if(!ex.name)return;const n=Number(ex.targetSets)||2;const r=num(ex.repMin)??num(ex.repMax)??8;const kg=num(ex.targetKg);
   if(!(ex.sets||[]).some(x=>num(x.reps)!=null)) ex.sets=Array.from({length:n},()=>({kg:kg??'',reps:r}))})}
 function vGroup(){
@@ -1922,8 +1940,8 @@ function progTable(ctx,doc){
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
     return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
      <td class="name"><span class="nmwrap"><span class="nmview">${esc(dn(ex.name))||'<span class="muted">שם התרגיל</span>'}</span><input list="lib" data-f="name" value="${esc(dn(ex.name))}" placeholder="שם התרגיל"></span>${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(o)}">${esc(o)}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">✎ בשפה של הסטודיו: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(exNorm(ex.name).n)}" data-note="${esc(exNorm(ex.name).note)}">${esc(exNorm(ex.name).n)}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!doc.intro&&doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
-     <td class="narrow" data-l="סטים">${doc.intro?`<b>2</b>`:`<input type="number" min="1" max="6" min="1" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים">`}</td>
-     <td class="rngc" data-l="חזרות">${doc.intro?`<b dir="ltr">6–8</b>`:`<div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום" data-autojump="repMax"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}" aria-label="חזרות מקסימום"></div>`}${sec?'<div class="unitnote">שניות</div>':''}</td>
+     <td class="narrow" data-l="סטים">${doc.intro?`<b>2</b>`:`<div class="stepv" data-stepk="sets"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><input type="number" min="1" max="10" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}</td>
+     <td class="rngc" data-l="חזרות">${doc.intro?`<b dir="ltr">6–8</b>`:`<div class="stepv" data-stepk="rng"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום" data-autojump="repMax"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}" aria-label="חזרות מקסימום"></div><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}${sec?'<div class="unitnote">שניות</div>':''}</td>
      <td class="kg" data-l="${isSmithPush(ex.name)?'גובה הגבהה בסמית':doc.intro&&isIntroSquat(ex.name)?'משקל עבודה':tOnly(ex.name,doc.intro)?'משקל בסה״כ':isDumbbell(ex.name)?(ex.dumbSide==='total'?'משקל בסה״כ':'משקל כל יד'):'משקל עבודה (בלי המוט)'}">${doc.intro&&isIntroSquat(ex.name)?`<span class="nokg">ללא משקל</span>`:isSmithPush(ex.name)?`<select data-f="height" class="hsel" aria-label="גובה הגבהה בסמית">${(ex.height==='intro'?[7,6,5]:[7,6,5,4,3,2,1]).map(h=>`<option value="${h}"${(ex.height==='intro'?7:Number(ex.height)||7)===h?' selected':''}>גובה ${h}</option>`).join('')}</select><div class="muted small" style="font-size:12px;white-space:nowrap">7 קל ← ${ex.height==='intro'?5:1} קשה</div>`:`<input type="text" inputmode="decimal" data-f="targetKg" value="${esc(doc.intro&&tOnly(ex.name,true)&&(ex.targetKg===''||ex.targetKg==null)?'1-2':ex.targetKg)}" placeholder="${sec?'—':isBW(ex.name)?'משקל גוף':''}" aria-label="${ex.name==='סקוואט'?'טמפו/טווח תנועה':'משקל עבודה בק׳׳ג'}">${tOnly(ex.name,doc.intro)?`<div class="muted small" style="font-size:12px">בסה״כ</div>`:isDumbbell(ex.name)?`<div class="dumbtog"><button type="button" class="dumbbtn${(ex.dumbSide||'each')==='each'?' on':''}" data-act="dumbSide" data-v="each" data-i="${i}" data-write>כל יד</button><button type="button" class="dumbbtn${ex.dumbSide==='total'?' on':''}" data-act="dumbSide" data-v="total" data-i="${i}" data-write>בסה״כ</button></div>`:''}`}</td>
      <td class="notes"><textarea data-f="tempo" data-hint="1" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, ציוד'}">${esc(ex.tempo)}</textarea></td>
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];const hasKg=!sec&&unitOf(ex)==='kg'&&!(doc.intro&&isIntroSquat(ex.name))&&ex.name!=='סקוואט';const kgPH=hasKg?(num(ex.targetKg)!=null?String(ex.targetKg):''):'';return s?`<td class="res" data-l="סט ${j+1}">${hasKg?`<input class="ki" type="text" inputmode="decimal" data-f="kg" data-set="${j}" value="${esc(num(s.kg)!=null?s.kg:'')}" placeholder="${esc(kgPH)}" aria-label="משקל סט ${j+1}" title="משקל (ריק = כמו יעד)">`:''}<input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===(ex.sets||[]).length-1?`${(ex.sets||[]).length<6?`<button type="button" class="addset" data-act="setAdd" title="הוספת סט לתרגיל הזה" aria-label="הוספת סט" data-write>+</button>`:''}${(ex.sets||[]).length>1?`<button type="button" class="addset delset" data-act="setDel" title="הורדת הסט האחרון" aria-label="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>'}).join('')}
@@ -2204,7 +2222,7 @@ function vReport(c){
   <div class="stats"><div class="stat"><b>${done.length}</b>אימונים</div><div class="stat"><b>${rows.filter(r=>r.ch>0).length}</b>תרגילים עם שיפור</div>${top&&top.ch>0?`<div class="stat"><b>+${top.ch}%</b>${esc(top.n)}</div>`:''}</div>
   ${chart?`<h3>${esc(top.n)} – לאורך הזמן</h3>${chart}`:''}
   ${rows.length?`<h3>מה השתפר</h3><table><thead><tr><th>תרגיל</th><th>בהתחלה</th><th>היום</th><th>שינוי</th></tr></thead><tbody>${rows.slice(0,10).map(r=>`<tr><td>${esc(r.n)}</td><td>${r.f} ${r.unit}</td><td><b>${r.l} ${r.unit}</b></td><td class="${r.ch>0?'up':''}">${r.ch>0?'+':''}${r.ch}%</td></tr>`).join('')}</tbody></table>`:'<p class="muted">אחרי כמה אימונים יופיעו כאן נתוני ההתקדמות.</p>'}
-  ${(c.goalsShort||c.goalsLong)?`<div class="goalbox">${c.goalsShort?`<div><b>מטרות קרובות:</b> ${esc(c.goalsShort)}</div>`:''}${c.goalsLong?`<div><b>מטרת על:</b> ${esc(c.goalsLong)}</div>`:''}</div>`:''}
+  ${(c.goalsShort||c.goalsLong)?`<div class="goalbox">${c.goalsShort?`<div><b>מטרות קרובות:</b> ${esc(c.goalsShort)}</div>`:''}${c.goalsLong?`<div><b>מטרת על:</b> ${esc(c.goalsLong)}</div>`:''}${c.goalStart?`<div><b>נקודת פתיחה (מפגש היכרות):</b> ${esc(c.goalStart)}</div>`:''}</div>`:''}
   <div class="foot">כוח מחודש · מחזירים את הכוח, בונים איכות חיים</div></div>`;
 }
 
@@ -2810,6 +2828,12 @@ function bind(){
   main.addEventListener('focusout',()=>{setTimeout(()=>{if(S.deferred&&!editorFocused())render()},0)});
 }
 
+/* חיצים: סטים ±1, טווח חזרות זז כולו ±1 */
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-step]');if(!b)return;e.preventDefault();e.stopPropagation();
+  const w=b.closest('.stepv');if(!w)return;const d=Number(b.dataset.step);const fire=el=>{el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))};
+  if(w.dataset.stepk==='sets'){const el=w.querySelector('input');const mx=Number(el.max)||10;const v=Math.max(1,Math.min(mx,(Number(el.value)||0)+d));if(String(v)===el.value)return;el.value=v;fire(el);setTimeout(()=>{if(S.deferred&&!editorFocused())render()},0);return}
+  const lo=w.querySelector('[data-f="repMin"],[data-gf="repMin"]'),hi=w.querySelector('[data-f="repMax"],[data-gf="repMax"]');const a=Number(lo.value);if(!lo.value||(d<0&&a<=1))return;
+  lo.value=a+d;fire(lo);if(hi&&hi.value!==''){hi.value=Number(hi.value)+d;fire(hi)}},true);
 /* ---------- boot ---------- */
 /* ---------- דף אישי למתאמן (מוצפן: המפתח רק בקישור שהמתאמן קיבל ובתיק שלו כאן) ---------- */
 const TPB='https://yaringohar.com/clinic/', TPAGE='https://restrength.github.io/restrength-app/t.html';
@@ -3037,7 +3061,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114112000';
+const APP_V='20261114113500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
