@@ -1462,13 +1462,20 @@ function clientKnownHtml(c,withName){
 function introCard(list){const pair=list.length>1;
   const knownBlocks=list.map(c=>clientKnownHtml(c,pair)).join('');
   const hasKnown=knownBlocks.trim().length>0;
-  return `<details class="card" open style="border:2px solid #ffe08a;background:#fffbea"><summary><b>תזכורת לתסריט מפגש היכרות${pair?' זוגי':''}</b></summary><ol class="small" style="margin:8px 0 0;padding-inline-start:18px;line-height:1.7">
-   <li><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.</li>
-   <li><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים${hasKnown?' (ראו למטה)':' (גיל, ניסיון, מטרה, כאבים)'}${pair?'':''}${hasKnown?':':','} שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ומסבירים שהאימון היום לא אמור להיות קשה.${hasKnown?knownBlocks:''}</li>
-   <li><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד, ידיים קרובות.</li>
-   <li><b>עבודת כוח:</b> טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא").</li>
-   <li><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ו"אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
-</ol><div style="margin:12px 0 4px;padding:10px 12px;border:2px solid #e8590c;border-radius:10px;background:#fff4e6;font-size:19px;font-weight:800;line-height:1.5">⭐ חובה: ממלאים את "📲 התיעוד לשקד" בסוף העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד".</div>
+  return `<details class="card iscript" open style="border:3px solid #f5b800;background:#fffbea;font-size:20px;line-height:1.75"><summary style="font-size:24px;font-weight:900;cursor:pointer">📋 תזכורת לתסריט מפגש היכרות${pair?' זוגי':''}</summary><ol style="margin:10px 0 0;padding-inline-start:24px">
+   <li style="margin-bottom:10px"><b>קבלת פנים:</b> מזגן ומוזיקה מראש, יוצאים לקבל אותו בחיוך. יש אימון במקביל? השיחה בקליניקה או במשרד.
+    <div style="margin-top:6px;display:grid;gap:4px">
+     <div style="color:#c92a2a;font-weight:700">✗ לא מדברים במונחים רפואיים ובשפה מקצועית</div>
+     <div style="color:#c92a2a;font-weight:700">✗ לא מדברים יותר מדי על עצמנו</div>
+     <div style="color:#c92a2a;font-weight:700">✗ לא מעלים עצימות – נצמדים לתוכנית</div>
+     <div style="color:#2b8a3e;font-weight:700">✓ חיזוקים: "מצוין, הגוף שלך מגיב טוב"</div>
+     <div style="color:#2b8a3e;font-weight:700">✓ חולשה שזיהינו: "מעולה שראינו את זה – אפשר לשפר את זה מהר יחסית"</div>
+    </div></li>
+   <li style="margin-bottom:10px"><b>שיחת פתיחה:</b> מציגים מה שכבר יודעים${hasKnown?' (ראו למטה)':' (גיל, ניסיון, מטרה, כאבים)'}, שואלים "מה היית רוצה לשפר, בגוף או בהרגשה?", ואומרים שהאימון היום צריך להיות יחסית קל עבורם כדי לבנות בהדרגה.${hasKnown?knownBlocks:''}</li>
+   <li style="margin-bottom:10px"><b>חימום ושיווי משקל</b> (בשדה החימום) – עומדים צמוד למתאמן, ידיים קרובות, שיראה וירגיש שאנחנו איתו.</li>
+   <li style="margin-bottom:10px"><b>עבודת כוח:</b> טמפו ונשימה בכל תרגיל, ומחברים כל תרגיל למטרה שלו ("זה מחזק את הרגליים כדי שיהיה לך קל לקום מכיסא, שזה מה שאמרת שקשה לך").</li>
+   <li style="margin-bottom:10px"><b>סיום:</b> 2–3 דקות מתיחות, "איך הרגשת באימון?", "אולי מחר תרגיש קצת את השרירים – זה נורמלי", ובסוף: "אני מעביר את ההמלצה שלי לשקד, היא תיצור איתך קשר".</li>
+</ol><div style="margin:14px 0 4px;padding:12px 14px;border:3px solid #e8590c;border-radius:12px;background:#fff4e6;font-size:22px;font-weight:900;line-height:1.5">⭐ המפגש הוא 50 דקות. בסופו ממלאים את "📲 התיעוד לשקד" בתחתית העמוד מיד בסיום – לא הולכים בלי לרשום! לוחצים "שליחה לשקד".</div>
 </details>`}
 function introDocBox(list,d){const pair=list.length>1;const sent=d&&d.introSent||{};
   if(pair){
@@ -2987,7 +2994,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114070900';
+const APP_V='20261114071500';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
