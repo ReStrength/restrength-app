@@ -3057,6 +3057,17 @@ function tpSelfBox(c){
    ${hk.length?`<div class="small" style="margin-top:6px"><b>תרגילים לבית:</b><ul style="margin:4px 0">${hk.map(k=>{const m=H[k];return `<li>${esc(k)}: <b>${m.n} פעמים</b> · אחרון ${tpDay(m.last)}${pc(m.pain)}${m.maxPain>=4&&m.pain<4?` <span class="muted">(היה עד ${m.maxPain})</span>`:''}</li>`}).join('')}</ul></div>`:''}
    ${pains.length?`<div class="small" style="margin-top:6px;color:var(--bad)"><b>🤕 דיווחי כאב:</b> ${pains.map(o=>tpDay(o.t)+' · '+o.pain+'/10'+(o.text?' '+esc(o.text):'')).join(' | ')}</div>`:''}</div>`;
 }
+/* כיווץ סרטון לפני העלאה (720p, כ-1.5Mbps) – כדי שייטען מהר בטלפון */
+async function shrinkVideo(file,prog){try{
+  const types=['video/mp4;codecs=avc1.42E01F','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'];const mt=window.MediaRecorder&&types.find(t=>MediaRecorder.isTypeSupported(t));if(!mt)return file;
+  const url=URL.createObjectURL(file);const v=document.createElement('video');v.src=url;v.muted=true;v.playsInline=true;v.preload='auto';
+  await new Promise((res,rej)=>{v.onloadedmetadata=res;v.onerror=rej});const sc=Math.min(1,720/Math.max(v.videoWidth,v.videoHeight));const W=Math.round(v.videoWidth*sc/2)*2,H=Math.round(v.videoHeight*sc/2)*2;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');const st=cv.captureStream(30);
+  const rec=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:1500000});const ch=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};const stopped=new Promise(r=>rec.onstop=r);
+  const ended=new Promise(r=>v.onended=r);rec.start(1000);await v.play();
+  let on=true;const tick=()=>{if(!on)return;g.drawImage(v,0,0,W,H);if(prog&&v.duration)prog(Math.min(1,v.currentTime/v.duration));setTimeout(tick,33)};tick();
+  await ended;on=false;g.drawImage(v,0,0,W,H);rec.stop();await stopped;URL.revokeObjectURL(url);
+  const out=new Blob(ch,{type:mt.split(';')[0]});return out.size>200000&&out.size<file.size?new File([out],'video.'+(/mp4/.test(mt)?'mp4':'webm'),{type:out.type}):file}catch(e){return file}}
 function tpPickFile(cb){const i=document.createElement('input');i.type='file';i.accept='video/*,image/*';i.onchange=()=>{const f=i.files&&i.files[0];if(f)cb(f)};i.click()}
 function tpHRead(c){const H=clone(c.homeEx||[]);document.querySelectorAll('[data-th]').forEach(el=>{const [i,k]=el.dataset.th.split('.');if(H[+i])H[+i][k]=el.value.trim()});H.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:(x.unit||'bw')});return H}
 async function tpAct(name,el){
@@ -3086,6 +3097,7 @@ async function tpAct(name,el){
   case 'tpImport': {const o=(S.tpReps[c.id]||[]).find(x=>x.r===el.dataset.r); if(!o) return; if(await tpImportLog(c,o)) toast('נוסף להיסטוריה ✓ (אימון עצמאי)'); break;}
   case 'tpVid': case 'tpHVid': tpPickFile(async f=>{
     if(f.size>300*1048576){toast('הקובץ גדול מדי (עד 300MB)');return}
+    if(/^video/.test(f.type)&&f.size>12*1048576){toast('מכווץ את הסרטון… 0% (לא לסגור את המסך)');f=await shrinkVideo(f,p=>toast('מכווץ את הסרטון… '+Math.round(p*100)+'% (לא לסגור את המסך)'))}
     toast('מעלה… 0%');
     try{const m=await tpUpMedia(c,f,p=>toast('מעלה… '+Math.round(p*100)+'%'));
       if(name==='tpVid'){const V={...(c.exVideos||{}),[el.dataset.ex]:m};await updClient(c.id,{exVideos:V});c.exVideos=V}
@@ -3131,7 +3143,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114152000';
+const APP_V='20261114154000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
