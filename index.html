@@ -259,7 +259,8 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .weekttl h2{font-family:var(--f-display);font-weight:400;font-size:30px}
 .sheet td.notes textarea{border:0;border-radius:0;background:transparent;width:100%;min-height:54px;resize:vertical;padding:6px 8px;font-size:15px;line-height:1.35;color:var(--ink)}
 .sheet td.notes textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
-.sheet td.res .ki{display:none}
+.sheet td.res .ki{display:block;width:100%;font-size:13px;min-height:26px!important;padding:2px!important;border:0;border-bottom:1px dashed var(--line);background:transparent;text-align:center;color:var(--muted)}
+.sheet td.res .ki:not(:placeholder-shown){color:var(--ink);font-weight:700}
 .sheet tr.gsep td{background:var(--surface-2);color:var(--accent-text);font-weight:700;font-size:15px;text-align:start;padding:7px 14px;border-top:4px solid var(--band);border-left:0;border-right:0}
 .sheet thead + tbody tr.gsep:first-child td{border-top:0}
 .warmup textarea{min-height:56px;font-size:16px}.sheet td.notes textarea,.ptab td.pnotes textarea,label.warmup textarea,textarea[data-introdoc]{overflow:hidden}
@@ -2857,6 +2858,12 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(w.dataset.stepk==='sets'){const el=w.querySelector('input');const mx=Number(el.max)||10;const v=Math.max(1,Math.min(mx,(Number(el.value)||0)+d));if(String(v)===el.value)return;el.value=v;fire(el);setTimeout(()=>{if(S.deferred&&!editorFocused())render()},0);return}
   const lo=w.querySelector('[data-f="repMin"],[data-gf="repMin"]'),hi=w.querySelector('[data-f="repMax"],[data-gf="repMax"]');const a=Number(lo.value);if(!lo.value||(d<0&&a<=1))return;
   lo.value=a+d;fire(lo);if(hi&&hi.value!==''){hi.value=Number(hi.value)+d;fire(hi)}},true);
+/* טווח משקל: עד 2.5 ק"ג */
+document.addEventListener('change',e=>{const t=e.target;if(!t.matches||!t.matches('[data-f="targetKg"],[data-gm="kg"]'))return;const m=String(t.value).match(/^\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*$/);if(!m)return;let a=Number(m[1]),b=Number(m[2]);if(b<a)[a,b]=[b,a];
+  if(b-a>2.5){b=Math.round((a+2.5)*100)/100;toast('טווח משקל – עד 2.5 ק"ג. עודכן ל-'+a+'-'+b)}const nv=a+'-'+b;if(nv!==t.value.replace(/\s/g,'').replace('–','-')||b-a>2.5){t.value=nv;t.dispatchEvent(new Event('input',{bubbles:true}))}},true);
+/* אנגלית → עברית בשמות תרגילים */
+const EN_HE=[[/romanian deadlift|rdl/,'דדליפט רומני'],[/trap ?bar/,'טראפ בר'],[/safety ?(squat )?bar|ssb/,'סייפטי בר'],[/deadlift|dl\b/,'דדליפט'],[/goblet/,'גובלט'],[/box squat/,'בוקס סקוואט'],[/split squat|bulgarian/,'מכרע בולגרי'],[/squat/,'סקוואט'],[/reverse lunge/,"רברס לאנג'"],[/lunge/,'מכרע'],[/hip thrust/,'היפ תראסט'],[/glute bridge|bridge/,"גלוט ברידג'"],[/bench press|chest press/,'לחיצת חזה'],[/shoulder press|overhead press|ohp|military/,'לחיצת כתפיים'],[/push ?-?ups?/,'שכיבות סמיכה'],[/lat ?pull ?-?down|pull ?-?down/,'משיכה מפולי עליון'],[/pull ?-?ups?|chin ?-?ups?/,"צ'ין אפס"],[/face pull/,'פייס פול'],[/row/,'חתירה'],[/lateral raise/,'הרחקת כתפיים'],[/biceps? curl|curl/,'כפיפת מרפקים'],[/triceps|tricep|pushdown|extension/,'פשיטת מרפקים'],[/calf raise|calves?/,'עליות תאומים'],[/step ?-?up/,'סטפ אפ'],[/step ?-?down/,'סטפ דאון'],[/side plank/,'פלאנק צידי'],[/plank/,'פלאנק'],[/pallof/,'פאלוף פרס'],[/dead ?bug/,'דד באג'],[/bird ?dog/,'בירד דוג'],[/crunch|sit ?-?ups?|abs/,'כפיפות בטן'],[/farmer'?s? (walk|carry)/,'פארמר ווק'],[/suitcase carry/,'הליכה עם דאמבל ביד אחת'],[/balance|single ?leg stand/,'עמידה על רגל אחת'],[/dumbbells?|db\b/,'דאמבל'],[/smith( machine)?/,'סמית משין'],[/cable/,'כבל'],[/bands?/,'גומייה'],[/barbell|olympic bar/,'מוט אולימפי'],[/kettlebell|kb\b/,'קטלבל'],[/trx|rings?/,'טבעות']];
+function enToHe(q){let x=' '+String(q).toLowerCase()+' ',out=[];EN_HE.forEach(([re,h])=>{if(re.test(x)){out.push(h);x=x.replace(re,' ')}});return out.join(' ')}
 /* הצעות שמות תרגילים מהמאגר (עובד גם באייפד, במקום ה-datalist) */
 const EXSUG_SEL='[data-f="name"],[data-gf="name"],input[data-rte$=".n"],#cueName,input[data-th$=".n"]';
 function exSugHide(){const b=document.querySelector('.exsug');if(b)b.remove()}
@@ -2865,13 +2872,13 @@ async function exAddNew(name){if(/[A-Za-z]/.test(name)){toast('כותבים את
   if(!LIB.some(l=>l[0]===name))LIB.push([name,/פלאנק|החזקה|שניות/.test(name)?'sec':'kg',exGuessGrp(name)]);refreshLib();
   try{const ref=S.db.collection('settings').doc('exercisesExtra');const sn=await ref.get();const cur=(sn.exists&&sn.data().list)||[];if(!cur.some(x=>x.n===name)){cur.push({n:name,u:LIB.find(l=>l[0]===name)[1],g:LIB.find(l=>l[0]===name)[2],by:S.meId||'',at:Date.now()});await ref.set({list:cur},{merge:true})}}catch(e){}
   toast('התרגיל נוסף לרשימה ✓');return true}
-function exSugShow(inp){const q=String(inp.value||'').trim();const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
+function exSugShow(inp){const q0=String(inp.value||'').trim();const isEn=/[A-Za-z]/.test(q0);const q=isEn?enToHe(q0):q0;const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
   let A=toks.length?all.filter(n=>toks.every(t=>n.includes(t))):all.slice();if(q)A.sort((a,b)=>(a.startsWith(q)?0:1)-(b.startsWith(q)?0:1)||a.length-b.length);
   let B=[];if(q&&!A.length){const nz=x=>x.replace(/[׳`]/g,"'");const st=toks.filter(t=>t.length>=2).map(t=>nz(t).slice(0,Math.min(3,t.length)));const sc=n=>{const ws=nz(n).split(/\s+/);return st.filter(t=>ws.some(w=>w.startsWith(t))).length};B=all.filter(n=>sc(n)>0);B.sort((a,b)=>sc(b)-sc(a)||a.length-b.length)}
   let fx=null;try{const f=exNorm(q);if(f)fx=dn(f.n)}catch(e){}
   let L=[...(fx?[fx]:[]),...A,...B].filter((n,k,a)=>n&&n!==q&&a.indexOf(n)===k).slice(0,14);const exact=all.includes(q);
-  exSugHide();if(!L.length&&(!q||exact))return;const box=document.createElement('div');box.className='exsug';
-  box.innerHTML=(q&&!exact&&!A.length&&L.length?`<div class="exsugh">אולי התכוונת ל:</div>`:'')+L.map(n=>`<button type="button" data-exsug="${esc(n)}">${esc(n)}</button>`).join('')+(q&&!exact?`<button type="button" class="exadd" data-exadd="1">➕ להוספה: «${esc(q)}»</button>`:'');document.body.appendChild(box);
+  exSugHide();if(isEn&&!exact&&q&&!L.includes(q)&&!A.length)L=[...L];if(isEn&&exact)L=[q,...L.filter(n=>n!==q)];if(isEn&&!L.length){if(!q0)return;const box0=document.createElement('div');box0.className='exsug';box0.innerHTML=`<div class="exsugh">כותבים את שם התרגיל בעברית${q?' – אולי: '+esc(q):''}</div>`;document.body.appendChild(box0);const r0=inp.getBoundingClientRect();box0.style.top=(window.scrollY+r0.bottom+2)+'px';box0.style.left=Math.max(4,window.scrollX+r0.left)+'px';return}if(!L.length&&(!q||exact))return;const box=document.createElement('div');box.className='exsug';
+  box.innerHTML=(isEn?`<div class="exsugh">בעברית – התכוונת ל:</div>`:q&&!exact&&!A.length&&L.length?`<div class="exsugh">אולי התכוונת ל:</div>`:'')+L.map(n=>`<button type="button" data-exsug="${esc(n)}">${esc(n)}</button>`).join('')+(q&&!exact&&!isEn?`<button type="button" class="exadd" data-exadd="1">➕ להוספה: «${esc(q)}»</button>`:'');document.body.appendChild(box);
   const r=inp.getBoundingClientRect();const w=Math.max(260,r.width);box.style.top=(window.scrollY+r.bottom+2)+'px';box.style.width=w+'px';box.style.left=Math.max(4,Math.min(window.scrollX+r.right-w,window.scrollX+innerWidth-w-4))+'px';
   box.addEventListener('pointerdown',async e=>{const b=e.target.closest('[data-exsug],[data-exadd]');if(!b)return;e.preventDefault();let v=b.dataset.exsug;if(b.dataset.exadd){if(!await exAddNew(q))return;v=q}inp.value=v;exSugHide();inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.blur()})}
 document.addEventListener('focusin',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)){if(t.hasAttribute('list'))t.removeAttribute('list');exSugShow(t)}});
@@ -3108,7 +3115,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114131000';
+const APP_V='20261114132000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
