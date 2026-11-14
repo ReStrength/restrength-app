@@ -960,7 +960,7 @@ function carryTempo(ctx,d,ex,old){if(!ctx||!ctx.sessions||d.status!=='done')retu
   if((ne.tempo||'')!==old&&(ne.tempo||'')!=='')return;
   ne.tempo=ex.tempo;saveDoc('sessions/'+nx.id,{exercises:nx.exercises},{merge:true,delay:300});}
 function barHint(n){if(isSmithPush(n)||/שכיבות ס[מש]יכה/.test(String(n||'')))return '';n=String(n||'');const b=/סמית/.test(n)?['מוט הסמית',7]:/סייפטי|safety/i.test(n)?['מוט הסייפטי בר',17.5]:/טראפ|trap/i.test(n)?['הטראפ בר',20]:/מוט/.test(n)?['המוט האולימפי',20]:null;return b?`המשקל = פלטות בלבד (${b[0]} ${b[1]} ק"ג לא נספר)`:''}
-function isBW(n){const l=libFind(n);return !!(l&&l[1]==='bw')}
+function isBW(n){const l=libFind(n);return !!(l&&l[1]==='bw'&&!/גומי|שכיבות סמיכה בסמית/.test(String(n)))}
 function unitOf(ex){return ex.unit==='kg'&&num(ex.targetKg)==null&&!(ex.sets||[]).some(s=>num(s.kg)>0)?'bw':ex.unit}
 function stepFor(group,kg){ const st=S.settings||{}; return num(st.step)??1; }
 function exStats(ex){
@@ -1403,8 +1403,8 @@ function pairTable(d,ms,exs,tags){
     if(d.intro&&ms.length===2){
       const rot=d.rot||0;
       const totalSS=Math.ceil(exs.length/2);
-      if(rot>=totalSS*2) return false;
-      const blockIdx=Math.floor(rot/2);
+      if(rot>=totalSS*4) return false;
+      const blockIdx=Math.floor(rot/4);
       const swapped=rot%2===1;
       const tg=tags[i];
       if(!tg||String(tg.n)!==String(blockIdx+1)) return false;
@@ -1439,8 +1439,8 @@ function pairTable(d,ms,exs,tags){
       if(S.gAdapt===`${i}-${c.id}`)body+=`<tr class="adaptrow"><td colspan="${nSets+8}"><div class="adaptpanel"><label>תרגיל חלופי: <input type="text" data-gm="adaptEx" data-ei="${i}" data-cid="${c.id}" value="${esc((ex.m[c.id]||{}).adaptEx||'')}" placeholder="שם תרגיל חלופי"></label><button class="btn ghost sm" data-act="gOff" data-ei="${i}" data-cid="${c.id}" data-write style="margin-inline-start:4px">הוצא מהתוכנית</button></div></td></tr>`});
     if(S.gPain===i)body+=`<tr class="painrow"><td colspan="${nSets+8}"><div class="banner bad" style="margin:4px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום ב"התאמה אישית" מה שונה.</span></span></div></td></tr>`;
     if(d.intro&&ms.length===2&&tg.first&&i+1<exs.length&&tags[i+1]&&tags[i+1].n===tg.n){
-      const rot=d.rot||0;const totalSS=Math.ceil(exs.length/2);const ssBlockIdx=Number(tg.n)-1;const curBlock=Math.floor(rot/2);const done=rot>=totalSS*2;const isCur=curBlock===ssBlockIdx&&!done;const isSwapped=isCur&&rot%2===1;const A=esc(String(ms[0].name||'').split(' ')[0]);const B=esc(String(ms[1].name||'').split(' ')[0]);const e0=esc(exs[i].name||'');const e1=esc(exs[i+1].name||'');
-      body+=`<tr class="swaprow"><td colspan="${nSets+8}"><span style="font-size:13px"><b>${A}</b>: ${isSwapped?e1:e0} &nbsp;•&nbsp; <b>${B}</b>: ${isSwapped?e0:e1}</span>${isCur?` <button class="btn ghost sm" data-act="gRot" data-write style="margin-inline-start:10px">${rot%2===0?'🔄 החלפה':'➡ סופר סט הבא'}</button>`:''}</td></tr>`;
+      const rot=d.rot||0;const totalSS=Math.ceil(exs.length/2);const ssBlockIdx=Number(tg.n)-1;const curBlock=Math.floor(rot/4);const done=rot>=totalSS*4;const isCur=curBlock===ssBlockIdx&&!done;const isSwapped=isCur&&rot%2===1;const A=esc(String(ms[0].name||'').split(' ')[0]);const B=esc(String(ms[1].name||'').split(' ')[0]);const e0=esc(exs[i].name||'');const e1=esc(exs[i+1].name||'');
+      body+=`<tr class="swaprow"><td colspan="${nSets+8}"><span style="font-size:13px"><b>${A}</b>: ${isSwapped?e1:e0} &nbsp;•&nbsp; <b>${B}</b>: ${isSwapped?e0:e1}</span>${isCur?` <span class="nowb">סט ${Math.floor((rot%4)/2)+1} מתוך 2</span> <button class="btn ghost sm" data-act="gRot" data-write style="margin-inline-start:10px">${rot%4<3?'🔄 החלפה':'➡ סופר סט הבא'}</button>`:''}</td></tr>`;
     }
   });
   return strip+`<div class="tbl-wrap"><table class="gtable ptab">${head}<tbody>${body}</tbody></table></div>`;
@@ -1796,7 +1796,7 @@ function abHtml(k){
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
   const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
-      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}" data-abintro="${/היכרות/.test(r.w||'')?1:''}"`:`data-open="${c.id}" data-abintro="${/היכרות/.test(r.w||'')?1:''}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-abpair="${/זוגי/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'מפגש היכרות: ':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
+      return c?`<button class="abr" ${pairKey(c)&&ttype(c)==='pair'?`data-group="${esc(pairKey(c))}" data-abintro="${/היכרות/.test(r.w||'')?1:''}"`:`data-open="${c.id}" data-abintro="${/היכרות/.test(r.w||'')?1:''}"`}>${inner}<span class="abgo">פתיחת התוכנית ←</span></button>`:(r.n?`<button class="abr" data-abnew="${esc(r.n)}" data-abc="${esc(r.c||'')}" data-abintro="${/היכרות/.test(r.w||'')?1:''}" data-abpair="${/זוגי/.test(r.w||'')?1:''}" data-write>${inner}<span class="abgo">${/היכרות/.test(r.w||'')?'':'לא נמצא במערכת: '}פתיחת תיק +</span></button>`:`<div class="abr">${inner}</div>`)}).join('')}</div>`:`<div class="muted">אין אימונים ${off?'מחר':'היום'} בארבוקס${k?' למאמן הזה':''}.</div>`;
   return `<div class="abbox"><div class="abh"><h2>🗓️ לו"ז הסטודיו ${off?'מחר':'היום'}</h2>${tabs}</div>${body}</div>`}
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-abnew]');if(!a)return;e.preventDefault();e.stopPropagation();const nm=a.dataset.abnew.trim();S.newIntro=!!a.dataset.abintro;S.newPair=!!a.dataset.abpair;const cid=(S.coaches.find(k=>{try{return abCoachMatch(k,a.dataset.abc)}catch(_){return false}})||{}).id||S.meId;closeClient();S.view='coaches';S.coachView=cid;S.showNew=true;render();setTimeout(()=>{const i=$('#n_name');if(i){i.value=nm;i.focus()}window.scrollTo(0,0)},0)},true);
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-openc]');if(a){e.preventDefault();e.stopPropagation();openClient(a.dataset.openc);return}});
@@ -2996,7 +2996,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114072500';
+const APP_V='20261114073500';
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
