@@ -624,6 +624,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .kgmenu button:hover{background:var(--accent-soft,#fde2e2)}
 .ptab td.res .ki{display:block;width:100%;font-size:13px;min-height:26px!important;padding:2px!important;border:0;border-bottom:1px dashed var(--line);background:transparent;text-align:center;color:var(--muted)}
 .ptab td.res .ki:not(:placeholder-shown){color:var(--ink);font-weight:700}
+.exsug{position:absolute;z-index:300;max-height:320px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.2);padding:4px;display:flex;flex-direction:column}
+.exsug button{text-align:start;border:0;background:transparent;font:inherit;font-size:17px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.exsug button:hover,.exsug button:focus{background:var(--surface-2)}
 </style>
 
 <div class="app" dir="rtl">
@@ -2852,6 +2855,18 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(w.dataset.stepk==='sets'){const el=w.querySelector('input');const mx=Number(el.max)||10;const v=Math.max(1,Math.min(mx,(Number(el.value)||0)+d));if(String(v)===el.value)return;el.value=v;fire(el);setTimeout(()=>{if(S.deferred&&!editorFocused())render()},0);return}
   const lo=w.querySelector('[data-f="repMin"],[data-gf="repMin"]'),hi=w.querySelector('[data-f="repMax"],[data-gf="repMax"]');const a=Number(lo.value);if(!lo.value||(d<0&&a<=1))return;
   lo.value=a+d;fire(lo);if(hi&&hi.value!==''){hi.value=Number(hi.value)+d;fire(hi)}},true);
+/* הצעות שמות תרגילים מהמאגר (עובד גם באייפד, במקום ה-datalist) */
+const EXSUG_SEL='[data-f="name"],[data-gf="name"],input[data-rte$=".n"],#cueName,input[data-th$=".n"]';
+function exSugHide(){const b=document.querySelector('.exsug');if(b)b.remove()}
+function exSugShow(inp){const q=String(inp.value||'').trim();const all=[...document.querySelectorAll('#lib option')].map(o=>o.value);const toks=q.split(/\s+/).filter(Boolean);
+  let L=toks.length?all.filter(n=>toks.every(t=>n.includes(t))):all.slice();if(q)L.sort((a,b)=>(a.startsWith(q)?0:1)-(b.startsWith(q)?0:1)||a.length-b.length);L=L.filter(n=>n!==q).slice(0,14);
+  exSugHide();if(!L.length)return;const box=document.createElement('div');box.className='exsug';box.innerHTML=L.map(n=>`<button type="button" data-exsug="${esc(n)}">${esc(n)}</button>`).join('');document.body.appendChild(box);
+  const r=inp.getBoundingClientRect();box.style.top=(window.scrollY+r.bottom+2)+'px';box.style.width=Math.max(240,r.width)+'px';box.style.left=Math.max(4,Math.min(window.scrollX+r.right-Math.max(240,r.width),window.scrollX+innerWidth-Math.max(240,r.width)-4))+'px';
+  box.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-exsug]');if(!b)return;e.preventDefault();inp.value=b.dataset.exsug;exSugHide();inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.blur()})}
+document.addEventListener('focusin',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)){if(t.hasAttribute('list'))t.removeAttribute('list');exSugShow(t)}});
+document.addEventListener('input',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)&&document.activeElement===t)exSugShow(t)});
+document.addEventListener('focusout',e=>{if(e.target.matches&&e.target.matches(EXSUG_SEL))setTimeout(exSugHide,150)});
+addEventListener('scroll',()=>{const a=document.activeElement;if(document.querySelector('.exsug')&&a&&a.matches&&a.matches(EXSUG_SEL))exSugShow(a)},{passive:true});
 /* ---------- boot ---------- */
 /* ---------- דף אישי למתאמן (מוצפן: המפתח רק בקישור שהמתאמן קיבל ובתיק שלו כאן) ---------- */
 const TPB='https://yaringohar.com/clinic/', TPAGE='https://restrength.github.io/restrength-app/t.html';
@@ -3079,7 +3094,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114124500';
+const APP_V='20261114125000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
