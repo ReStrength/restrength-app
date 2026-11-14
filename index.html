@@ -1225,10 +1225,9 @@ function render(){
 /* ---------- מוזיקה לסטודיו: תחנות רדיו חינמיות, שירים מלאים בלי פרסומות (כמו בקליניקה) ---------- */
 const MU_ST=[
   {id:'heb',n:'עברית של פעם',d:'רדיוס · 100% נוסטלגיה',u:'https://gb25.streamgates.net/radios-audio/100Nostalgia/icecast.audio'},
+  {id:'isr',n:'עברית עדכנית',d:'רדיוס · 100% Israeli',u:'https://gb25.streamgates.net/radios-audio/100Israeli/icecast.audio'},
   {id:'eng',n:'אנגלית של פעם',d:'רדיוס · 100% Oldies',u:'https://gb25.streamgates.net/radios-audio/100Oldies/icecast.audio'},
   {id:'miz',n:'מזרחית',d:'רדיוס · 100% מזרחית',u:'https://gb25.streamgates.net/radios-audio/100Mizrachit/icecast.audio'},
-  {id:'s60',n:'שנות ה-60',d:'0N 60s',u:'https://0n-60s.radionetz.de/0n-60s.mp3'},
-  {id:'s70',n:'שנות ה-70',d:'0N 70s',u:'https://0n-70s.radionetz.de/0n-70s.mp3'},
   {id:'leg',n:'אגדות (קלאסיקות)',d:'רדיוס · 100% Legends',u:'https://gb25.streamgates.net/radios-audio/100Legends/icecast.audio'},
   {id:'crock',n:'רוק קלאסי',d:'רדיוס · 100% Classic Rock',u:'https://gb25.streamgates.net/radios-audio/100ClassicRock/icecast.audio'}
 ];
@@ -3063,7 +3062,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114115500';
+const APP_V='20261114120500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
