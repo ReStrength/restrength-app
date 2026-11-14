@@ -2866,6 +2866,8 @@ function exSugShow(inp){const q=String(inp.value||'').trim();const all=[...docum
 document.addEventListener('focusin',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)){if(t.hasAttribute('list'))t.removeAttribute('list');exSugShow(t)}});
 document.addEventListener('input',e=>{const t=e.target;if(t.matches&&t.matches(EXSUG_SEL)&&document.activeElement===t)exSugShow(t)});
 document.addEventListener('focusout',e=>{if(e.target.matches&&e.target.matches(EXSUG_SEL))setTimeout(exSugHide,150)});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.exsug')&&!(e.target.matches&&e.target.matches(EXSUG_SEL)))exSugHide()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')exSugHide()});
 addEventListener('scroll',()=>{const a=document.activeElement;if(document.querySelector('.exsug')&&a&&a.matches&&a.matches(EXSUG_SEL))exSugShow(a)},{passive:true});
 /* ---------- boot ---------- */
 /* ---------- דף אישי למתאמן (מוצפן: המפתח רק בקישור שהמתאמן קיבל ובתיק שלו כאן) ---------- */
@@ -3094,7 +3096,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114125000';
+const APP_V='20261114125500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
