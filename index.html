@@ -1057,7 +1057,7 @@ function isDumbbell(n){return /דא?מבל|דאמבלים|דמבל|דמבלים/
 function pushH(ex){if(isSmithPush(ex.name)&&num(ex.height)!=null)return {h:+ex.height,where:'field'};if(!/שכיבות ס[מש]יכה|פוש.?אפ/.test(String(ex.name||'')))return null;
   const re=/(?:הגבהה|גובה)\s*(?:מס['׳]?\s*)?(\d)/;let m=String(ex.name).match(re);if(m)return {h:+m[1],m:m[0],where:'name'};
   if(!/סמית/.test(String(ex.name)+' '+String(ex.tempo||'')))return null;m=String(ex.tempo||'').match(re)||String(ex.tempo||'').match(/מס['׳]?\s*(\d)/);return m?{h:+m[1],m:m[0],where:'tempo'}:null}
-function tempoKeep(t){return String(t||'').split(/\n|(?<=\.)\s+/).map(x=>x.replace(/\s*\(קל\?[^)]*\)/g,'').trim()).filter(x=>x&&!/^(אם\s+)?(עדיין\s+)?קל|היכרות/.test(x)).map(x=>x.replace(/^לימוד\s+ברייסינג\s+ו/,'').replace(/^לימוד\s+/,'').replace(/\.$/,'')).filter(Boolean).join('. ')}
+function tempoKeep(t){return String(t||'').split(/\n|(?<=\.)\s+/).map(x=>x.replace(/\s*\(קל\?[^)]*\)/g,'').trim()).filter(x=>x&&!/^(אם\s+)?(עדיין\s+)?(קל|קשה)|היכרות|^קודם\s+לימוד/.test(x)).map(x=>x.replace(/^לימוד\s+ברייסינג\s+ו/,'').replace(/^לימוד\s+/,'').replace(/\.$/,'')).filter(Boolean).join('. ')}
 function carry(ex){return {name:ex.name,unit:ex.unit,group:ex.group||'other',ss:ex.ss||'',rirTarget:ex.rirTarget??3,tempo:ex.tempo||'',...(ex.height!=null&&ex.height!==''?{height:ex.height}:{})}}
 function buildNext(ctx,d,docId){
   if(d.intro){const exercises=(d.exercises||[]).filter(e=>e.name).map(ex=>{const cx=carry(ex);const hint='';cx.tempo=tempoKeep(cx.tempo);if(cx.height==='intro')cx.height=7;
@@ -3063,7 +3063,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261114115000';
+const APP_V='20261114115500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
