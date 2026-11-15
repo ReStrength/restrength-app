@@ -3004,7 +3004,7 @@ async function tpBuild(c){
   const next=planned.map(s=>({label:String(s.label||''),warmup:s.warmup||'',ex:(s.exercises||[]).filter(e=>e.name).map(e=>{const u=unitOf(e),tp=String(e.tempo||'').trim(),heb=/[א-ת]/.test(tp);
     return {n:e.name,ss:e.ss||'',unit:u,sets:String(e.targetSets||''),reps:tpReps2(e),kg:u==='kg'&&num(e.targetKg)?String(e.targetKg):'',tempo:heb?'':tp,note:heb?tp:'',m:V[e.name]||null,last:lastOf(e.name)}})}));
   const home=(c.homeEx||[]).filter(x=>x.n).map(x=>({n:x.n,unit:x.unit||'bw',sets:x.sets||'',reps:x.reps||'',kg:x.kg||'',note:x.note||'',m:x.m||null}));
-  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,msgs:(c.portalMsgs||[]).slice(-80),remote:!!c.remote,seed:c.remote&&c.remoteSeed?rtSeedOut(c):null,u:Date.now()};
+  return {v:1,name:c.name,first:String(c.name||'').split(' ')[0],coach:coachName(c.coachId)!=='—'?coachName(c.coachId):'',next,home,acks:A,exr:c.portalExr||{},msgs:(c.portalMsgs||[]).slice(-80),remote:!!c.remote,seed:c.remote&&c.remoteSeed?rtSeedOut(c):null,u:Date.now()};
 }
 function tpKeep(c){const k={...(S.cmKeep||{})};Object.values(c.coachMedia||{}).forEach(L=>(L||[]).forEach(m=>{if(m&&m.k)k[m.k]=m.n}));Object.values(c.exVideos||{}).forEach(m=>{if(m&&m.k)k[m.k]=m.n});(c.homeEx||[]).forEach(x=>{if(x.m&&x.m.k)k[x.m.k]=x.m.n});return k}
 async function tpPublish(cid,quiet){
@@ -3044,8 +3044,8 @@ function tpWatch(ctx){const c=clientById(ctx.clientId); if(!c||!c.portal||!S.can
   const sig=JSON.stringify(ctx.sessions.filter(s=>s.status==='planned').map(s=>[s.label,s.warmup,(s.exercises||[]).map(e=>[e.name,e.ss,e.targetSets,e.repMin,e.repMax,e.targetKg,e.tempo])]));
   if(tpSig[c.id]===undefined){tpSig[c.id]=sig;return} if(tpSig[c.id]===sig) return; tpSig[c.id]=sig;
   clearTimeout(tpT[c.id]); tpT[c.id]=setTimeout(()=>tpPublish(c.id,true),8000);}
-function tpDesc(o){
-  if(o.kind==='log'){const rows=(o.ex||[]).map(e=>`<tr><td>${esc(e.n)}</td><td dir="ltr" style="text-align:right">${(e.sets||[]).map(s=>(s.kg?esc(s.kg)+'×':'')+esc(s.reps||'–')).join(', ')}${e.kp!=null&&e.kp!==''?` <span class="chip${+e.kp>=4?' down':''}">כאב ${+e.kp===0?'0':+e.kp<=2?'1-3':+e.kp<=4?'4-5':'6+'}</span>`:''}${e.ok===false&&(e.why||e.note)?` <span class="muted small">לא הצליח הכל${e.why?' · '+esc({hard:'קשה מדי',pain:'כאב',tired:'עייפות',tech:'טכניקה',oth:'אחר'}[e.why]||e.why):''}${e.note?' · '+esc(e.note):''}</span>`:''}${e.cn?`<div class="small" style="margin-top:3px">📝 ${esc(e.cn)}</div>`:''}</td></tr>`).join('');
+function tpDesc(o,c){const XR=(c&&c.portalExr)||{};
+  if(o.kind==='log'){const rows=(o.ex||[]).map(e=>`<tr><td>${esc(e.n)}</td><td dir="ltr" style="text-align:right">${(e.sets||[]).map(s=>(s.kg?esc(s.kg)+'×':'')+esc(s.reps||'–')).join(', ')}${e.kp!=null&&e.kp!==''?` <span class="chip${+e.kp>=4?' down':''}">כאב ${+e.kp===0?'0':+e.kp<=2?'1-3':+e.kp<=4?'4-5':'6+'}</span>`:''}${e.ok===false&&(e.why||e.note)?` <span class="muted small">לא הצליח הכל${e.why?' · '+esc({hard:'קשה מדי',pain:'כאב',tired:'עייפות',tech:'טכניקה',oth:'אחר'}[e.why]||e.why):''}${e.note?' · '+esc(e.note):''}</span>`:''}${e.cn?`<div class="small" style="margin-top:3px">📝 ${esc(e.cn)}</div>${XR[e.n]&&XR[e.n].t>o.t*1000?`<div class="small" style="margin-top:2px;color:var(--accent-text)">✓ ענית: ${esc(XR[e.n].text)}</div>`:`<div class="row" style="margin-top:4px;gap:6px"><input class="tpexr" placeholder="תשובה על ${esc(e.n)}…" style="flex:1;min-width:140px"><button class="btn sm" data-act="tpExReply" data-ex="${esc(e.n)}" data-write>שליחה</button></div>`}`:''}</td></tr>`).join('');
     return `<b>🏋️ תיעוד אימון${o.label?' '+esc(o.label):''}</b> <span class="muted small">${o.date?fmt(o.date):''}${o.min?` · ${o.min} דק׳`:''}${o.rpe?` · מאמץ ${o.rpe}`:''}${o.pain!=null?` · <b style="${o.pain>=4?'color:var(--bad)':''}">כאב ${o.pain}/10</b>`:''}</span><table class="small" style="margin-top:6px">${rows}</table>${o.note?`<div class="small" style="margin-top:4px">💬 ${esc(o.note)}</div>`:''}`}
   if(o.kind==='media') return `<b>${/^video/.test(o.mt||'')?'🎥 סרטון':'📷 תמונה'}</b>${o.note?` <span>${esc(o.note)}</span>`:''}<div id="tpm_${esc(o.r)}"></div>`;
   if(o.kind==='done') return `<b>✓ עשה/תה בבית:</b> ${esc(o.ex||'')}${o.pain!=null?` · <span style="${o.pain>=4?'color:var(--bad);font-weight:700':''}">כאב ${o.pain}/10</span>`:''}`;
@@ -3110,7 +3110,7 @@ function tPortalBody(c){
   const names=c.remote&&c.remoteSeed?[...new Set((c.remoteSeed.w||[]).flatMap(w=>(w.ex||[]).filter(x=>x.n&&x.leg!=='info').map(x=>x.n)))]:[...new Set(planned.flatMap(s=>(s.exercises||[]).map(e=>e.name).filter(Boolean)))], V=c.exVideos||{};
   const H=c.homeEx||[];
   const repsHtml=!L.length?`<p class="muted">${S.tpBusy[c.id]==='load'?'טוען…':'עוד לא נשלח כלום מהדף.'}</p>`:L.slice(0,30).map(o=>`<div class="tprep${o.t>seen?' new':''}">
-      <div class="muted small">${new Date(o.t*1000).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}${o.t>seen?' · <b style="color:var(--accent-text)">חדש</b>':''}</div>${tpDesc(o)}
+      <div class="muted small">${new Date(o.t*1000).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}${o.t>seen?' · <b style="color:var(--accent-text)">חדש</b>':''}</div>${tpDesc(o,c)}
       <div class="row" style="margin-top:6px">${o.kind==='media'?`<button class="btn sm" data-act="tpOpenM" data-r="${esc(o.r)}" data-n="${o.n}" data-t="${esc(o.mt||'')}">פתיחה</button>`:''}
       ${o.kind==='log'?(imp[o.r]?'<span class="chip up">נוסף להיסטוריה ✓</span>':`<button class="btn sm" data-act="tpImport" data-r="${esc(o.r)}" data-write>הוספה להיסטוריה כאימון</button>`):''}
       ${A[o.r]!=null?`<span class="chip up">✓ ענית${A[o.r]?': '+esc(A[o.r]):''}</span>`:`<input class="tpack" data-r="${esc(o.r)}" placeholder="תשובה קצרה (לא חובה)" style="flex:1;min-width:140px"><button class="btn sm" data-act="tpAck" data-r="${esc(o.r)}" data-write>✓ ראיתי</button>`}</div></div>`).join('');
@@ -3195,6 +3195,7 @@ async function tpAct(name,el){
   case 'homeAskNo': {S.homeAsk=null; render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},150); break;}
   case 'homeFill': {const H=await homeFromPlan(c,el.dataset.mode); if(!H.length){toast('אין עדיין תרגילים באימון המתוכנן');break} await updClient(c.id,{homeEx:H,homeMode:el.dataset.mode,portalOwner:S.meId||tpOwner(c)}); c.homeEx=H; S.homeAsk=null; await tpPublish(c.id); render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},150); toast(el.dataset.mode==='min'?'התרגילים הותאמו לבית. אפשר לערוך ואז לשלוח בווטסאפ':'התוכנית הועתקה. אפשר לערוך ואז לשלוח בווטסאפ'); break;}
   case 'tpPub': await tpPublish(c.id); break;
+  case 'tpExReply': {const inp=el.parentNode.querySelector('.tpexr'); const v=(inp&&inp.value||'').trim(); if(!v) break; const X={...(c.portalExr||{}),[el.dataset.ex]:{t:Date.now(),text:v}}; c.portalExr=X; await updClient(c.id,{portalExr:X}); const ok=await tpPublish(c.id,true); toast(ok?'התשובה תופיע בדף מתחת לתרגיל ✓':'נשמר, אבל הדף לא התעדכן'); render(); break;}
   case 'tpMsg': {const ta=document.getElementById('tpmsg'); const v=(ta&&ta.value||'').trim(); if(!v) break; const M=[...(c.portalMsgs||[]),{t:Date.now(),text:v}].slice(-150); c.portalMsgs=M; await updClient(c.id,{portalMsgs:M}); if(ta) ta.value=''; const ok=await tpPublish(c.id,true); toast(ok?'נשלח ✓':'ההודעה נשמרה, אבל הדף לא התעדכן. נסו "עדכון הדף"'); render(); setTimeout(()=>{const t=document.getElementById('tpthread');if(t)t.scrollTop=t.scrollHeight},50); break;}
   case 'tpCopy': try{await navigator.clipboard.writeText(tpLink(c));toast('הקישור הועתק')}catch(e){prompt('העתיקו את הקישור:',tpLink(c))} break;
   case 'tpRefresh': S.tpReps[c.id]=null; await tpLoad(c,true); break;
@@ -3255,7 +3256,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115173500';
+const APP_V='20261115182000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
