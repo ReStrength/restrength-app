@@ -349,7 +349,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
   if(W.run){h+=runHtml(W)+'<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':'✓ סיימתי. לבנות את הריצה הבאה')+'</button></div>';return h}
   var lastSS=null;
   W.ex.forEach(function(x,i){var k=RT+'.'+i;
-    if(WK()&&sx(x.n).info){if(lastSS!==null){h+='</div>';lastSS=null}var I=sx(x.n),mk='s'+k.replace('.','_');h+='<div class="card"><div class="t"><b style="font-size:20px;flex:1">'+esc(x.n)+'</b></div>'+(I.cue?'<div class="note" style="margin:8px 0 0;font-size:17px">'+esc(I.cue)+'</div>':'')+(I.how?'<div class="note" style="margin:8px 0 0;font-size:17px">📈 '+esc(I.how)+'</div>':'')+(I.m?'<div class="media" id="md_'+mk+'"><button class="play" data-play="'+mk+'">▶ לראות איך עושים</button></div>':'')+(PLAN&&PLAN.seed&&PLAN.seed.infoNote?'<input data-cn="'+k+'" value="'+esc(x.cnote||'')+'" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px;margin-top:8px" placeholder="📝 הערה ל'+esc((PLAN&&PLAN.coach)||'מאמן')+' (לא חובה): איך הלך, איפה הרגיש, באיזו תנוחה">':'')+'</div>';return}
+    if(WK()&&sx(x.n).info){if(lastSS!==null){h+='</div>';lastSS=null}var I=sx(x.n),mk='s'+k.replace('.','_');h+='<div class="card"><div class="t"><b style="font-size:20px;flex:1">'+esc(x.n)+'</b></div>'+(I.cue?'<div class="note" style="margin:8px 0 0;font-size:17px">'+esc(I.cue)+'</div>':'')+(I.how&&!(PLAN.seed&&PLAN.seed.hideHow)?'<div class="note" style="margin:8px 0 0;font-size:17px">📈 '+esc(I.how)+'</div>':'')+(I.m?'<div class="media" id="md_'+mk+'"><button class="play" data-play="'+mk+'">▶ לראות איך עושים</button></div>':'')+(PLAN&&PLAN.seed&&PLAN.seed.infoNote?'<input data-cn="'+k+'" value="'+esc(x.cnote||'')+'" style="width:100%;font-size:17px;padding:10px;border:2px solid var(--line);border-radius:10px;margin-top:8px" placeholder="📝 הערה ל'+esc((PLAN&&PLAN.coach)||'מאמן')+' (לא חובה): איך הלך, איפה הרגיש, באיזו תנוחה">':'')+'</div>';return}
     if(WK()){var NOSS=!W.ex.some(function(e){return e.ss});if(x.ss!==lastSS||NOSS){if(lastSS!==null)h+='</div>';h+='<div class="card ssg">'+(x.ss?'<div class="ssh">סופר סט '+esc(x.ss)+'</div>':'')+''}}
     else if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
     h+='<div class="'+(WK()?'ssx ex rex':'card ex rex')+'"><div class="t"><span class="num">'+(i+1)+'</span>'+(WK()?'<b style="font-size:20px">'+esc(x.n)+'</b>':'<input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל">')+'</div>'+
@@ -371,7 +371,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
     h+='</div>'+(WK()?'':'<button class="btn alt" data-rdel="'+i+'" style="min-height:44px;font-size:16px;margin-top:6px">🗑 למחוק תרגיל</button>')+'</div>'});
   if(!WK())h+='<button class="btn alt" data-radd="1">+ תרגיל</button>';
   if(WK()&&lastSS!==null)h+='</div>';
-  if(WK())h+='<button class="btn alt" data-rall="1" style="margin-top:8px">✓ הצלחתי את כל האימון</button>';
+  if(WK()&&!(PLAN.seed&&PLAN.seed.noAll))h+='<button class="btn alt" data-rall="1" style="margin-top:8px">✓ הצלחתי את כל האימון</button>';
   h+='<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':(PLAN.seed&&PLAN.seed.finLbl)||'✓ סיימתי. לבנות את האימון הבא')+'</button></div>';
   return h}
 function rpUni(n){return /רגל אחת|יד אחת|מכרע|לאנג|לאנצ|בולגרי|סטפ|עלייה על מדרגה|סינגל/.test(n)}
@@ -487,10 +487,12 @@ document.addEventListener('click',function(e){var g=e.target.closest&&e.target.c
   if(b.hasAttribute('data-rdel')){if(!confirm('למחוק את התרגיל?'))return;RP.w[RT].ex.splice(+b.getAttribute('data-rdel'),1);rpSave();render();return}
   if(b.hasAttribute('data-rfin')){rpFinish();return}
   if(b.hasAttribute('data-rhelp')){sheet('<h3>איך משתמשים בדף</h3><video src="remote-howto.mp4" controls playsinline autoplay style="width:100%;border-radius:12px"></video><button class="btn alt" id="rhc">סגירה</button>');$('rhc').onclick=unsheet;return}},true);
+function introHtml(L){var h='',g=[];function fl(){if(g.length){h+='<div class="card" style="border:3px solid var(--accent);background:var(--soft);margin:10px 0">'+g.map(function(x,i){return '<p style="font-size:'+(i?21:22)+'px;font-weight:800;margin:'+(i?'6px':'0')+' 0 0;color:var(--ink)">'+esc(x)+'</p>'}).join('')+'</div>';g=[]}}
+  L.forEach(function(t){if(t.charAt(0)==='!'){g.push(t.slice(1).trim());return}fl();h+='<p class="sub" style="font-size:19px">'+esc(t)+'</p>'});fl();return h}
 function render(){
-  var p=PLAN,SD=p.seed||{},h=SD.hi?'<h1>'+esc(SD.hi)+'</h1>'+(SD.intro||[]).map(function(t){return '<p class="sub" style="font-size:19px">'+esc(t)+'</p>'}).join(''):'<h1>שלום '+esc(p.first||p.name||'')+' 👋</h1><p class="sub">התוכנית האישית שלך'+(p.coach?' מ'+esc(p.coach):'')+'. אפשר לפתוח אותה מכל מקום, גם בחו"ל.</p>';
+  var p=PLAN,SD=p.seed||{},h=SD.hi?'<h1>'+esc(SD.hi)+'</h1>'+introHtml(SD.intro||[]):'<h1>שלום '+esc(p.first||p.name||'')+' 👋</h1><p class="sub">התוכנית האישית שלך'+(p.coach?' מ'+esc(p.coach):'')+'. אפשר לפתוח אותה מכל מקום, גם בחו"ל.</p>';
   if(!lsg('rs_a2hs_'+SID)&&!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches))){var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    h+='<div class="card a2hs">'+a2hsInner(ios)+'</div>'}
+    h='<div class="card a2hs">'+a2hsInner(ios)+'</div>'+h}
   var N=p.remote?[]:(p.next||[]);
   if(p.remote)h+=remoteHtml();
   if(N.length){
