@@ -1445,9 +1445,21 @@ function gProg(ex,mm){
 /* ---------- אימון זוגי: טבלה כמו באימון האישי, שורה לכל אחד מבני הזוג ---------- */
 function pairBlocks(exs,tags){const bl=[];tags.forEach((tg,i)=>{if(tg.first)bl.push({n:tg.n,ss:tg.ss,idx:exs.map((e,j)=>j).filter(j=>tags[j].n===tg.n)})});return bl}
 function pairNow(d,ms,bl){if(ms.length!==2||bl.length<2)return null;const k=((d.rot||0)%bl.length+bl.length)%bl.length;return {k,A:bl[k],B:bl[(k+1)%bl.length]}}
+/* אימון זוגי רגיל: לכל מתאמן מודגש רק התרגיל שהוא מבצע עכשיו. עובר לתרגיל הבא רק אחרי שכל הסטים שלו הוזנו */
+function pairCurMap(d,ms,exs,tags){const bl=pairBlocks(exs,tags),now=pairNow(d,ms,bl),R={};if(!bl.length)return R;
+  const filled=mm=>(mm.sets||[]).filter(v=>v!==''&&v!=null).length;
+  ms.forEach((c,k)=>{const st=now?((now.k+k)%bl.length):0;
+    for(let b=0;b<bl.length;b++){const B=bl[(st+b)%bl.length];
+      const cand=B.idx.filter(i=>{const mm=(exs[i].m||{})[c.id];return mm&&!mm.off&&(mm.sets||[]).length&&filled(mm)<mm.sets.length});
+      if(cand.length){cand.sort((x,y)=>filled(exs[x].m[c.id])-filled(exs[y].m[c.id])||x-y);R[c.id]=cand[0];return}}});
+  return R}
+function pairNowRefresh(){const G=S.G;if(!G||!G.edit)return;const d=G.edit.doc;if(d.intro)return;const ms=groupMembers(G.name);if(ms.length<2)return;
+  const exs=d.exercises||[],tags=groupTags(exs);const M=pairCurMap(d,ms,exs,tags);
+  document.querySelectorAll('.ptab tr.prow[data-cid]').forEach(tr=>tr.classList.toggle('now',M[tr.dataset.cid]===Number(tr.dataset.gex)))}
 function pairTable(d,ms,exs,tags){
   const nSets=d.intro?0:Math.max(2,...exs.map(e=>Number(e.targetSets)||0));const bl=pairBlocks(exs,tags);const now=pairNow(d,ms,bl);
   const lab=b=>b?(b.ss?'סופר סט ':'תרגיל ')+b.n:'';
+  const CUR=d.intro?null:pairCurMap(d,ms,exs,tags);
   const nowOf=(cid,i)=>{
     if(d.intro&&ms.length===2){
       const rot=d.rot||0;
@@ -1463,6 +1475,7 @@ function pairTable(d,ms,exs,tags){
       const isA=cid===ms[0].id;
       return swapped?(isA?posInBlock===1:posInBlock===0):(isA?posInBlock===0:posInBlock===1);
     }
+    if(CUR)return CUR[cid]===i;
     if(!now)return false;const b=cid===ms[0].id?now.A:now.B;return b.idx.includes(i);
   };
   const strip='';
@@ -1484,7 +1497,7 @@ function pairTable(d,ms,exs,tags){
         const L=mm.sets.length;
         rest=`<td class="gkg">${kgc}</td>${Array.from({length:nSets},(_,j)=>j<L?`<td class="res">${gSetKg(d,ex,mm,c,i,j)}<input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}" aria-label="${esc(c.name)} סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===L-1&&first?`${L<6?`<button type="button" class="addset" data-act="gSetAdd" data-ei="${i}" data-tip="הוספת סט" data-write>+</button>`:''}${L>1?`<button type="button" class="addset delset" data-act="gSetDel" data-ei="${i}" data-tip="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>').join('')}
          <td class="gadapt"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt||'')}" placeholder=""></td>`}
-      body+=`<tr class="prow p${k}${nowOf(c.id,i)?' now':''}${k===ms.length-1?' plast':''}" data-gex="${i}">${shared}${who}${rest}${acts}</tr>`;
+      body+=`<tr class="prow p${k}${nowOf(c.id,i)?' now':''}${k===ms.length-1?' plast':''}" data-gex="${i}" data-cid="${c.id}">${shared}${who}${rest}${acts}</tr>`;
       if(S.gAdapt===`${i}-${c.id}`)body+=`<tr class="adaptrow"><td colspan="${nSets+8}"><div class="adaptpanel"><label>תרגיל חלופי: <input type="text" data-gm="adaptEx" data-ei="${i}" data-cid="${c.id}" value="${esc((ex.m[c.id]||{}).adaptEx||'')}" placeholder="שם תרגיל חלופי"></label><button class="btn ghost sm" data-act="gOff" data-ei="${i}" data-cid="${c.id}" data-write style="margin-inline-start:4px">הוצא מהתוכנית</button></div></td></tr>`});
     if(S.gPain===i)body+=`<tr class="painrow"><td colspan="${nSets+8}"><div class="banner bad" style="margin:4px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום ב"התאמה אישית" מה שונה.</span></span></div></td></tr>`;
     if(d.intro&&ms.length===2&&tg.first&&i+1<exs.length&&tags[i+1]&&tags[i+1].n===tg.n){
@@ -1657,6 +1670,7 @@ function gInput(t){
   const mm=ex.m[t.dataset.cid]; if(!mm) return true; const f=t.dataset.gm;
   if(f==='skg'){mm.kgs=mm.kgs||[];const v=String(t.value).replace(',','.').trim();mm.kgs[Number(t.dataset.si)]=v===''?'':(isNaN(Number(v))?v:Number(v));gSave(700);return true}
   if(f==='rep'){mm.sets[Number(t.dataset.si)]=t.value===''?'':Number(t.value); if(!d.date&&t.value!=='') d.date=today(); t.dataset.st=setState(ex,{reps:t.value});
+    try{pairNowRefresh()}catch(e){}
     if(!t._step&&t.value!==''){
       /* זוגי: אחרי הזנת תוצאה – לקפוץ לאותו תרגיל של המתאמן הבא */
       const memberIds=Object.keys(ex.m||{});
@@ -3189,7 +3203,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115083000';
+const APP_V='20261115093500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
