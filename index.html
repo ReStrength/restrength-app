@@ -1898,9 +1898,11 @@ function abSpreadPatch(c,text,src,onlyEmpty){const o=abSpread(text),P={};const t
   if(o.age&&!c.birthYear)P.birthYear=new Date().getFullYear()-o.age;
   if(o.sex&&!c.sex)P.sex=o.sex;
   return P}
+const ABD_HOOK='https://hook.eu1.make.com/qyku7c9nra7x7w81gi297w2sivi381zs';
+async function abDetails(c,ph){if(c.arboxDetAt&&Date.now()-c.arboxDetAt<30*864e5)return;try{const r=await fetch(ABD_HOOK,{method:'POST',body:new URLSearchParams({phone:ph})});const j=await r.json();const P={arboxDetAt:Date.now()};if(j.found==='1'){const dec=x=>{try{return decodeURIComponent(x||'').trim()}catch(e){return String(x||'').trim()}};const bd=dec(j.birthday);if(/^(19[2-9]\d|200\d)-\d{2}-\d{2}/.test(bd)){if(!c.birthDate)P.birthDate=bd.slice(0,10);if(!c.birthYear)P.birthYear=+bd.slice(0,4)}const g=dec(j.gender);if(!c.sex&&/^(male|female)$/.test(g))P.sex=g==='female'?'F':'M';[['email','email'],['address','address'],['phone2','phone2'],['height','height'],['weight','weight'],['leadSource','source']].forEach(([f,k])=>{const v=dec(j[k]);if(!c[f]&&v&&v!=='0'&&(f!=='email'||/@/.test(v)))P[f]=v})}if(await updClient(c.id,P))Object.assign(c,P)}catch(e){}}
 async function abNotesSync(c,force){if(!c||!S.db)return false;let ph=abPhone(c.phone);
   if(!ph&&AB.book){const r=AB.book.find(o=>o.p&&abClient(o.n)===c);if(r){ph=abPhone(r.p);if(ph){c.phone=ph;await updClient(c.id,{phone:ph})}}}
-  if(!ph)return false;if(!force&&(ABN.t[c.id]&&Date.now()-ABN.t[c.id]<6*3600e3))return false;ABN.t[c.id]=Date.now();
+  if(!ph)return false;if(!force&&(ABN.t[c.id]&&Date.now()-ABN.t[c.id]<6*3600e3))return false;ABN.t[c.id]=Date.now();abDetails(c,ph);
   try{const r=await fetch(ABN_HOOK,{method:'POST',body:new URLSearchParams({phone:ph})});if(!r.ok)return false;const j=await r.json();
     let raw='';try{raw=decodeURIComponent(String(j.notes||''))}catch(e){raw=String(j.notes||'')}raw=raw.trim();if(!raw||raw===c.arboxNotesRaw)return false;
     const L=abSplitNotes(raw),seen=c.arboxNotesSeen||[],fresh=L.filter(x=>!seen.includes((x.d+x.t).slice(0,80)));
@@ -2434,7 +2436,8 @@ function tProfile(c){
    <label class="f" for="p_partner" id="p_pairwrap"${ttype(c)==='pair'?'':' hidden'}>בזוג עם<select id="p_partner"><option value="">עדיין לא נקבע</option>${partnerOpts.map(x=>`<option value="${x.id}"${x.id===c.partnerId?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
    <label class="f" for="p_start">תאריך התחלה<input id="p_start" type="date" value="${v('startDate')}"></label>
    <label class="f" for="p_status">סטטוס<select id="p_status">${[['active','פעיל'],['paused','בהקפאה'],['archived','ארכיון']].map(o=>`<option value="${o[0]}"${(c.status||'active')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></label>
-  </div></div>
+   <label class="f" for="p_by">שנת לידה${ageOf(c)?` <span class="muted small">(גיל ${ageOf(c)})</span>`:''}<input id="p_by" type="number" inputmode="numeric" dir="ltr" min="1920" max="2015" value="${esc(c.birthYear||'')}" placeholder="למשל 1958"></label>
+  </div>${(()=>{const it=[];const fd=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'.'+m[2]+'.'+m[1]:''};if(c.birthDate&&fd(c.birthDate))it.push(['תאריך לידה',fd(c.birthDate)]);if(c.email)it.push(['אימייל',c.email]);if(c.phone2)it.push(['טלפון נוסף',c.phone2]);if(c.address)it.push(['כתובת',c.address]);if(c.height)it.push(['גובה',c.height]);if(c.weight)it.push(['משקל',c.weight]);if(c.leadSource)it.push(['איך הגיע',c.leadSource]);return it.length?`<div class="muted small" style="margin-top:10px;line-height:1.8">📇 <b>מארבוקס:</b> ${it.map(([l,v])=>`${esc(l)}: <span dir="auto">${esc(v)}</span>`).join(' · ')}</div>`:''})()}</div>
   <div class="card"><h2>מטרות</h2><div class="grid2">
    <label class="f" for="p_gshort">מטרות קרובות<textarea id="p_gshort" placeholder="למשל: לקום מהכיסא בלי עזרת ידיים, שיפור יציבה, חיזוק כלל הגוף">${esc(c.goalsShort??c.goalText??'')}</textarea></label>
    <label class="f" for="p_glong">מטרת על (לטווח הארוך)<textarea id="p_glong" placeholder="למשל: לטייל עם הנכדים בחו״ל בקיץ">${v('goalsLong')}</textarea></label></div>
@@ -3211,7 +3214,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115120500';
+const APP_V='20261115122000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
