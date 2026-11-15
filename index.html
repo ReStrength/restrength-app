@@ -3084,9 +3084,9 @@ const HOME_MAP=[
 function homeAdapt(name){const n=String(name||'');for(const [re,to] of HOME_MAP){if(re.test(n)){if(!to)return null;return {n:to[0]==='='?n:to[0],note:to[1]}}}return {n,note:'לבצע בבית בלי ציוד או עם גומייה'}}
 async function homeFromPlan(c,mode){let ps=[];if(S.P&&S.P.clientId===c.id)ps=plannedSessions(S.P);else{try{const q=await S.db.collection('sessions').where('clientId','==',c.id).get();ps=q.docs.map(d=>d.data()).filter(x=>x.status==='planned')}catch(e){}}
   const out=[],seen=new Set();ps.forEach(s=>(s.exercises||[]).forEach(e=>{if(!e.name)return;const reps=e.repMin&&e.repMax&&String(e.repMin)!==String(e.repMax)?e.repMin+'-'+e.repMax:String(e.repMax||e.repMin||'');const sets=String(e.targetSets||'');
-    if(mode==='min'){const a=homeAdapt(e.name);if(!a||seen.has(a.n))return;seen.add(a.n);out.push({n:a.n,sets,reps,kg:'',note:[a.note,'במקום: '+dn(e.name)].filter(Boolean).join(' · ')})}
-    else{if(seen.has(e.name))return;seen.add(e.name);out.push({n:e.name,sets,reps,kg:e.targetKg!=null?String(e.targetKg):'',note:[e.tempo,e.notes].filter(Boolean).join(' · ')})}}));
-  out.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:'bw'});return out}
+    if(mode==='min'){const a=homeAdapt(e.name);if(!a||seen.has(a.n))return;seen.add(a.n);out.push({n:dn(a.n),sets,reps,kg:'',note:[a.note,dn(a.n)!==dn(e.name)?'במקום: '+dn(e.name):''].filter(Boolean).join(' · ')})}
+    else{if(seen.has(e.name))return;seen.add(e.name);out.push({n:dn(e.name),sets,reps,kg:e.targetKg!=null?String(e.targetKg):'',note:[e.tempo,e.notes].filter(Boolean).join(' · ')})}}));
+  out.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:(x.kg?'kg':'bw')});return out}
 function homeAskCard(c){const f=String(c.name).split(' ')[0];const has=(c.homeEx||[]).some(x=>x&&x.n);
   return `<div class="card" id="homeAsk" style="border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))"><h2 style="margin-top:0">🏠 מה לשלוח ל${esc(f)} לבית?</h2>
   <div class="row" style="gap:10px;align-items:stretch;flex-wrap:wrap">
@@ -3255,7 +3255,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115163500';
+const APP_V='20261115164500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
