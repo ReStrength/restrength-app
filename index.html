@@ -1879,7 +1879,7 @@ function abSpread(text){const o={g:[],st:[],med:[],lim:[],meds:[],age:null,sex:'
     if(/תרופ|כדור(?:ים)? ל/.test(cl))k='meds';
     else if(/רוצה|מטר[הת]|חשוב ל|מעוניינ/.test(cl)&&!/כא(?:ב|בי)|ניתוח|פציע/.test(cl))k='g';
     else if(/מגביל|הגבלה|לא מפריע|אסור|להימנע|אין לה בעיה|אין לו בעיה/.test(cl))k='lim';
-    else if(/כא(?:ב|בי|בים)|ניתוח|נותח|פציע|אבחנ|דלקת|שבר|פריצ|בלט|לחץ דם|סוכרת|אוסטאו|פרוק|החלפת|שחיק|סחרחור|נפיל|(?:^|\s)לב(?:\s|$)|קוצב|(?:^|\s)רגיש/.test(cl))k='med';
+    else if(/כא(?:ב|בי|בים)|ניתוח|נותח|פציע|אבחנ|דלקת|שבר|פריצ|בלט|לחץ דם|סוכרת|אוסטאו|פרוק|החלפת|שחיק|סחרחור|נפיל|בקע|אי ספיק|ורידי|גרבי לחץ|אוזמפיק|זריק|פרקינסון|סרטן|מיניסקוס|דיסק|ניוונ|(?:^|\s)לב(?:\s|$)|קוצב|(?:^|\s)רגיש/.test(cl))k='med';
     else if(/מתאמנ|מתאמן|התאמנ|הולכת|הולך|הליכ|שוחה|שחיי|פילאטיס|יוגה|חדר כושר|ניסיון|לא יצא|ספורט|רוכב|ריצ/.test(cl))k='st';
     else if(/רוצה|מטר|לחזק|להתחזק|חשוב ל|לשפר|שיפור|מרגיש|לשמור|להיות|לחזור/.test(cl))k='g';
     else if(last&&/^(?:ו|אמר|היא |הוא |יש )/.test(cl))k=last;
@@ -1888,13 +1888,13 @@ function abSpread(text){const o={g:[],st:[],med:[],lim:[],meds:[],age:null,sex:'
     o[k].push(cl);last=k});
   return o}
 function abMerge(cur,add,bullet){cur=String(cur||'').trim();const n=add.filter(x=>!cur.includes(x));if(!n.length)return null;const t=bullet?n.map(x=>'• '+x).join('\n'):n.join(', ');return cur?cur+'\n'+t:t}
-function abSpreadPatch(c,text,src){const o=abSpread(text),P={};const tag=src?' ('+src+')':'';
+function abSpreadPatch(c,text,src,onlyEmpty){const o=abSpread(text),P={};const tag=src?' ('+src+')':'';const E0=f=>onlyEmpty&&String(c[f]||(f==='goalsShort'?c.goalText:'')||'').trim();
   const one=(f,arr,b)=>{if(!arr.length)return;const v=abMerge(c[f],arr.map(x=>x),b);if(v!=null)P[f]=v};
-  if(o.g.length){const v=abMerge(c.goalsShort||c.goalText,o.g,true);if(v!=null)P.goalsShort=v}
-  if(o.st.length){const v=abMerge(c.goalStart,[o.st.join(', ')],false);if(v!=null)P.goalStart=v}
-  if(o.med.length){const v=abMerge(c.medHistory,[o.med.join(', ')+tag],false);if(v!=null&&!o.med.every(x=>String(c.medHistory||'').includes(x)))P.medHistory=v}
-  if(o.lim.length){const v=abMerge(c.limits,[o.lim.join(', ')],false);if(v!=null)P.limits=v}
-  if(o.meds.length){const v=abMerge(c.meds,[o.meds.join(', ')],false);if(v!=null)P.meds=v}
+  if(o.g.length&&!E0('goalsShort')){const v=abMerge(c.goalsShort||c.goalText,o.g,true);if(v!=null)P.goalsShort=v}
+  if(o.st.length&&!E0('goalStart')){const v=abMerge(c.goalStart,[o.st.join(', ')],false);if(v!=null)P.goalStart=v}
+  if(o.med.length&&!E0('medHistory')){const v=abMerge(c.medHistory,[o.med.join(', ')+tag],false);if(v!=null&&!o.med.every(x=>String(c.medHistory||'').includes(x)))P.medHistory=v}
+  if(o.lim.length&&!E0('limits')){const v=abMerge(c.limits,[o.lim.join(', ')],false);if(v!=null)P.limits=v}
+  if(o.meds.length&&!E0('meds')){const v=abMerge(c.meds,[o.meds.join(', ')],false);if(v!=null)P.meds=v}
   if(o.age&&!c.birthYear)P.birthYear=new Date().getFullYear()-o.age;
   if(o.sex&&!c.sex)P.sex=o.sex;
   return P}
@@ -1905,7 +1905,7 @@ async function abNotesSync(c,force){if(!c||!S.db)return false;let ph=abPhone(c.p
     let raw='';try{raw=decodeURIComponent(String(j.notes||''))}catch(e){raw=String(j.notes||'')}raw=raw.trim();if(!raw||raw===c.arboxNotesRaw)return false;
     const L=abSplitNotes(raw),seen=c.arboxNotesSeen||[],fresh=L.filter(x=>!seen.includes((x.d+x.t).slice(0,80)));
     const P={arboxNotesRaw:raw,arboxNotes:L.map(x=>(x.by?x.by.split(' ')[0]+(x.d?' ('+x.d.slice(8,10)+'.'+x.d.slice(5,7)+')':'')+': ':'')+x.t).join('\n\n'),arboxNotesAt:Date.now(),arboxNotesSeen:[...seen,...fresh.map(x=>(x.d+x.t).slice(0,80))].slice(-60)};
-    let tmp=Object.assign({},c);fresh.forEach(x=>{const sp=abSpreadPatch(tmp,x.t,x.by?x.by.split(' ')[0]:'ארבוקס');Object.assign(P,sp);Object.assign(tmp,sp)});
+    let tmp=Object.assign({},c);fresh.forEach(x=>{const sp=abSpreadPatch(tmp,x.t,x.by?x.by.split(' ')[0]:'ארבוקס',true);Object.assign(P,sp);Object.assign(tmp,sp)});
     if(P.goalsShort&&!c.goalDate){const d=new Date();d.setMonth(d.getMonth()+3);P.goalDate=d.toISOString().slice(0,10)}
     const ok=await updClient(c.id,P);if(ok){Object.assign(c,P);scheduleRender()}return ok}catch(e){return false}}
 async function abIntroSync(){if(ABN.busy||!S.clients)return;ABN.busy=true;try{
@@ -3211,7 +3211,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115113500';
+const APP_V='20261115120500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
