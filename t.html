@@ -317,7 +317,7 @@ function PW(){return !!(PLAN&&PLAN.seed&&PLAN.seed.pw)}
 function dlSets(x){return RP.deload?Math.max(2,(+x.sets||2)-1):(+x.sets||1)}
 function dlRun(r){if(!RP.deload)return r;var o=JSON.parse(JSON.stringify(r));if(o.kind==='tempo'){var a=secOf(o.p1),b=secOf(o.p2)||a;o.p1=mmss(a+10);o.p2=mmss(b+10)}else o.km=Math.max(2,Math.round(o.km*0.8*2)/2);return o}
 /* תכנון שבוע: מחיל את ההתקדמות של כל אימון שבוצע השבוע. כל שבוע רביעי הוא שבוע קל (פחות נפח), בלי העלאות */
-function weekPlan(auto){var ch=[],wasDl=!!RP.deload;RP.wk=(RP.wk||1)+1;RP.deload=RP.wk%4===0;
+function weekPlan(auto){var ch=[],wasDl=!!RP.deload;RP.wk=(RP.wk||1)+1;RP.deload=!(PLAN.seed&&PLAN.seed.noDeload)&&RP.wk%4===0;
   RP.w.forEach(function(W){var nm=W.run?(W.run.kind==='tempo'?'ריצת קצב':'ריצה ארוכה'):'אימון '+W.label;
     if(W.pend&&!wasDl){var P=W.pend;if(W.run){W.run=P.run;W.run.res={};W.run.msg=''}else{W.ex=P.ex.map(function(x){x.res=[];x.msg='';return x})}ch.push([nm,P.sum||'מתקדמים'])}
     else ch.push([nm,W.doneAt>(RP.planAt||0)?'אותו יעד':'לא בוצע בשבוע שעבר, נשארים על אותו יעד']);
