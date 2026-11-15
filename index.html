@@ -3045,7 +3045,7 @@ function tpWatch(ctx){const c=clientById(ctx.clientId); if(!c||!c.portal||!S.can
   if(tpSig[c.id]===undefined){tpSig[c.id]=sig;return} if(tpSig[c.id]===sig) return; tpSig[c.id]=sig;
   clearTimeout(tpT[c.id]); tpT[c.id]=setTimeout(()=>tpPublish(c.id,true),8000);}
 function tpDesc(o){
-  if(o.kind==='log'){const rows=(o.ex||[]).map(e=>`<tr><td>${esc(e.n)}</td><td dir="ltr" style="text-align:right">${(e.sets||[]).map(s=>(s.kg?esc(s.kg)+'×':'')+esc(s.reps||'–')).join(', ')}${e.kp!=null&&e.kp!==''?` <span class="chip${+e.kp>=4?' down':''}">כאב ${+e.kp===0?'0':+e.kp<=2?'1-3':+e.kp<=4?'4-5':'6+'}</span>`:''}${e.ok===false&&(e.why||e.note)?` <span class="muted small">לא הצליח הכל${e.why?' · '+esc({hard:'קשה מדי',pain:'כאב',tired:'עייפות',tech:'טכניקה',oth:'אחר'}[e.why]||e.why):''}${e.note?' · '+esc(e.note):''}</span>`:''}</td></tr>`).join('');
+  if(o.kind==='log'){const rows=(o.ex||[]).map(e=>`<tr><td>${esc(e.n)}</td><td dir="ltr" style="text-align:right">${(e.sets||[]).map(s=>(s.kg?esc(s.kg)+'×':'')+esc(s.reps||'–')).join(', ')}${e.kp!=null&&e.kp!==''?` <span class="chip${+e.kp>=4?' down':''}">כאב ${+e.kp===0?'0':+e.kp<=2?'1-3':+e.kp<=4?'4-5':'6+'}</span>`:''}${e.ok===false&&(e.why||e.note)?` <span class="muted small">לא הצליח הכל${e.why?' · '+esc({hard:'קשה מדי',pain:'כאב',tired:'עייפות',tech:'טכניקה',oth:'אחר'}[e.why]||e.why):''}${e.note?' · '+esc(e.note):''}</span>`:''}${e.cn?`<div class="small" style="margin-top:3px">📝 ${esc(e.cn)}</div>`:''}</td></tr>`).join('');
     return `<b>🏋️ תיעוד אימון${o.label?' '+esc(o.label):''}</b> <span class="muted small">${o.date?fmt(o.date):''}${o.min?` · ${o.min} דק׳`:''}${o.rpe?` · מאמץ ${o.rpe}`:''}${o.pain!=null?` · <b style="${o.pain>=4?'color:var(--bad)':''}">כאב ${o.pain}/10</b>`:''}</span><table class="small" style="margin-top:6px">${rows}</table>${o.note?`<div class="small" style="margin-top:4px">💬 ${esc(o.note)}</div>`:''}`}
   if(o.kind==='media') return `<b>${/^video/.test(o.mt||'')?'🎥 סרטון':'📷 תמונה'}</b>${o.note?` <span>${esc(o.note)}</span>`:''}<div id="tpm_${esc(o.r)}"></div>`;
   if(o.kind==='done') return `<b>✓ עשה/תה בבית:</b> ${esc(o.ex||'')}${o.pain!=null?` · <span style="${o.pain>=4?'color:var(--bad);font-weight:700':''}">כאב ${o.pain}/10</span>`:''}`;
@@ -3255,7 +3255,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115164500';
+const APP_V='20261115173500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
