@@ -1973,15 +1973,15 @@ function vClient(){
     <div class="row" style="margin-top:8px">${(c.goals||[]).map(g=>`<span class="chip acc">${esc(GOALS[g]||g)}</span>`).join('')}${(c.status&&c.status!=='active')?`<span class="chip warn">${c.status==='paused'?'בהקפאה':'בארכיון'}</span>`:''}</div></div>
 </div>`;
   const safety=(c.limits?`<div class="safety"><b>⚠ מגבלות והתוויות נגד:</b><span>${esc(c.limits)}</span></div>`:'')+(c.medHistory||c.conditions?`<div class="safety med"><b>🩺 היסטוריה רפואית:</b><span>${esc(c.medHistory||c.conditions)}</span></div>`:'');
-  const main=[['session','תוכנית אימונים'],['prev','היסטוריית אימונים'],['profile','תיק מתאמן']], more=[['portal',`📱 דף למתאמן${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}`],['progress','גרפי התקדמות'],['assess','מבדקים']];
+  const main=[['session','תוכנית אימונים'],['prev','היסטוריית אימונים'],['profile','תיק מתאמן']], more=[['progress','גרפי התקדמות'],['assess','מבדקים']];
   const moreBadge=S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:'';
-  const open=S.moreOpen||more.some(t=>t[0]===S.tab);
+  const open=S.moreOpen||more.some(t=>t[0]===S.tab)||S.tab==='portal';
   const tb=t=>`<button class="tab" role="tab" aria-selected="${S.tab===t[0]}" data-tab="${t[0]}">${t[1]}</button>`;
   let addDayHtml='';
   if(S.P&&S.P.edit&&S.tab==='session'){const ls={};S.P.sessions.forEach(x=>{const l=String(x.label);if(!ls[l]||x.status==='planned'||(ls[l].status!=='planned'&&(x.date||'')>(ls[l].date||'')))ls[l]=x});const lb=Object.keys(ls).sort();
     if(lb.length<2) addDayHtml=S.P.addOpen?`<span class="row small np-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lb.map(l=>`<button class="btn sm" data-act="addDay" data-src="${ls[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;}
   const np=S.P&&S.P.edit&&S.tab==='session'?(S.P.newProg?`<span class="row small np-menu"><span class="muted">תוכנית חדשה:</span><button class="btn sm" data-act="newProgram" data-mode="ss" data-write>חדשה – סופר סטים</button><button class="btn sm" data-act="newProgram" data-mode="single" data-write>חדשה – סטים רגילים</button><button class="btn sm" data-act="newProgram" data-mode="copy" data-write>העתקת התרגילים הנוכחיים</button>${allTemplates().map(t=>`<button class="btn sm" data-act="newProgram" data-tpl="${t.id}" data-write>תבנית: ${esc(t.name)}</button>`).join('')}<button class="btn ghost sm" data-act="cancelNewProg">ביטול</button></span>`:`<button class="btn sm np-btn" data-act="askNewProg" data-write>+ תוכנית אימונים חדשה</button>${S.user&&S.user.role==='admin'?`<button class="btn sm ghost" data-act="delAllProg" style="color:#c62828;font-weight:800" data-write>${delArmed('all:'+S.P.clientId)?'⚠️ המתאמן וכל האימונים שלו יימחקו לצמיתות – לחצו שוב':'🗑️ מחיקת המתאמן וכל התוכנית'}</button>`:''}${S.user&&S.user.role==='admin'&&S.P.edit&&!S.P.edit.local&&S.P.edit.doc.status!=='done'?`<button class="btn sm ghost" data-act="delPlan" style="color:var(--bad,#c62828)" data-write>${delLabel(S.P.edit.id)}</button>`:''}`):'';
-  const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}${open?'':moreBadge}</button>${open?`<span class="morebox">${more.map(tb).join('')}<button class="tab" data-act="openReport">📄 דוח התקדמות</button><button class="tab" data-act="tpGoHome">🏠 תרגילים לבית עם סרטון</button>${c.remote||(c.handoff&&c.handoff.text)?'':`<button class="tab" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button>`}</span>`:''}</div>`;
+  const tabHtml=`<div class="tabs" role="tablist">${main.map(tb).join('')}<button class="tab folder" aria-expanded="${open}" data-act="toggleMore">📁 עוד ${open?'▴':'▾'}${open?'':moreBadge}</button>${open?`<span class="morebox">${more.map(tb).join('')}<button class="tab" data-act="openReport">📄 דוח התקדמות</button><button class="tab" data-act="tpGoHome" aria-selected="${S.tab==='portal'}">🏠 תרגילים למתאמן לבית${S.tpNew[c.id]&&tpMine(c)?` <span class="tpbadge">${S.tpNew[c.id]}</span>`:''}</button>${c.remote||(c.handoff&&c.handoff.text)?'':`<button class="tab" data-act="noteEdit" data-write>📝 הוספת הערה למאמן המחליף</button>`}</span>`:''}</div>`;
   const chipsL=(periodicDue(c)?`<span class="chip warn">📋 הגיע הזמן למבדק תקופתי</span>`:'')+(!(c.goalsShort||c.goalText||c.goalsLong)?`<button type="button" class="chip info" style="cursor:pointer;border:0;font:inherit" data-act="goalSug" title="הצעה למטרות לפי התוכנית והגיל">🎯 עוד לא כתובות מטרות ל${esc(String(c.name).split(' ')[0])} ←</button>`:'');
   const hl=(chipsL||addDayHtml||np)?`<div class="hline"><span class="row">${chipsL}</span><span class="tabs-side">${addDayHtml}${np}</span></div>${S.goalSug===c.id&&!(c.goalsShort||c.goalText||c.goalsLong)?goalSugHtml(c):''}`:'';
   const body=S.tab==='portal'?tPortal(c):S.tab==='session'?tSession(c):(S.tab==='prev'||S.tab==='history')?tPrev(c):S.tab==='progress'?tProgress(c):S.tab==='assess'?tAssess(c):tProfile(c);
@@ -3059,7 +3059,46 @@ function tpChat(c,L){const first=esc(String(c.name).split(' ')[0]),A=c.portalAck
   return `<div class="card"><h2 style="margin:0 0 8px">💬 צ'אט עם ${first}</h2><div class="tpthread" id="tpthread">${it.length?it.slice(-60).map(x=>`<div class="tpb ${x.me?'me':'him'}">${x.h}<span class="muted small" style="display:block;margin-top:2px">${f(x.t)}</span></div>`).join(''):`<p class="muted">עוד אין הודעות.</p>`}</div>
    <div class="row" style="margin-top:8px;align-items:stretch"><textarea id="tpmsg" rows="2" placeholder="כותבים ל${first}…" style="flex:1;min-width:200px;font:inherit;font-size:17px;padding:8px;border:1px solid var(--line);border-radius:10px"></textarea><button class="btn primary" data-act="tpMsg" data-write ${S.tpBusy[c.id]==='pub'?'disabled':''}>שליחה</button></div>
    <p class="muted small" style="margin:6px 0 0">${first} רואה את ההודעה בדף שלו תוך כחצי דקה, עם התראה.</p></div>`}
+/* תרגילים לבית: העתקה מהתוכנית בסטודיו, כמו שהיא או מותאמת לציוד מינימלי (כיסא, קיר, גומייה, בקבוקי מים) */
+const HOME_MAP=[
+ [/היכרות/,null],
+ [/בולגרי|מכרע|לאנג/,['מכרע סטטי','בלי משקל, יד על כיסא או קיר לאיזון']],
+ [/לחיצת רגליים|סקוואט/,['בוקס סקוואט','ישיבה וקימה מכיסא בלי משקל. קל מדי? מחזיקים בקבוק מים צמוד לחזה']],
+ [/היפ תראסט|גלוט ברידג/,["גלוט ברידג'",'בשכיבה על הגב, על הרצפה או על המיטה']],
+ [/דדליפט|הינג/,['דדליפט רומני','עם 2 בקבוקי מים או בלי משקל, ליד כיסא לביטחון']],
+ [/לחיצת חזה|שכיבות סמיכה/,['שכיבות סמיכה','על הקיר או על שולחן יציב. ככל שהגוף זקוף יותר – קל יותר']],
+ [/פולאובר|משיכה מפולי עליון|צ'ין|חתירה|TRX|טבעות|פייס פול/,['חתירה עם גומייה','גומייה סביב ידית של דלת סגורה, או מתחת לכפות הרגליים בישיבה']],
+ [/לחיצת כתפיים/,['לחיצת כתפיים','עם 2 בקבוקי מים או דאמבלים קלים, בישיבה על כיסא']],
+ [/הרחקת כתפיים|הרחקה אופקית/,['הרחקת כתפיים עם גומייה','']],
+ [/כפיפת מרפקים/,['כפיפת מרפקים עם גומייה','']],
+ [/פשיטת מרפקים/,['פשיטת מרפקים עם גומייה','']],
+ [/הרחקת ירך/,['הרחקת ירך עם גומייה','גומייה מעל הברכיים, בישיבה או בעמידה ליד קיר']],
+ [/קירוב ירך/,['קירוב ירך','בישיבה, לוחצים כרית בין הברכיים']],
+ [/עליות תאומים/,['עליות תאומים','יד על קיר או שיש']],
+ [/סטפ דאון/,['סטפ דאון','על המדרגה הנמוכה בבית, יד על מעקה']],
+ [/סטפ אפ/,['סטפ אפ','על מדרגה בבית, יד על מעקה']],
+ [/הליכה עם דאמבל/,['הליכה עם דאמבל ביד אחת','במקום דאמבל – שקית קניות או בקבוק']],
+ [/הרמת ברכיים/,['דד באג','בשכיבה על הגב']],
+ [/פלאנק|דד באג|בירד דוג|כפיפות בטן|אלכסונים/,['=','על הרצפה או על המיטה']],
+];
+function homeAdapt(name){const n=String(name||'');for(const [re,to] of HOME_MAP){if(re.test(n)){if(!to)return null;return {n:to[0]==='='?n:to[0],note:to[1]}}}return {n,note:'לבצע בבית בלי ציוד או עם גומייה'}}
+async function homeFromPlan(c,mode){let ps=[];if(S.P&&S.P.clientId===c.id)ps=plannedSessions(S.P);else{try{const q=await S.db.collection('sessions').where('clientId','==',c.id).get();ps=q.docs.map(d=>d.data()).filter(x=>x.status==='planned')}catch(e){}}
+  const out=[],seen=new Set();ps.forEach(s=>(s.exercises||[]).forEach(e=>{if(!e.name)return;const reps=e.repMin&&e.repMax&&String(e.repMin)!==String(e.repMax)?e.repMin+'-'+e.repMax:String(e.repMax||e.repMin||'');const sets=String(e.targetSets||'');
+    if(mode==='min'){const a=homeAdapt(e.name);if(!a||seen.has(a.n))return;seen.add(a.n);out.push({n:a.n,sets,reps,kg:'',note:[a.note,'במקום: '+dn(e.name)].filter(Boolean).join(' · ')})}
+    else{if(seen.has(e.name))return;seen.add(e.name);out.push({n:e.name,sets,reps,kg:e.targetKg!=null?String(e.targetKg):'',note:[e.tempo,e.notes].filter(Boolean).join(' · ')})}}));
+  out.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:'bw'});return out}
+function homeAskCard(c){const f=String(c.name).split(' ')[0];const has=(c.homeEx||[]).some(x=>x&&x.n);
+  return `<div class="card" id="homeAsk" style="border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))"><h2 style="margin-top:0">🏠 מה לשלוח ל${esc(f)} לבית?</h2>
+  <div class="row" style="gap:10px;align-items:stretch;flex-wrap:wrap">
+   <button class="btn primary" style="flex:1;min-width:220px;text-align:right;padding:14px" data-act="homeFill" data-mode="studio" data-write><b>🏋️ התוכנית כמו בסטודיו</b><br><span class="small" style="font-weight:400">אותם תרגילים, סטים, חזרות ומשקלים כמו עם המאמן</span></button>
+   <button class="btn primary" style="flex:1;min-width:220px;text-align:right;padding:14px;background:#0f766e;border-color:#0f766e" data-act="homeFill" data-mode="min" data-write><b>🪑 אותה תוכנית – ציוד מינימלי</b><br><span class="small" style="font-weight:400">כל תרגיל מותאם לבית: כיסא, קיר, גומייה או בקבוקי מים</span></button>
+  </div>
+  ${has?`<p class="muted small" style="margin:8px 0 0">שימו לב: הבחירה תחליף את רשימת התרגילים לבית הנוכחית (${(c.homeEx||[]).filter(x=>x&&x.n).length} תרגילים).</p>`:''}
+  <div class="row" style="margin-top:8px"><button class="btn ghost sm" data-act="homeAskNo">בלי שינוי – להמשיך לרשימה הקיימת</button></div></div>`}
 function tPortal(c){
+  if(S.homeAsk===c.id&&c.portal) return homeAskCard(c)+tPortalBody(c);
+  return tPortalBody(c)}
+function tPortalBody(c){
   if(!c.portal) return `<div class="card"><h2>📱 דף אישי למתאמן</h2>
     <p>דף פרטי בטלפון של ${esc(c.name)}: התוכנית שלו עם המשקלים והחזרות, סרטוני הדגמה, ותרגילים שתיתנו לבית. כשהוא לא מגיע לסטודיו (למשל בחו"ל), הוא יכול להתאמן לפי התוכנית, לתעד את התוצאות ולשלוח לכם תמונה או סרטון.</p>
     <p class="muted small">אין צורך בסיסמה. רק מי שיש לו את הקישור רואה את הדף, והתוכן מוצפן.</p>
@@ -3152,7 +3191,9 @@ async function tpAct(name,el){
   case 'tpRtDelEx': {S.rtEdit.seed.w[+el.dataset.w].ex.splice(+el.dataset.x,1);render();break;}
   case 'tpRtSave': {const sd=S.rtEdit.seed;sd.w.forEach(w=>{if(w.ex){w.ex=w.ex.filter(x=>String(x.n||'').trim());w.ex.forEach(x=>{x.sets=Math.min(5,Math.max(1,num(x.sets)||3));x.min=Math.max(1,num(x.min)||8);x.max=Math.min(15,Math.max(x.min,num(x.max)||12))})}if(w.run){w.run.km=num(w.run.km)||3}});
     const rr=document.getElementById('rtRule');if(rr)sd.rule=rr.value.trim();const rg=document.getElementById('rtRng');if(rg)sd.rng=rg.checked;sd.v='v'+Date.now();const ok=await updClient(c.id,{remoteSeed:sd,remote:true,trainingType:'remote'});if(ok){c.remoteSeed=sd;S.rtEdit=null;if(c.portal)await tpPublish(c.id,true);toast('התוכנית נשמרה והדף עודכן ✓');render()}break;}
-  case 'tpGoHome': {S.tab='portal'; if(!c.portal) await tpPublish(c.id,true); render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},300); break;}
+  case 'tpGoHome': {S.tab='portal'; S.homeAsk=c.id; if(!c.portal) await tpPublish(c.id,true); render(); setTimeout(()=>{const h=document.getElementById('homeAsk'); if(h) h.scrollIntoView({behavior:'smooth',block:'center'})},150); break;}
+  case 'homeAskNo': {S.homeAsk=null; render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},150); break;}
+  case 'homeFill': {const H=await homeFromPlan(c,el.dataset.mode); if(!H.length){toast('אין עדיין תרגילים באימון המתוכנן');break} await updClient(c.id,{homeEx:H,homeMode:el.dataset.mode,portalOwner:S.meId||tpOwner(c)}); c.homeEx=H; S.homeAsk=null; await tpPublish(c.id); render(); setTimeout(()=>{const h=[...document.querySelectorAll('#main h2, h2')].find(x=>/תרגילים לבית/.test(x.textContent)); if(h) h.scrollIntoView({behavior:'smooth',block:'start'})},150); toast(el.dataset.mode==='min'?'התרגילים הותאמו לבית. אפשר לערוך ואז לשלוח בווטסאפ':'התוכנית הועתקה. אפשר לערוך ואז לשלוח בווטסאפ'); break;}
   case 'tpPub': await tpPublish(c.id); break;
   case 'tpMsg': {const ta=document.getElementById('tpmsg'); const v=(ta&&ta.value||'').trim(); if(!v) break; const M=[...(c.portalMsgs||[]),{t:Date.now(),text:v}].slice(-150); c.portalMsgs=M; await updClient(c.id,{portalMsgs:M}); if(ta) ta.value=''; const ok=await tpPublish(c.id,true); toast(ok?'נשלח ✓':'ההודעה נשמרה, אבל הדף לא התעדכן. נסו "עדכון הדף"'); render(); setTimeout(()=>{const t=document.getElementById('tpthread');if(t)t.scrollTop=t.scrollHeight},50); break;}
   case 'tpCopy': try{await navigator.clipboard.writeText(tpLink(c));toast('הקישור הועתק')}catch(e){prompt('העתיקו את הקישור:',tpLink(c))} break;
@@ -3214,7 +3255,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115122000';
+const APP_V='20261115163500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
