@@ -567,6 +567,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .ptab td.pwho{text-align:start;padding:4px 8px;min-width:120px;white-space:normal}
 .ptab td.pwho .prevline,.ptab td.pwho .sghint{font-size:12px}
 .ptab tr.prow.p0 td.pwho{border-inline-start:4px solid #1d5fa8}.ptab tr.prow.p1 td.pwho{border-inline-start:4px solid #a8431d}
+.sheet tr.exrow.now>td{box-shadow:inset 0 0 0 9999px rgba(255,214,0,.45)}.sheet tr.exrow.now>td.name{outline:3px solid #f5b800;outline-offset:-3px}
 .ptab tr.now td.pwho,.ptab tr.now td.gkg,.ptab tr.now td.res,.ptab tr.now td.gadapt{box-shadow:inset 0 0 0 9999px rgba(255,214,0,.55)}.ptab tr.now td.pwho{outline:3px solid #f5b800;outline-offset:-3px}.nowb{display:inline-block;background:#f5b800;color:#000;font-weight:800;font-size:12px;border-radius:999px;padding:1px 8px;margin-inline-start:6px}.nokg{display:inline-block;padding:6px 10px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-weight:700;background:var(--surface-2)}
 .padaptbtn.on{color:var(--accent);font-weight:700}
 .adaptrow td{background:var(--surface-2);padding:6px 12px;border-bottom:1px solid var(--line)}
@@ -2014,8 +2015,15 @@ function doQfill(btn){const row=btn.closest('tr[data-ex]');const ctx=ctxOf(btn);
   const pr=btn.dataset.src==='prev'?prevReps(ctx,ex):null,fb=num(ex.repMax)??num(ex.repMin);
   row.querySelectorAll('input.si').forEach((inp,j)=>{if(inp.value!==''||inp.disabled)return;const v=pr?(pr[j]??pr[pr.length-1]):fb;if(v==null)return;inp.value=String(v);inp.dispatchEvent(new Event('input',{bubbles:true}))});
   btn.remove()}
+/* אימון אישי: מודגש רק התרגיל שמבצעים עכשיו. בסופר סט עובר לתרגיל הבא אחרי כל סט, בתרגיל רגיל – אחרי שכל הסטים הוזנו */
+function exCurIdx(exs){const tags=groupTags(exs),fl=e=>(e.sets||[]).filter(s=>s&&s.reps!==''&&s.reps!=null).length,seen={};
+  for(let i=0;i<exs.length;i++){const n=tags[i]&&tags[i].n;if(seen[n])continue;seen[n]=1;
+    const cand=exs.map((e,j)=>j).filter(j=>tags[j]&&tags[j].n===n&&exs[j].name&&(exs[j].sets||[]).length&&fl(exs[j])<exs[j].sets.length);
+    if(cand.length){cand.sort((x,y)=>fl(exs[x])-fl(exs[y])||x-y);return cand[0]}}
+  return -1}
+function sheetNowRefresh(tbl,d){if(!tbl||!d)return;const k=exCurIdx(d.exercises||[]);tbl.querySelectorAll('tr.exrow[data-ex]').forEach(tr=>tr.classList.toggle('now',Number(tr.dataset.ex)===k))}
 function progTable(ctx,doc){
-  const exs=doc.exercises||[]; const tags=groupTags(exs);
+  const exs=doc.exercises||[]; const tags=groupTags(exs);const CURX=doc.status==='done'?-1:exCurIdx(exs);
   const nSets=doc.intro?0:Math.min(6,Math.max(2,...exs.map(e=>Number(e.targetSets)||0)));
   const showSugg=doc.status==='planned';
   const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th>${nSets?`<th colspan="${nSets}" class="grp-res">תוצאות</th>`:''}<th></th></tr>
@@ -2025,7 +2033,7 @@ function progTable(ctx,doc){
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
-    return `${sep}<tr data-ex="${i}" class="${tg.ss?'ssr':''} ${tg.first?'gfirst':''}">
+    return `${sep}<tr data-ex="${i}" class="exrow ${tg.ss?'ssr':''} ${tg.first?'gfirst':''}${i===CURX?' now':''}">
      <td class="name"><span class="nmwrap"><span class="nmview">${esc(dn(ex.name))||'<span class="muted">שם התרגיל</span>'}</span><input list="lib" data-f="name" value="${esc(dn(ex.name))}" placeholder="שם התרגיל"></span>${ex.name&&!libFind(ex.name)?(exAmbig(ex.name)?`<div class="unihint">❓ למה הכוונה? ${exAmbig(ex.name).map(o=>`<button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(dn(o))}">${esc(dn(o))}</button>`).join(' ')}</div>`:exNorm(ex.name)?`<div class="unihint">❓ התכוונת ל: <button type="button" class="chip" data-act="nameTo" data-i="${i}" data-name="${esc(dn(exNorm(ex.name).n))}" data-note="${esc(exNorm(ex.name).note)}">${esc(dn(exNorm(ex.name).n))}</button></div>`:`<div class="unihint" title="כדי שכל הצוות ידבר באותה שפה – לבחור שם מהרשימה שנפתחת בהקלדה. פרטים (גובה, חור, זווית) כותבים בהערות">✎ שם לא מהמאגר – עדיף לבחור מהרשימה</div>`):''}${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}${!sec&&isUnilateral(ex.name)&&num(ex.repMax)>8?`<div class="unihint">חד־צדדי: מומלץ עד 8 חזרות ולהתקדם במשקל</div>`:''}${!sec&&!isUnilateral(ex.name)&&num(ex.repMax)>12?`<div class="unihint">מעל 12 חזרות: עדיף להוסיף משקל</div>`:''}${!exs.some(e=>e.ss)?`<button class="linkbtn tiny" data-act="joinEx" data-i="${i}" data-write>+ צירוף לסופר סט</button>`:''}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!doc.intro&&doc.status!=='done'&&ex.name&&(ex.sets||[]).some(s=>num(s.reps)==null)?qfillBtn(ctx,ex,i):''}${cueHtml(ex.name)}</td>
      <td class="narrow" data-l="סטים">${doc.intro?`<b>2</b>`:`<div class="stepv" data-stepk="sets"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><input type="number" min="1" max="10" data-f="targetSets" value="${esc(ex.targetSets)}" aria-label="סטים"><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}</td>
      <td class="rngc" data-l="חזרות">${doc.intro?`<b dir="ltr">6–8</b>`:`<div class="stepv" data-stepk="rng"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><div class="rng"><input type="number" min="0" data-f="repMin" value="${esc(ex.repMin)}" aria-label="חזרות מינימום" data-autojump="repMax"><span class="rngsep">–</span><input type="number" min="0" data-f="repMax" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}" aria-label="חזרות מקסימום"></div><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}${sec?'<div class="unitnote">שניות</div>':''}</td>
@@ -2884,7 +2892,7 @@ function bind(){
     if(t.dataset.set!=null){if(!d.date&&t.value!==''){d.date=today();const di=t.closest('[data-pane]')?.querySelector('[data-f="sess.date"]');if(di)di.value=d.date;} const s=ex.sets[Number(t.dataset.set)];
       if(f==='kg'){s.kg=t.value===''?'':(/^\s*\d+(\.\d+)?\s*[-–]\s*\d+(\.\d+)?\s*$/.test(t.value)?t.value.replace(/\s/g,'').replace('–','-'):Number(t.value)||t.value);}
       else s[f]=t.value===''?'':Number(t.value);
-      if(f==='reps'){t.dataset.st=setState(ex,s); clearTimeout(t._rt); t._rt=setTimeout(()=>adjRange(ctx,ex,t),1300);} saveEdit(ctx,700); return}
+      if(f==='reps'){t.dataset.st=setState(ex,s); clearTimeout(t._rt); t._rt=setTimeout(()=>adjRange(ctx,ex,t),1300);try{sheetNowRefresh(t.closest('table'),d)}catch(e){}} saveEdit(ctx,700); return}
     if(f==='tempo'){const old=ex.tempo||'';ex.tempo=t.value;saveEdit(ctx,900);clearTimeout(t._tt);t._tt=setTimeout(()=>carryTempo(ctx,d,ex,old),1200);return}
     if(['name','note'].includes(f)){ex[f]=t.value;saveEdit(ctx,900);return}
     if(f==='repMin'||f==='repMax'){delete ex.rMin0;delete ex.rMax0}
@@ -3203,7 +3211,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115093500';
+const APP_V='20261115095500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
