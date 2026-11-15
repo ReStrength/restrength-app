@@ -3201,7 +3201,7 @@ async function boot(){
   db.doc('settings/exercisesExtra').onSnapshot(sn=>{const L=(sn.exists&&sn.data().list)||[];L.forEach(x=>{if(x&&x.n&&!LIB.some(l=>l[0]===x.n))LIB.push([x.n,x.u||'kg',x.g||'upper'])});refreshLib()},()=>{});
   db.doc('settings/exercises').onSnapshot(sn=>{const d=sn.exists?(sn.data()||{}):{};S.exNames=d;S.exNamesRev={};Object.entries(d).forEach(([o,c])=>{if(c&&c!==o)S.exNamesRev[c]=o;});refreshLib();},()=>{});
   let linked=false;
-  db.collection('clients').onSnapshot(snap=>{S.clients=snap.docs.map(d=>({id:d.id,...d.data()}));S.loaded.k=true;
+  db.collection('clients').onSnapshot(snap=>{S.clients=snap.docs.filter(d=>!d.id.startsWith('arbox_')).map(d=>({id:d.id,...d.data()}));S.loaded.k=true;
     if(!S.tpPolled){S.tpPolled=1;setTimeout(()=>tpPoll(),4000)}
     const h=(location.hash||'').slice(1); if(!linked&&h&&S.clients.some(c=>c.id===h)){linked=true;openClient(h,'session');return}
     if(!linked){linked=true;let nv=null;try{nv=JSON.parse(localStorage.getItem('rs_nav')||'null')}catch(e){}
@@ -3211,7 +3211,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261115111500';
+const APP_V='20261115113500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
