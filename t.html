@@ -256,7 +256,15 @@ if(!DEMO){
 if(!SID||!KS){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
 if(!window.crypto||!crypto.subtle){fail('הדפדפן הזה ישן מדי. פתחו את הקישור בכרום או בספארי.');return}
 var raw;try{raw=PC.unb64u(KS)}catch(e){fail('הקישור לא שלם. בקשו מהמאמן לשלוח אותו שוב.');return}
-Promise.all([PC.key(raw),PC.wOf(raw)]).then(function(a){K=a[0];W=a[1];return post('plan',{s:SID})}).then(function(r){return PC.decJ(K,r.blob||r.plan)}).then(function(p){PLAN=p;TAB=Math.min(+(lsg('rs_tt_'+SID)||0),(p.next||[]).length-1);if(TAB<0)TAB=0;try{LOG=JSON.parse(lsg('rs_tl_'+SID)||'null')}catch(e){LOG=null}render();loadReps();syRestore()},function(e){fail(String(e&&e.message)==='404'?'הדף הזה כבר לא פעיל. בקשו מהמאמן קישור חדש.':'לא הצלחנו לטעון. בדקו שיש אינטרנט ונסו שוב.<br><br><button class="btn alt" onclick="location.reload()">לנסות שוב</button>')});
+Promise.all([PC.key(raw),PC.wOf(raw)]).then(function(a){K=a[0];W=a[1];return post('plan',{s:SID})}).then(function(r){return PC.decJ(K,r.blob||r.plan)}).then(function(p){PLAN=p;TAB=Math.min(+(lsg('rs_tt_'+SID)||0),(p.next||[]).length-1);if(TAB<0)TAB=0;try{LOG=JSON.parse(lsg('rs_tl_'+SID)||'null')}catch(e){LOG=null}render();loadReps();syRestore();rsRegPush()},function(e){fail(String(e&&e.message)==='404'?'הדף הזה כבר לא פעיל. בקשו מהמאמן קישור חדש.':'לא הצלחנו לטעון. בדקו שיש אינטרנט ונסו שוב.<br><br><button class="btn alt" onclick="location.reload()">לנסות שוב</button>')});
+}
+function rsRegPush(){
+  if(DEMO||!SID||!('serviceWorker' in navigator)||!('PushManager' in window))return;
+  var VPUB='BGOh1Xot117J-r7V7ehf3ziCNm7XEz6E9LlTHHYBdogqBoayfwE-O09tHA13KmpQ2nQAF7FnMtuO7iVkmmGULIg';
+  function u8(b64u){var b64=b64u.replace(/-/g,'+').replace(/_/g,'/');while(b64.length%4)b64+='=';var bin=atob(b64),a=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
+  navigator.serviceWorker.register('./sw.js').then(function(reg){
+    return reg.pushManager.getSubscription().then(function(s){return s||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VPUB)})});
+  }).then(function(sub){post('sub',{s:SID,sub:sub.toJSON()})}).catch(function(){});
 }
 function loadReps(){post('reps',{s:SID,w:W}).then(function(r){return Promise.all((r.reps||[]).map(function(x){return PC.decJ(K,x.blob).then(function(o){o.t=x.t*1000;return o},function(){return null})}))}).then(function(L){REPS=L.filter(Boolean).sort(function(a,b){return a.t-b.t});paintHist();paintDone()},function(){})}
 
