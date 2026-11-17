@@ -1924,10 +1924,11 @@ function abHtml(k){
   if(!AB.ok)return AB.err==='nokey'?`<div class="abbox"><div class="abh"><h2>🗓️ הלו״ז מארבוקס</h2></div><div class="muted">יופעל אחרי שירין ייכנס לאפליקציה פעם אחת.</div></div>`:'';
   const off=S.abDay||0,D=abDate(off);
   let rows=[];
-  if(AB.book){const by={};AB.book.filter(o=>String(o.d).slice(0,10)===D&&abCoachMatch(k,o.c)).forEach(o=>{const key=o.t+'|'+o.w+'|'+o.c;(by[key]=by[key]||{t:String(o.t).slice(0,5),c:o.c,w:o.w,g:o.g,ns:[]}).ns.push(o.n)});
+  const isClinic=w=>/קליניקה/.test(String(w||''));
+  if(AB.book){const by={};AB.book.filter(o=>String(o.d).slice(0,10)===D&&abCoachMatch(k,o.c)&&!isClinic(o.w)).forEach(o=>{const key=o.t+'|'+o.w+'|'+o.c;(by[key]=by[key]||{t:String(o.t).slice(0,5),c:o.c,w:o.w,g:o.g,ns:[]}).ns.push(o.n)});
     Object.values(by).forEach(x=>{if(x.ns.length>1||/קבוצ/.test(x.g||x.w||''))rows.push({t:x.t,n:'',w:x.w,c:x.c,ns:x.ns});else rows.push({t:x.t,n:x.ns[0],w:x.w,c:x.c})})}
-  else{rows=AB.list.filter(o=>String(o.date).slice(0,10)===D&&abCoachMatch(k,o.coach)).map(o=>({t:String(o.time).slice(0,5),e:String(o.end||'').slice(0,5),n:o.name,c:o.coach,w:o.what}));
-    AB.sched.filter(x=>String(x.d).slice(0,10)===D&&abCoachMatch(k,x.st)).forEach(x=>rows.push({t:String(x.s).slice(0,5),e:String(x.e||'').slice(0,5),n:'',c:x.st,w:x.sn,g:x.cnt}))}
+  else{rows=AB.list.filter(o=>String(o.date).slice(0,10)===D&&abCoachMatch(k,o.coach)&&!isClinic(o.what)).map(o=>({t:String(o.time).slice(0,5),e:String(o.end||'').slice(0,5),n:o.name,c:o.coach,w:o.what}));
+    AB.sched.filter(x=>String(x.d).slice(0,10)===D&&abCoachMatch(k,x.st)&&!isClinic(x.sn)).forEach(x=>rows.push({t:String(x.s).slice(0,5),e:String(x.e||'').slice(0,5),n:'',c:x.st,w:x.sn,g:x.cnt}))}
   rows.sort((a,b)=>a.t.localeCompare(b.t));
   const tabs=`<span class="abtabs"><button class="${off===0?'on':''}" data-abday="0">היום</button><button class="${off===1?'on':''}" data-abday="1">מחר</button></span>`;
   const body=rows.length?`<div class="abl">${rows.map(r=>{const c=r.n?abClient(r.n):null;const inner=`<span class="abt">${esc(r.t)}${r.e?`<small>–${esc(r.e)}</small>`:''}</span><span class="abn">${r.n?esc(r.n):'👥 '+esc(r.w||'אימון קבוצתי')}${r.g!=null?` <small>(${r.g} רשומים)</small>`:''}${r.ns?`<small class="abns">${r.ns.map(n=>{const c=abClient(n);return c?`<a href="#" data-openc="${c.id}">${esc(n)}</a>`:esc(n)}).join(' · ')}</small>`:''}</span><span class="abm">${r.n?esc(r.w||''):''}${!k&&r.c?` · ${esc(r.c)}`:''}</span>`;
