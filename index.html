@@ -190,6 +190,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:16px;font-variant-numeri
 @media (prefers-reduced-motion:no-preference){.btn,.chip,.tab{transition:background .15s,color .15s,border-color .15s}}
 @media (max-width:560px){h1{font-size:23px}.kpi b{font-size:24px}.top-side{margin-inline-start:0}}
 .ss-group{border:1px solid var(--line);background:var(--surface-2);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px}
+.draggrip{cursor:grab;user-select:none;touch-action:none}
+.exrow.dropt{outline:2px dashed #1c64f2;outline-offset:-2px}
 .ss-head{font-weight:700;color:var(--accent-text);padding:2px 6px}
 .pairgrid{display:grid;grid-template-columns:1fr;gap:36px;align-items:start}
 .pairgrid > section{min-width:0}
@@ -2048,7 +2050,7 @@ function progTable(ctx,doc){
      <td class="kg" data-l="${isSmithPush(ex.name)?'גובה הגבהה בסמית':doc.intro&&isIntroSquat(ex.name)?'משקל עבודה':tOnly(ex.name,doc.intro)?'משקל בסה״כ':sideable(ex.name)?(ex.dumbSide==='total'?'משקל בסה״כ':'משקל כל יד'):'משקל עבודה (בלי המוט)'}">${doc.intro&&isIntroSquat(ex.name)?`<span class="nokg">ללא משקל</span>`:isSmithPush(ex.name)?`<select data-f="height" class="hsel" aria-label="גובה הגבהה בסמית">${((doc.intro&&ex.height==='intro')?[7,6,5]:[7,6,5,4,3,2,1]).map(h=>`<option value="${h}"${(ex.height==='intro'?7:Number(ex.height)||7)===h?' selected':''}>גובה ${h}</option>`).join('')}</select><div class="muted small" style="font-size:12px;white-space:nowrap">7 קל ← ${(doc.intro&&ex.height==='intro')?5:1} קשה</div>`:`${doc.intro||sec?'':'<div class="stepv" data-stepk="kg" data-inc="'+(isDumbbell(ex.name)?1:2.5)+'"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button>'}<input type="text" inputmode="decimal" data-f="targetKg" value="${esc(doc.intro&&tOnly(ex.name,true)&&(ex.targetKg===''||ex.targetKg==null)?'1-2':ex.targetKg)}" placeholder="${sec?'—':isBW(ex.name)?'משקל גוף':''}" aria-label="${ex.name==='סקוואט'?'טמפו/טווח תנועה':'משקל עבודה בק׳׳ג'}">${doc.intro||sec?'':'<button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>'}${tOnly(ex.name,doc.intro)?`<div class="muted small" style="font-size:12px">בסה״כ</div>`:sideable(ex.name)?`<div class="dumbtog"><button type="button" class="dumbbtn${(ex.dumbSide||'each')==='each'?' on':''}" data-act="dumbSide" data-v="each" data-i="${i}" data-write>כל יד</button><button type="button" class="dumbbtn${ex.dumbSide==='total'?' on':''}" data-act="dumbSide" data-v="total" data-i="${i}" data-write>בסה״כ</button></div>`:''}`}</td>
      <td class="notes"><textarea data-f="tempo" data-hint="1" rows="${Math.max(2,Math.min(5,Math.ceil(String(ex.tempo||'').length/26)))}" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, ציוד'}">${esc(ex.tempo)}</textarea></td>
      ${Array.from({length:nSets},(_,j)=>{const s=(ex.sets||[])[j];const hasKg=!sec&&(isKgRange(ex.targetKg)||(ex.sets||[]).some(x=>num(x.kg)!=null&&String(x.kg)!==String(ex.targetKg)))&&(unitOf(ex)==='kg'||/\d/.test(String(ex.targetKg??'')))&&!(doc.intro&&isIntroSquat(ex.name))&&ex.name!=='סקוואט';const kgPH=hasKg?(num(ex.targetKg)!=null?String(ex.targetKg):kgLo(ex.targetKg)):'';return s?`<td class="res" data-l="סט ${j+1}">${hasKg?`<label class="kiw" title="משקל העבודה בסט הזה"><input class="ki" type="text" inputmode="decimal" data-f="kg" data-set="${j}" value="${esc(num(s.kg)!=null?s.kg:'')}" placeholder="${esc(kgPH)}" aria-label="משקל עבודה בסט ${j+1}"><span>ק״ג</span></label>`:''}<input class="si" type="number" inputmode="numeric" min="0" data-f="reps" data-set="${j}" value="${esc(s.reps)}" data-st="${setState(ex,s)}" aria-label="סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===(ex.sets||[]).length-1?`${(ex.sets||[]).length<6?`<button type="button" class="addset" data-act="setAdd" title="הוספת סט לתרגיל הזה" aria-label="הוספת סט" data-write>+</button>`:''}${(ex.sets||[]).length>1?`<button type="button" class="addset delset" data-act="setDel" title="הורדת הסט האחרון" aria-label="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>'}).join('')}
-     <td class="acts"><button class="btn ghost sm${num(ex.pain)||S.painEx===ex.id?' painon':''}" data-act="painOpen" data-i="${i}" data-tip="כאב" aria-label="כאב">🤕${num(ex.pain)?' '+ex.pain:''}</button><button class="btn ghost sm${num(ex.rpe)||S.effEx===ex.id?' effon':''}" data-act="effOpen" data-i="${i}" data-tip="${num(ex.rpe)?'מאמץ: '+effName(ex.rpe):'מאמץ'}" aria-label="מאמץ">💪${num(ex.rpe)?' '+effName(ex.rpe):''}</button><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" data-tip="תרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄</button><span class="mvcol"><button class="btn ghost sm" data-act="exUp" data-tip="למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" data-tip="למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="exDel" data-tip="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${S.painEx!=null&&S.painEx===ex.id?painRow(ex,i,nSets):''}${S.effEx!=null&&S.effEx===ex.id?effRow(ex,i,nSets):''}${S.cmEx!=null&&S.cmEx===ex.id?cmRow(ctx,ex,i,nSets):''}${sg}`}).join('');
+     <td class="acts"><button class="btn ghost sm${num(ex.pain)||S.painEx===ex.id?' painon':''}" data-act="painOpen" data-i="${i}" data-tip="כאב" aria-label="כאב">🤕${num(ex.pain)?' '+ex.pain:''}</button><button class="btn ghost sm${num(ex.rpe)||S.effEx===ex.id?' effon':''}" data-act="effOpen" data-i="${i}" data-tip="${num(ex.rpe)?'מאמץ: '+effName(ex.rpe):'מאמץ'}" aria-label="מאמץ">💪${num(ex.rpe)?' '+effName(ex.rpe):''}</button><button class="btn ghost sm" data-act="swapOpen" data-i="${i}" data-tip="תרגיל חלופי" aria-label="תרגיל חלופי" data-write>🔄</button><span class="mvcol"><span class="btn ghost sm draggrip" draggable="true" data-drag="${i}" data-tip="גרירה לחיבור סופר סט" aria-label="גרירה לחיבור סופר סט" data-write>⠿</span><button class="btn ghost sm" data-act="exUp" data-tip="למעלה" aria-label="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="exDown" data-tip="למטה" aria-label="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="exDel" data-tip="מחיקת התרגיל" aria-label="מחיקת תרגיל" data-write>✕</button></td></tr>${S.swapEx!=null&&S.swapEx===ex.id?swapRow(ex,i,nSets):''}${S.painEx!=null&&S.painEx===ex.id?painRow(ex,i,nSets):''}${S.effEx!=null&&S.effEx===ex.id?effRow(ex,i,nSets):''}${S.cmEx!=null&&S.cmEx===ex.id?cmRow(ctx,ex,i,nSets):''}${sg}`}).join('');
   return `<div class="sheet-wrap"><table class="sheet">${head}<tbody>${rows}</tbody></table></div>`;
 }
 function pastWeeks(ctx,c,label,curId,limit,title){
@@ -2143,6 +2145,10 @@ function rtSeed(k){const t=RT_SEEDS[k];return {v:'v'+Date.now(),w:t.w.map(w=>w.r
 function ADM(){return !!(S.user&&S.user.role==='admin')}
 function rtVidCard(c,sd){if(!ADM()||!sd||!sd.w)return '';const V=c.exVideos||{};const names=[...new Set(sd.w.flatMap(w=>(w.ex||[]).filter(x=>x.n&&x.leg!=='info').map(x=>x.n)))];if(!names.length)return '';
   return `<div class="card" style="margin:10px 0;border:2px solid #1c64f2"><h3 style="margin:0 0 4px">🎥 סרטוני הדגמה לתרגילים</h3><p class="muted small" style="margin:0 0 8px">מצלמים פעם אחת כל תרגיל. הסרטון מופיע בדף של ${esc(c.extCoach||String(c.name).split(' ')[0])} מעל התרגיל, והדף מתעדכן לבד.${c.portal?'':' <b>קודם יוצרים את הדף האישי.</b>'}</p><div class="tpgrid">${names.map(n=>`<div class="tpex"><span>${esc(n)}</span>${V[n]?`<span class="row"><span class="chip up">יש סרטון ✓</span><button class="btn ghost sm" data-act="tpVid" data-ex="${esc(n)}" data-write>החלפה</button><button class="btn ghost sm" data-act="tpVidDel" data-ex="${esc(n)}" data-write>מחיקה</button></span>`:`<button class="btn sm" data-act="tpVid" data-ex="${esc(n)}" data-write ${c.portal?'':'disabled'}>📷 העלאת סרטון</button>`}</div>`).join('')}</div></div>`}
+function tpCmPanel(c){const n=S.tpCmEx;if(!n)return '';const L=cmList(c,n);
+  return `<div class="card" style="margin:10px 0;border:2px solid #888"><b>📷 תמונות וסרטונים למאמן – ${esc(dn(n))}</b> <span class="muted small">(רק הצוות רואה)</span>
+  <div class="cmgrid">${L.length?L.map((m,j)=>`<div class="cmitem"><div class="cmbox" id="cmb_${esc(m.k)}"><button class="btn sm" data-act="tpCmShow" data-j="${j}">${/^video/.test(m.t)?'▶ סרטון':'🖼 תמונה'}</button></div><div class="small muted">${m.by?esc(m.by)+' · ':''}${m.at?new Date(m.at).toLocaleDateString('he-IL'):''} <button class="linkbtn tiny" data-act="tpCmDel" data-j="${j}" data-write>מחיקה</button></div></div>`).join(''):'<p class="muted small">עוד אין תמונות לתרגיל הזה.</p>'}</div>
+  <div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="tpCmAdd" data-write>+ צילום / העלאה</button><button class="btn ghost sm" data-act="tpCm" data-exn="${esc(n)}">סגירה</button></div></div>`}
 function remoteProg(c){
   const sd=S.rtEdit&&S.rtEdit.id===c.id?S.rtEdit.seed:c.remoteSeed;
   const head=`<div class="card"><div class="spread"><div><h2 style="margin:0">🌍 תוכנית ליווי מרחוק</h2><span class="muted small">${esc(String(c.name).split(' ')[0])} מתאמן לבד לפי הדף האישי: ממלא תוצאות, והדף מתכנן לבד את האימון והשבוע הבא בהתקדמות הדרגתית (טמפו ← טווח ← משקל קילו אחד ← חזרות ← לעיתים רחוקות סט; בריצות חצי ק"מ או 5 שניות לק"מ). כל שבוע רביעי שבוע קל. התוצאות, המטרות והכאבים מגיעים לתיבה.</span></div></div>`;
@@ -2153,13 +2159,13 @@ function remoteProg(c){
       ${ed?`<label class="f">סוג<select data-rte="${wi}.run.kind"><option value="tempo"${w.run.kind==='tempo'?' selected':''}>ריצת קצב</option><option value="long"${w.run.kind!=='tempo'?' selected':''}>ריצה ארוכה</option></select></label>`:''}
       <label class="f">ק"מ${inp(wi+'.run.km',w.run.km,'',  '90px')}</label><label class="f">קצב מ־ (דק׳:שנ׳)${inp(wi+'.run.p1',w.run.p1,'5:30','110px')}</label><label class="f">עד${inp(wi+'.run.p2',w.run.p2,'5:40','110px')}</label></div></div>`
     :`<div class="card" style="margin:10px 0"><h3 style="margin:0 0 8px">💪 אימון ${esc(w.label)} · ${w.ex.some(x=>x.ss)?'כוח בסופר סטים':'כוח, תרגיל אחרי תרגיל'}</h3><div class="tbl-wrap"><table class="tbl rtbl"><thead><tr><th>סופר סט (ריק = בלי)</th><th>תרגיל</th><th>סטים</th><th>חזרות</th><th>ק"ג</th><th>קפיצת משקל</th><th>🦵 רגליים</th><th>דגש לביצוע</th><th>איך מתקדמים</th>${ADM()?'<th>סרטון הדגמה</th>':''}${ed?'<th></th>':''}</tr></thead><tbody>
-      ${w.ex.map((x,xi)=>`<tr><td>${inp(wi+'.ex.'+xi+'.ss',x.ss,'','50px')}</td><td>${ed?`<input list="lib" data-rte="${wi}.ex.${xi}.n" value="${esc(x.n)}" placeholder="שם התרגיל" style="min-width:200px">`:`<b>${esc(x.n||'—')}</b>`}</td><td>${inp(wi+'.ex.'+xi+'.sets',x.sets,'','55px')}</td><td dir="ltr" style="text-align:right">${inp(wi+'.ex.'+xi+'.min',x.min,'','50px')} – ${inp(wi+'.ex.'+xi+'.max',x.max,'','50px')}</td><td>${inp(wi+'.ex.'+xi+'.kg',x.kg,'גוף','60px')}</td><td>${inp(wi+'.ex.'+xi+'.inc',x.inc,'1','55px')}</td><td>${ed?`<select data-rte="${wi}.ex.${xi}.leg"><option value=""${!x.leg?' selected':''}>אוטומטי</option><option value="1"${x.leg==='1'?' selected':''}>כן</option><option value="0"${x.leg==='0'?' selected':''}>לא</option><option value="info"${x.leg==='info'?' selected':''}>הנחיה בלבד</option></select>`:(x.leg==='info'?'📝':rtLeg(x)?'🦵':'')}</td><td>${ed?`<textarea data-rte="${wi}.ex.${xi}.cue" rows="2" style="min-width:170px" placeholder="למשל: ברך מעל כף הרגל, לרדת לאט">${esc(x.cue||'')}</textarea>`:esc(x.cue||'')}</td><td>${ed?`<textarea data-rte="${wi}.ex.${xi}.how" rows="2" style="min-width:170px" placeholder="למשל: אחרי 10 חזרות בלי כאב, ספסל נמוך יותר">${esc(x.how||'')}</textarea>`:esc(x.how||'')}</td>${ADM()?`<td>${!ed&&x.n?((c.exVideos||{})[x.n]?`✅ <button class="btn ghost sm" data-act="tpVid" data-ex="${esc(x.n)}" data-write>החלפה</button>`:`<button class="btn sm" data-act="tpVid" data-ex="${esc(x.n)}" data-write ${c.portal?'':'disabled title="קודם יוצרים את הדף"'}>🎥 העלאה</button>`):''}</td>`:''}${ed?`<td><button class="btn ghost sm" data-act="tpRtDelEx" data-w="${wi}" data-x="${xi}">מחיקה</button></td>`:''}</tr>`).join('')}
+      ${w.ex.map((x,xi)=>`<tr><td>${inp(wi+'.ex.'+xi+'.ss',x.ss,'','50px')}</td><td>${ed?`<input list="lib" data-rte="${wi}.ex.${xi}.n" value="${esc(x.n)}" placeholder="שם התרגיל" style="min-width:200px">`:`<b>${esc(x.n||'—')}</b>${x.n?`<br><button type="button" class="linkbtn tiny" data-act="tpCm" data-exn="${esc(x.n)}">📷 ${cmList(c,x.n).length?`תמונות למאמן (${cmList(c,x.n).length})`:'תמונה/סרטון למאמן'}</button>`:''}`}</td><td>${inp(wi+'.ex.'+xi+'.sets',x.sets,'','55px')}</td><td dir="ltr" style="text-align:right">${inp(wi+'.ex.'+xi+'.min',x.min,'','50px')} – ${inp(wi+'.ex.'+xi+'.max',x.max,'','50px')}</td><td>${inp(wi+'.ex.'+xi+'.kg',x.kg,'גוף','60px')}</td><td>${inp(wi+'.ex.'+xi+'.inc',x.inc,'1','55px')}</td><td>${ed?`<select data-rte="${wi}.ex.${xi}.leg"><option value=""${!x.leg?' selected':''}>אוטומטי</option><option value="1"${x.leg==='1'?' selected':''}>כן</option><option value="0"${x.leg==='0'?' selected':''}>לא</option><option value="info"${x.leg==='info'?' selected':''}>הנחיה בלבד</option></select>`:(x.leg==='info'?'📝':rtLeg(x)?'🦵':'')}</td><td>${ed?`<textarea data-rte="${wi}.ex.${xi}.cue" rows="2" style="min-width:170px" placeholder="למשל: ברך מעל כף הרגל, לרדת לאט">${esc(x.cue||'')}</textarea>`:esc(x.cue||'')}</td><td>${ed?`<textarea data-rte="${wi}.ex.${xi}.how" rows="2" style="min-width:170px" placeholder="למשל: אחרי 10 חזרות בלי כאב, ספסל נמוך יותר">${esc(x.how||'')}</textarea>`:esc(x.how||'')}</td>${ADM()?`<td>${!ed&&x.n?((c.exVideos||{})[x.n]?`✅ <button class="btn ghost sm" data-act="tpVid" data-ex="${esc(x.n)}" data-write>החלפה</button>`:`<button class="btn sm" data-act="tpVid" data-ex="${esc(x.n)}" data-write ${c.portal?'':'disabled title="קודם יוצרים את הדף"'}>🎥 העלאה</button>`):''}</td>`:''}${ed?`<td><button class="btn ghost sm" data-act="tpRtDelEx" data-w="${wi}" data-x="${xi}">מחיקה</button></td>`:''}</tr>`).join('')}
       </tbody></table></div>${ed?`<button class="btn sm" data-act="tpRtAddEx" data-w="${wi}">+ תרגיל</button>`:''}</div>`).join('');
   const portal=c.portal&&c.portalPub;
   const acts=ed?`<div class="row"><button class="btn primary" data-act="tpRtSave" data-write>שמירה ועדכון הדף של ${esc(String(c.name).split(' ')[0])}</button><button class="btn ghost" data-act="tpRtCancel">ביטול</button></div><p class="muted small">שמירה שומרת את ההתקדמות שכבר הייתה בתרגילים ובריצות שנשארו בתוכנית. עד 15 חזרות בכל תרגיל.</p>`
     :`<div class="row"><button class="btn" data-act="tpRtEdit" data-write>✏️ עריכת התוכנית</button>${portal?`<a class="btn primary" data-own="1" style="background:#25D366;border-color:#25D366" href="${esc(tpWa(c,rtMsg(c)))}" target="_blank" rel="noopener">📲 שליחה ל${esc(String(c.name).split(' ')[0])} בוואטסאפ</a><a class="btn" href="${esc(tpLink(c))}" target="_blank" rel="noopener">איך זה נראה אצלו</a>`:`<button class="btn primary" data-act="tpCreate" data-write ${S.tpBusy[c.id]?'disabled':''}>${S.tpBusy[c.id]?'יוצר…':'יצירת הדף האישי לשליחה'}</button>`}</div>${c.phone?'':'<p class="muted small">כדי שהוואטסאפ ייפתח ישר אצלו, צריך טלפון בתיק המתאמן.</p>'}`;
   const rule=ed?`<div class="card" style="margin:10px 0"><label class="f" style="width:100%">📌 כלל לכל התרגילים (מופיע בראש הדף)<textarea id="rtRule" rows="2" style="width:100%" placeholder="למשל: בלימה של 2 שניות בירידה, וטווח הכי גדול שאפשר בלי כאב">${esc(sd.rule||'')}</textarea></label><label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="rtRng"${sd.rng?' checked':''}> טווח חזרות (למשל 8–10) במקום מספר אחד, ו"לא הצליח הכל" עם מספר אחד וסיבה</label></div>`:(sd.rule?`<div class="card" style="margin:10px 0">📌 <b>כלל לכל התרגילים:</b> ${esc(sd.rule)}</div>`:'');
-  return head+acts+'</div>'+rule+(ed?'':rtVidCard(c,sd))+wk;
+  return head+acts+'</div>'+rule+tpCmPanel(c)+(ed?'':rtVidCard(c,sd))+wk;
 }
 function rtMsg(c){const f=String(c.name).split(' ')[0],sd=c.remoteSeed||{w:[]},nr=sd.w.filter(w=>w.run).length,ns=sd.w.length-nr;
   return `היי ${f} 💪 זו תוכנית האימונים שלך בליווי מרחוק: ${ns} אימוני כוח${nr?` ו-${nr} ריצות`:''} בשבוע.\nבהתחלה כותבים בדף את המטרות שלך. אחרי כל אימון ממלאים כמה חזרות ובאיזה משקל עשית (ובריצה: כמה ק"מ ובכמה זמן) ולוחצים "סיימתי".\nבסוף השבוע לוחצים "תכנון שבוע האימונים הבא", והדף בונה לבד את השבוע הבא בהתקדמות הדרגתית. אם כואב משהו, מדווחים שם.\n${tpLink(c)}`}
@@ -2294,7 +2300,7 @@ function gcalCard(k){if(!S.canWrite||k.gcal||S.gcalLater)return '';const em=esc(
   return head+`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary sm" data-act="gcalStep" data-st="new">כן – תפתחו לי יומן חדש</button><button class="btn sm" data-act="gcalStep" data-st="existing">יש לי כבר יומן לאימונים בסטודיו</button><button class="btn ghost sm" data-act="gcalSave" data-mode="none">לא משתמש/ת ביומן גוגל</button><button class="btn ghost sm" data-act="gcalLater">אחר כך</button></div></div>`}
 /* תמונה / סרטון למאמן לתרגיל מסוים (למשל זווית הספסל) – נשמר מוצפן, רק לצוות */
 function cmList(c,n){return ((c&&c.coachMedia)||{})[n]||[]}
-function cmBtn(ctx,ex,i){const c=ctx&&clientById(ctx.clientId);if(!c||!ex.name)return '';const L=cmList(c,ex.name);return `<button type="button" class="linkbtn tiny" data-act="cmOpen" data-i="${i}" title="תמונה או סרטון למאמן: איך הושבנו, זווית, גובה">📷 ${L.length?`תמונות למאמן (${L.length})`:'תמונה/סרטון למאמן'}</button>`}
+function cmBtn(ctx,ex,i){const c=ctx&&clientById(ctx.clientId);if(!c||!ex.name)return '';if(!c.remote&&ttype(c)!=='remote')return '';const L=cmList(c,ex.name);return `<button type="button" class="linkbtn tiny" data-act="cmOpen" data-i="${i}" title="תמונה או סרטון למאמן: איך הושבנו, זווית, גובה">📷 ${L.length?`תמונות למאמן (${L.length})`:'תמונה/סרטון למאמן'}</button>`}
 function cmRow(ctx,ex,i,nSets){const c=clientById(ctx.clientId);const L=cmList(c,ex.name);
   return `<tr class="painrow cmrow" data-ex="${i}"><td colspan="${nSets+6}"><div class="ptip"><b>📷 תמונות וסרטונים למאמן – ${esc(dn(ex.name))}</b> <span class="muted small">(רק הצוות רואה. למשל: זווית הספסל, גובה, איך הושבנו)</span></div>
   <div class="cmgrid">${L.map((m,j)=>`<div class="cmitem"><div class="cmbox" id="cmb_${esc(m.k)}"><button class="btn sm" data-act="cmShow" data-i="${i}" data-j="${j}">${/^video/.test(m.t)?'▶ סרטון':'🖼 תמונה'}</button></div>
@@ -2308,6 +2314,36 @@ function painRow(ex,i,nSets){return `<tr class="painrow" data-ex="${i}"><td cols
   <label class="plvl">רמת כאב (לא חובה) <input type="number" inputmode="numeric" dir="ltr" min="0" max="10" placeholder="0–10" data-f="pain" value="${esc(ex.pain)}" aria-label="רמת כאב 0–10"></label> <button class="btn ghost sm" data-act="painOpen" data-i="${i}">סגירה</button></td></tr>`}
 function swapRow(ex,i,nSets){const subs=subsFor(ex.name);
   return `<tr class="swaprow" data-ex="${i}"><td colspan="${nSets+6}"><b>תרגילים חלופיים ל${esc(dn(ex.name))}:</b> ${subs.length?subs.map(n=>`<button class="chip" data-act="swapTo" data-name="${esc(n)}" data-write>${esc(n)}</button>`).join(''):'<span class="muted">לא נמצאו חלופות במאגר – אפשר לכתוב שם ידנית</span>'} <button class="btn ghost sm" data-act="swapClose">סגירה</button></td></tr>`}
+
+/* ----- גרירת תרגיל לחיבור סופר סט: גוררים את ⠿ ומשחררים על תרגיל אחר ----- */
+let EXDRAG=null;
+document.addEventListener('dragstart',e=>{const g=e.target.closest&&e.target.closest('.draggrip');if(!g)return;if(!S.canWrite){e.preventDefault();return}
+  const row=g.closest('tr[data-ex]');if(!row)return;const pn=row.closest('[data-pane]');
+  EXDRAG={i:Number(row.dataset.ex),pane:pn?String(pn.dataset.pane||'0'):'0'};
+  e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','ex')}catch(_){}});
+document.addEventListener('dragover',e=>{if(!EXDRAG)return;const row=e.target.closest&&e.target.closest('tr.exrow');if(!row)return;
+  const pn=row.closest('[data-pane]');if(!pn||String(pn.dataset.pane||'0')!==EXDRAG.pane)return;
+  if(Number(row.dataset.ex)===EXDRAG.i)return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';row.classList.add('dropt')});
+document.addEventListener('dragleave',e=>{const row=e.target.closest&&e.target.closest('tr.exrow');if(row)row.classList.remove('dropt')});
+document.addEventListener('drop',e=>{document.querySelectorAll('tr.exrow.dropt').forEach(r=>r.classList.remove('dropt'));
+  if(!EXDRAG)return;const row=e.target.closest&&e.target.closest('tr.exrow');if(!row){EXDRAG=null;return}
+  const pn=row.closest('[data-pane]');if(!pn||String(pn.dataset.pane||'0')!==EXDRAG.pane){EXDRAG=null;return}
+  e.preventDefault();
+  const ctx=ctxOf(row);const i=EXDRAG.i,j=Number(row.dataset.ex);EXDRAG=null;
+  if(!ctx||!ctx.edit||!S.canWrite)return;
+  const a=ctx.edit.doc.exercises;if(i===j||!a[i]||!a[j])return;
+  const src=a[i],tgt=a[j],oldSS=src.ss;
+  let k=tgt.ss;
+  if(!k){k=String(Math.max(0,...a.map(x=>Number(x.ss)||0))+1);tgt.ss=k;}
+  src.ss=k;
+  a.splice(i,1);
+  const tj=a.indexOf(tgt);let end=tj;
+  for(let m=tj+1;m<a.length&&String(a[m].ss)===String(k);m++)end=m;
+  a.splice(end+1,0,src);
+  if(oldSS&&String(oldSS)!==String(k)){const rest=a.filter(x=>String(x.ss)===String(oldSS));if(rest.length===1)rest[0].ss='';}
+  saveEdit(ctx,0);render();toast(`${dn(src.name)||'התרגיל'} חובר לסופר סט עם ${dn(tgt.name)||'התרגיל'} ✓`)});
+document.addEventListener('dragend',()=>{EXDRAG=null;document.querySelectorAll('tr.exrow.dropt').forEach(r=>r.classList.remove('dropt'))});
 
 /* ----- progress report ----- */
 function vReport(c){
@@ -3190,6 +3226,23 @@ async function tpAct(name,el){
   const c=client(); if(!c) return;
   switch(name){
   case 'tpCreate': await tpPublish(c.id); break;
+  case 'tpCm': S.tpCmEx=S.tpCmEx===el.dataset.exn?null:el.dataset.exn; render(); break;
+  case 'tpCmAdd': {const n=S.tpCmEx; if(!n) break;
+    tpPickFile(async f=>{ if(f.size>300*1048576){toast('הקובץ גדול מדי (עד 300MB)');return}
+      try{ toast('מעלה… 0%'); if(!c.portal) await tpPublish(c.id,true); const c2=clientById(c.id)||c;
+        const m=await tpUpMedia(c2,f,p=>toast('מעלה… '+Math.round(p*100)+'%'));
+        const CM=clone(c2.coachMedia||{}); CM[n]=[...(CM[n]||[]),{...m,at:Date.now(),by:coachName(S.meId),cap:''}];
+        await updClient(c2.id,{coachMedia:CM}); c2.coachMedia=CM; toast('נשמר ✓'); render();
+      }catch(e){toast('ההעלאה נכשלה. בדקו אינטרנט ונסו שוב')} }); break;}
+  case 'tpCmShow': {const n=S.tpCmEx; const m=cmList(c,n)[Number(el.dataset.j)]; if(!m) break;
+    const box=document.getElementById('cmb_'+m.k); const show=u=>{box.innerHTML=/^video/.test(m.t)?`<video controls playsinline src="${u}"></video>`:`<img src="${u}" alt="">`};
+    if(S.tpUrls['cm_'+m.k]){show(S.tpUrls['cm_'+m.k]);break}
+    box.innerHTML='<span class="muted small">טוען…</span>';
+    try{const x=await tpCtx(c); const b=await PC.getBlob(x.k,m.n,pi=>tpPost('m',{s:x.s,k:m.k,i:pi}),m.t,f=>{box.innerHTML=`<span class="muted small">טוען… ${Math.round(f*100)}%</span>`}); S.tpUrls['cm_'+m.k]=URL.createObjectURL(b); show(S.tpUrls['cm_'+m.k]);}catch(e){box.innerHTML='<span class="muted small">לא נטען. נסו שוב</span>'}
+    break;}
+  case 'tpCmDel': {if(el.dataset.sure!=='1'){el.dataset.sure='1';el.textContent='למחוק?';setTimeout(()=>{if(el.isConnected){el.dataset.sure='';el.textContent='מחיקה'}},3000);break}
+    const n=S.tpCmEx; const CM=clone(c.coachMedia||{}); (CM[n]||[]).splice(Number(el.dataset.j),1);
+    await updClient(c.id,{coachMedia:CM}); c.coachMedia=CM; render(); break;}
   case 'tpRtTpl': {const sd=rtSeed(el.dataset.k);S.rtEdit={id:c.id,seed:sd};render();break;}
   case 'tpRtEdit': S.rtEdit={id:c.id,seed:JSON.parse(JSON.stringify(c.remoteSeed))};render();break;
   case 'tpRtCancel': S.rtEdit=null;render();break;
@@ -3262,7 +3315,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261118162000';
+const APP_V='20261118164500';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
