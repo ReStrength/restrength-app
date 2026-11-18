@@ -207,6 +207,7 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .sheet{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:16px}
 .sheet th{background:var(--band);color:#fff;font-weight:600;font-size:15px;padding:10px 8px;white-space:nowrap;text-align:center;border:1px solid #2E2A29}
 .sheet thead{position:sticky;top:0;z-index:2}
+@media (min-width:701px){.sheet thead{top:95px}}
 .sheet thead tr:first-child th{font-size:16px;letter-spacing:.02em}
 .sheet th.grp-res{background:var(--accent)}
 .sheet td{border:1px solid var(--line);padding:0;vertical-align:middle;text-align:center}
@@ -396,6 +397,10 @@ td.res input.si{-moz-appearance:textfield;padding-right:24px!important}td.res in
 .pchip{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 11px;border-radius:999px;cursor:pointer}
 .pchip.rec{border-color:var(--up);color:var(--up)}
 .pchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.progline:has(.pchip[aria-pressed="true"]) .pchip:not([aria-pressed="true"]){display:none}
+.progline:has(.pchip[aria-pressed="true"]) .sghint{display:none}
+.prog-done-btn{display:none}
+.progline:has(.pchip[aria-pressed="true"]) .prog-done-btn{display:inline-flex}
 .sghint{font-size:13px;color:var(--muted);margin-inline-start:6px}
 .banner.up{background:var(--up-soft);color:var(--up)}
 .banner.big{font-size:18px;padding:16px 20px;justify-content:space-between}
@@ -421,7 +426,7 @@ td.res input.si{-moz-appearance:textfield;padding-right:24px!important}td.res in
 .sheet .rng input[data-f="repMax"]{text-align:left!important}
 .plan-next{display:flex;justify-content:center;padding:18px 0 6px}
 .sheet .rng .rngsep{font-size:18px;color:var(--muted);padding:0 6px}
-.sheet .rng input[data-f="repMin"],.sheet .rng input[data-f="repMax"]{width:30px!important;padding:4px 0!important;-moz-appearance:textfield;appearance:textfield}
+.sheet .rng input[data-f="repMin"],.sheet .rng input[data-f="repMax"]{width:42px!important;padding:4px 0!important;-moz-appearance:textfield;appearance:textfield}
 .sheet .rng input::-webkit-outer-spin-button,.sheet .rng input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .sheet .rng{gap:0!important}.sheet .rng .rngsep{padding:0 3px!important}
 .sheet td.rngc{width:84px}
@@ -620,7 +625,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .stepv{display:flex;flex-direction:column;align-items:center;gap:0}
 .stepv{margin-top:-6px}.stepv .stp-a{border:0;background:transparent;color:var(--accent);font-size:18px;line-height:1;padding:2px 12px 4px;cursor:pointer;border-radius:6px}.stepv .stp-a[data-step="-1"]{padding:4px 12px 2px}
 .stepv .stp-a:hover{background:var(--surface-2)}
-.stepv input{min-height:34px!important}
+.stepv input{min-height:46px}
 .kgmenu{position:absolute;z-index:200;display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .kgmenu button{border:1px solid var(--line);background:var(--surface-2);border-radius:9px;min-width:44px;min-height:40px;font:inherit;font-size:17px;font-weight:700;cursor:pointer;color:var(--ink)}
 .kgmenu button:hover{background:var(--accent-soft,#fde2e2)}
@@ -2032,7 +2037,7 @@ function progTable(ctx,doc){
   const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th>${nSets?`<th colspan="${nSets}" class="grp-res">תוצאות</th>`:''}<th></th></tr>
    <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
-    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}</div></td></tr>`:'';
+    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}<button class="btn primary sm prog-done-btn" data-act="planNext" data-write>אם סיימת, לחץ עליי</button></div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
@@ -3257,7 +3262,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261118140000';
+const APP_V='20261118150000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
