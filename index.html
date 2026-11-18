@@ -278,8 +278,8 @@ label.f.inline{flex-direction:row;align-items:center;gap:6px}
 .pinbox{max-width:360px;margin:24px auto 0;display:flex;flex-direction:column;gap:14px;text-align:start}
 .pinbox input{font-size:28px;letter-spacing:10px;text-align:center;direction:ltr}
 .pinerr{color:var(--bad,#c62828);font-weight:600;min-height:1.4em}
-.gsearch{position:relative;flex:1;min-width:0}
-.gsearch input{width:100%;box-sizing:border-box;background:#1b1b1b;border:1px solid #444;color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-size:15px}
+.gsearch{position:relative}
+.gsearch input{width:300px;background:#1b1b1b;border:1px solid #444;color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-size:15px}
 .gsearch input::placeholder{color:#aaa}
 .gsearch input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
 .gres{position:absolute;top:calc(100% + 6px);inset-inline-start:0;min-width:280px;max-height:60vh;overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:50;padding:6px}
@@ -665,9 +665,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
         <button data-nav="clinic" id="navClinic" hidden title="מעבר לאפליקציית הקליניקה">קליניקה ↗</button>
       </nav>
       <div class="subrow">
-      </div>
-      </div>
       <span class="gsearch" id="gsearch" hidden><input id="gq" name="rs-client-search" type="search" placeholder="🔍 חיפוש מתאמן" autocomplete="off" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" aria-label="חיפוש מתאמן לפי שם"><div class="gres" id="gres" hidden></div></span>
+      </div>
+      </div>
       <div class="top-side">
         <span class="save-state" id="saveState" aria-live="polite"></span><button type="button" id="instBtn" class="instbtn" hidden>📲 להוספה למסך הבית</button>
         <span class="zoom" role="group" aria-label="גודל תצוגה"><button id="zOut" type="button" title="הקטנה">א−</button><span id="zVal">100%</span><button id="zIn" type="button" title="הגדלה">א+</button></span>
@@ -3262,7 +3262,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261118160000';
+const APP_V='20261118162000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
