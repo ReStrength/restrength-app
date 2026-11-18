@@ -1424,7 +1424,7 @@ function openGroup(name,isIntro){
 function closeGroup(){const G=S.G; if(G){if(G.unsub)G.unsub(); if(G.unsub2)G.unsub2();} S.G=null;}
 function gMemCtx(cid){return {sessions:(S.G?S.G.msess:[]).filter(s=>s.clientId===cid)}}
 function gNewEx(base){const e={...newExercise(),...(base||{})}; e.m={}; return e}
-function gEnsureMembers(doc){const ms=groupMembers(S.G.name); (doc.exercises||[]).forEach(ex=>{ex.m=ex.m||{}; ms.forEach(c=>{if(!ex.m[c.id]) ex.m[c.id]={kg:ex.targetKg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:''}; const mm=ex.m[c.id]; if(doc.intro&&tOnly(ex.name,true)&&(mm.kg===''||mm.kg==null))mm.kg='1-2'; while(mm.sets.length<(Number(ex.targetSets)||2))mm.sets.push(''); while(mm.sets.length>(Number(ex.targetSets)||2)&&mm.sets[mm.sets.length-1]==='')mm.sets.pop();})}); doc.members=ms.map(c=>c.id); return doc}
+function gEnsureMembers(doc){const ms=groupMembers(S.G.name); (doc.exercises||[]).forEach(ex=>{ex.m=ex.m||{}; ms.forEach(c=>{if(!ex.m[c.id]) ex.m[c.id]={kg:ex.targetKg??'',sets:Array.from({length:Number(ex.targetSets)||2},()=>''),pain:'',adapt:''}; const mm=ex.m[c.id]; if(mm.off) return; if(doc.intro&&tOnly(ex.name,true)&&(mm.kg===''||mm.kg==null))mm.kg='1-2'; while(mm.sets.length<(Number(ex.targetSets)||2))mm.sets.push(''); while(mm.sets.length>(Number(ex.targetSets)||2)&&mm.sets[mm.sets.length-1]==='')mm.sets.pop();})}); doc.members=ms.map(c=>c.id); return doc}
 function gSave(delay){const G=S.G; if(!G||!G.edit) return; return saveDoc('sessions/'+G.edit.id,G.edit.doc,{delay:delay??700})}
 const FEEL=[['easy','קל','up'],['ok','בינוני','ok'],['hard','קשה','warn'],['pain','כאב','bad']];
 const FEEL_RPE={easy:5,ok:7,hard:9,pain:8};
@@ -3257,7 +3257,7 @@ async function boot(){
     scheduleRender()},dbErr);
   render();
 }
-const APP_V='20261116120000';
+const APP_V='20261118140000';
 document.addEventListener('wheel',function(e){var a=document.activeElement;if(a&&a.type==='number'&&a.contains(e.target))a.blur()},{passive:true});
 async function checkUpdate(){try{const r=await fetch('index.html?_='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_V='([^']+)'/);
   if(m&&m[1]!==APP_V&&m[1]!=='__BUILD__'&&!Object.values(writers).some(w=>w.pending||w.running)){location.reload()}}catch(e){}}
