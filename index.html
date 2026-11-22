@@ -2088,7 +2088,7 @@ function paneHtml(ctx,c,pane,pair){
   const lastByLbl={}; ctx.sessions.forEach(s=>{const l=String(s.label);const cur=lastByLbl[l];if(s.status==='planned'||!cur||(cur.status!=='planned'&&(s.date||'')>(cur.date||'')))lastByLbl[l]=s});
   const lbls=Object.keys(lastByLbl).sort();
   const addMenu=lbls.length>=2?'':ctx.addOpen?`<span class="row small add-menu"><span class="muted">אימון נוסף בשבוע:</span><button class="btn sm" data-act="addDay" data-mode="ss" data-write>ריק – סופר סטים</button><button class="btn sm" data-act="addDay" data-mode="single" data-write>ריק – סטים רגילים</button>${lbls.map(l=>`<button class="btn sm" data-act="addDay" data-src="${lastByLbl[l].id}" data-write>העתקה מאימון ${esc(l)}</button>`).join('')}<button class="btn ghost sm" data-act="askAdd">ביטול</button></span>`:`<button class="btn ghost sm" data-act="askAdd" data-write>+ אימון נוסף בשבוע</button>`;
-  const labelsBar=lbls.length>1&&!d.intro?`<div class="labels">${lbls.length>1?lbls.map(l=>{const p=lastByLbl[l];return `<button class="chip" aria-pressed="${!!(ctx.edit&&ctx.edit.id===p.id)}" data-pick="${p.id}">אימון ${esc(l)} בשבוע · ${wk(p)}${p.status==='done'?' (בוצע)':''}</button>`}).join(''):''}</div>`:'';
+  const labelsBar=lbls.length>1&&!(ctx.edit&&ctx.edit.doc&&ctx.edit.doc.intro)?`<div class="labels">${lbls.length>1?lbls.map(l=>{const p=lastByLbl[l];return `<button class="chip" aria-pressed="${!!(ctx.edit&&ctx.edit.id===p.id)}" data-pick="${p.id}">אימון ${esc(l)} בשבוע · ${wk(p)}${p.status==='done'?' (בוצע)':''}</button>`}).join(''):''}</div>`:'';
   if(!ctx.edit){
     const lastByLabel={}; done.forEach(d=>{if(!lastByLabel[d.label]) lastByLabel[d.label]=d});
     const labels=Object.keys(lastByLabel);
