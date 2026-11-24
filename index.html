@@ -532,7 +532,14 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .rotc h3{margin:0 0 4px}.rott{width:100%;border-collapse:collapse;margin-top:8px}.rott th{background:var(--band);color:#fff;padding:7px;font-size:15px}.rott td{border:1px solid var(--line);padding:8px 10px;vertical-align:top}.rott td:first-child{text-align:center;font-weight:800;width:56px}.rott small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
 /* זוגי: שתי תוכניות נפרדות זו לצד זו */
 .pairsplit{display:flex;gap:16px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px}
-.pairsplit-col{flex:1 1 420px;min-width:300px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card,#fff)}
+.pairsplit-col{flex:1 1 420px;min-width:300px;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card,#fff);overflow:hidden}
+/* each split column keeps its own full-size table and scrolls on its own, instead of the page-wide "no inner scrollbars" reflow rule further below — two squeezed-to-100% tables side by side would otherwise bleed into each other */
+.pairsplit-col .tbl-wrap{overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch;max-width:100%}
+.pairsplit-col .ptab{width:auto!important;min-width:560px!important;table-layout:auto}
+.pairsplit-col .ptab td.pname{min-width:170px!important;max-width:none!important;position:static!important}
+.pairsplit-col .ptab td.pnotes{min-width:150px!important}
+.pairsplit-col .ptab td.pwho{min-width:120px!important}
+.pairsplit-col .ptab th{white-space:nowrap!important}
 .pairsplit-name{margin:0 0 8px;font-size:18px}
 .pcard{border-inline-start-color:#1c7ed6}
 
