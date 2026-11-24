@@ -1775,7 +1775,7 @@ async function gAct(name,el){
     if(d.intro) d.exercises.forEach(ex=>{if(!ex.name)return;const r=num(ex.repMin)??num(ex.repMax)??8;Object.values(ex.m||{}).forEach(mm=>{if(mm.off)return;const k=Number(ex.targetSets)||2;if(!(mm.sets||[]).some(x=>x!==''&&x!=null))mm.sets=Array.from({length:k},()=>r)})});
     for(const c of ms){
       const QQ=gQuick(d);
-      const exsM=d.exercises.filter(ex=>ex.name&&!((ex.m||{})[c.id]||{}).off).map(ex=>{const mm=ex.m[c.id]||{sets:[]};
+      const exsM=d.exercises.filter(ex=>ex.name&&!((ex.m||{})[c.id]||{}).off&&(!d.pairSplit||!ex.owner||ex.owner===c.id)).map(ex=>{const mm=ex.m[c.id]||{sets:[]};
         if(QQ){const fl=FEEL.find(f=>f[0]===mm.feel);return {id:uid(),...carry(ex),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??'',sets:mm.feel?Array.from({length:Number(ex.targetSets)||2},()=>({kg:'',reps:gR(ex,mm)})):[],rir:'',rpe:mm.feel?FEEL_RPE[mm.feel]:'',pain:mm.feel==='pain'?4:'',feel:mm.feel||'',note:[fl?fl[1]:'',mm.adapt||''].filter(Boolean).join(' · '),sugg:null}}
         return {id:uid(),...carry(ex),...(mm.height?{height:mm.height}:{}),targetSets:ex.targetSets,repMin:ex.repMin,repMax:ex.repMax,targetKg:mm.kg??ex.targetKg??'',sets:(mm.sets||[]).map((r,j)=>({kg:(mm.kgs||[])[j]??'',reps:r})),rir:'',rpe:mm.rpe??'',pain:mm.pain??'',note:mm.adapt||'',sugg:null}});
       if(!exsM.some(e=>e.sets.some(s=>num(s.reps)!=null))) continue;
