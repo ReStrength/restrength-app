@@ -1503,7 +1503,7 @@ function pairTable(d,ms,exs,tags,idxMap){
         <td class="narrow" rowspan="${ms.length}">${d.intro?`<b>2</b>`:`<div class="stepv" data-stepk="sets"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><input type="number" min="1" max="6" data-gf="targetSets" data-ei="${ri}" value="${esc(ex.targetSets)}"><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}</td>
         <td class="rngc" rowspan="${ms.length}">${d.intro?`<b dir="ltr">6–8</b>`:`<div class="stepv" data-stepk="rng"><button type="button" class="stp-a" data-step="1" aria-label="להוסיף">▲</button><span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${ri}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${ri}" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}"></span><button type="button" class="stp-a" data-step="-1" aria-label="להוריד">▼</button></div>`}${sec?'<div class="muted small">שניות</div>':''}</td>
         <td class="pnotes" rowspan="${ms.length}"><textarea data-gf="tempo" data-ei="${ri}" rows="2" placeholder="${ex.tempoHint?esc('במפגש ההיכרות: '+ex.tempoHint):'טמפו, מנח, דגשים'}">${esc(ex.tempo||'')}</textarea></td>`:'';
-      const acts=first?`<td class="acts" rowspan="${ms.length}"><button class="btn ghost sm${S.gPain===ri?' painon':''}" data-act="gPain" data-ei="${ri}" data-tip="כאב – הצעה לשינוי מנח">🤕</button><span class="mvcol"><button class="btn ghost sm" data-act="gUp" data-ei="${ri}" data-tip="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${ri}" data-tip="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${ri}" data-tip="מחיקת התרגיל" data-write>✕</button></td>`:'';
+      const acts=first?`<td class="acts" rowspan="${ms.length}"><button class="btn ghost sm${S.gPain===ri?' painon':''}" data-act="gPain" data-ei="${ri}" data-tip="כאב – הצעה לשינוי מנח">🤕</button><span class="mvcol"><span class="btn ghost sm draggrip" draggable="true" data-drag="${ri}" data-tip="גרירה לחיבור סופר סט" aria-label="גרירה לחיבור סופר סט" data-write>⠿</span><button class="btn ghost sm" data-act="gUp" data-ei="${ri}" data-tip="למעלה" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${ri}" data-tip="למטה" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${ri}" data-tip="מחיקת התרגיל" data-write>✕</button></td>`:'';
       const who=`<td class="pwho p${k}"><b>${esc(String(c.name).split(' ')[0])}</b>${mm.off?'':` <button class="linkbtn tiny padaptbtn${S.gAdapt===`${ri}-${c.id}`?' on':''}" data-act="gAdapt" data-ei="${ri}" data-cid="${c.id}" data-tip="התאמת תרגיל עבור ${esc(String(c.name).split(' ')[0])}">✎</button>`}${prev?`<div class="prevline">${esc(prev)}</div>`:''}${!mm.off&&mm.sugg?`<div class="sghint">${esc(mm.sugg)}${mm.skg!=null&&num(mm.skg)!==num(mm.kg)?` <button class="linkbtn tiny" data-act="gApply" data-ei="${ri}" data-cid="${c.id}" data-write>החלה (${mm.skg} ק״ג)</button>`:''}</div>`:''}</td>`;
       let rest;
       if(mm.off) rest=`<td colspan="${nSets+2}" class="poff"><span class="muted">לא בתוכנית של ${esc(String(c.name).split(' ')[0])}</span> <button class="linkbtn tiny" data-act="gOn" data-ei="${ri}" data-cid="${c.id}" data-write>להוסיף</button></td>`;
@@ -1511,7 +1511,7 @@ function pairTable(d,ms,exs,tags,idxMap){
         const L=mm.sets.length;
         rest=`<td class="gkg">${kgc}</td>${Array.from({length:nSets},(_,j)=>j<L?`<td class="res">${gSetKg(d,ex,mm,c,ri,j)}<input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${ri}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}" aria-label="${esc(c.name)} סט ${j+1}"><span class="stp"><button type="button" tabindex="-1" data-step="1" aria-label="עוד חזרה">▲</button><button type="button" tabindex="-1" data-step="-1" aria-label="חזרה פחות">▼</button></span>${j===L-1&&first?`${L<6?`<button type="button" class="addset" data-act="gSetAdd" data-ei="${ri}" data-tip="הוספת סט" data-write>+</button>`:''}${L>1?`<button type="button" class="addset delset" data-act="gSetDel" data-ei="${ri}" data-tip="הורדת סט" data-write>−</button>`:''}`:''}</td>`:'<td class="res off"></td>').join('')}
          <td class="gadapt"><input data-gm="adapt" data-ei="${ri}" data-cid="${c.id}" value="${esc(mm.adapt||'')}" placeholder=""></td>`}
-      body+=`<tr class="prow p${k}${nowOf(c.id,i)?' now':''}${k===ms.length-1?' plast':''}" data-gex="${ri}" data-cid="${c.id}">${shared}${who}${rest}${acts}</tr>`;
+      body+=`<tr class="prow p${k}${nowOf(c.id,i)?' now':''}${k===ms.length-1?' plast':''} exrow" data-gex="${ri}" data-ex="${ri}" data-cid="${c.id}">${shared}${who}${rest}${acts}</tr>`;
       if(S.gAdapt===`${ri}-${c.id}`)body+=`<tr class="adaptrow"><td colspan="${nSets+8}"><div class="adaptpanel"><label>תרגיל חלופי: <input type="text" data-gm="adaptEx" data-ei="${ri}" data-cid="${c.id}" value="${esc((ex.m[c.id]||{}).adaptEx||'')}" placeholder="שם תרגיל חלופי"></label><button class="btn ghost sm" data-act="gOff" data-ei="${ri}" data-cid="${c.id}" data-write style="margin-inline-start:4px">הוצא מהתוכנית</button></div></td></tr>`});
     if(S.gPain===ri)body+=`<tr class="painrow"><td colspan="${nSets+8}"><div class="banner bad" style="margin:4px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום ב"התאמה אישית" מה שונה.</span></span></div></td></tr>`;
     if(d.intro&&ms.length===2&&tg.first&&i+1<exs.length&&tags[i+1]&&tags[i+1].n===tg.n){
@@ -1528,7 +1528,7 @@ function pairSplitBlocks(d,ms,exs){
     const subExs=idxMap.map(i=>exs[i]);
     const subTags=groupTags(subExs);
     const tbl=subExs.length?pairTable(d,[c],subExs,subTags,idxMap):'<div class="card empty"><strong>אין עדיין תרגילים</strong></div>';
-    return `<div class="pairsplit-col"><h3 class="pairsplit-name">👤 ${esc(c.name)}</h3>${tbl}
+    return `<div class="pairsplit-col" data-pane="g_${esc(c.id)}"><h3 class="pairsplit-name">👤 ${esc(c.name)}</h3>${tbl}
      <div class="row"><button class="btn" data-act="gAddSS" data-cid="${c.id}" data-write>+ הוספת סופר סט</button><button class="btn" data-act="gAddEx" data-cid="${c.id}" data-write>+ תרגיל בודד</button></div></div>`;
   }).join('')}</div>`;
 }
@@ -1648,7 +1648,7 @@ function vGroup(){
   const exs=d.exercises||[]; const tags=groupTags(exs);
   const nSets=Math.max(2,...exs.map(e=>Number(e.targetSets)||0));
   const usePT=PR&&!gQuick(d);
-  const blocks=usePT?(d.pairSplit?pairSplitBlocks(d,ms,exs):pairTable(d,ms,exs,tags)):exs.map((ex,i)=>{const tg=tags[i];
+  const blocksInner=usePT?(d.pairSplit?pairSplitBlocks(d,ms,exs):pairTable(d,ms,exs,tags)):exs.map((ex,i)=>{const tg=tags[i];
     const sep=tg.first&&(tg.ss||exs.some(e=>e.ss))?`<div class="gsep">${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</div>`:'';
     const sec=unitOf(ex)==='sec';
     const Q=gQuick(d);
@@ -1663,12 +1663,13 @@ function vGroup(){
        <td class="gkg" data-l="${tOnly(ex.name,d.intro)?'משקל בסה״כ':sideable(ex.name)?(ex.dumbSide==='total'?'משקל בסה״כ':'משקל כל יד'):'משקל'}"><input type="text" inputmode="decimal" data-gm="kg" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.kg)}" placeholder="${sec?'—':'ק״ג'}"></td>
        ${Array.from({length:nSets},(_,j)=>j<mm.sets.length?`<td class="res" data-l="סט ${j+1}">${gSetKg(d,ex,mm,c,i,j)}<input class="si" type="number" min="0" inputmode="numeric" data-gm="rep" data-si="${j}" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.sets[j])}" data-st="${setState(ex,{reps:mm.sets[j]})}"></td>`:'<td class="res off"></td>').join('')}
        <td class="gadapt" data-l="התאמה אישית"><input data-gm="adapt" data-ei="${i}" data-cid="${c.id}" value="${esc(mm.adapt)}" placeholder=""></td></tr>`}).join('');
-    return `${sep}<div class="gex card ${tg.ss?'ssr':''}" data-gex="${i}">
+  const blocks=(usePT&&d.pairSplit)?blocksInner:`<div data-pane="g">${blocksInner}</div>`;
+    return `${sep}<div class="gex card exrow ${tg.ss?'ssr':''}" data-gex="${i}" data-ex="${i}">
      <div class="gplan"><input class="gn" list="lib" data-gf="name" data-ei="${i}" value="${esc(dn(ex.name))}" placeholder="שם התרגיל">${barHint(ex.name)?`<div class="unihint">⚖️ ${barHint(ex.name)}</div>`:''}
       <label>סטים<input type="number" min="1" max="6" data-gf="targetSets" data-ei="${i}" value="${esc(ex.targetSets)}"></label>
       <label>${sec?'שניות':'חזרות'}<span class="rng"><input type="number" min="0" data-gf="repMin" data-ei="${i}" value="${esc(ex.repMin)}"><span class="rngsep">–</span><input type="number" min="0" data-gf="repMax" data-ei="${i}" value="${num(ex.repMax)!=null&&num(ex.repMax)!==num(ex.repMin)?esc(ex.repMax):''}"></span></label>
       <input class="gt" data-gf="tempo" data-ei="${i}" value="${esc(ex.tempo)}" placeholder="טמפו, מנח, דגשים">
-      <span class="gacts"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" title="הצעה לשינוי מנח כשיש כאב">🤕 כאב</button><span class="mvcol"><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
+      <span class="gacts"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" title="הצעה לשינוי מנח כשיש כאב">🤕 כאב</button><span class="mvcol"><span class="btn ghost sm draggrip" draggable="true" data-drag="${i}" title="גרירה לחיבור סופר סט" data-write>⠿</span><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
      ${S.gPain===i?`<div class="banner bad" style="margin:6px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום בעמודה "התאמה אישית" מה שונה.</span></span></div>`:''}${cueHtml(ex.name)}
      <div class="tbl-wrap"><table class="gtable">${Q?`<thead><tr><th>משתתף</th><th>משקל</th><th>${sec?'שניות':'חזרות'}</th><th>איך היה?</th><th>הערה</th></tr></thead>`:`<thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>התאמה אישית</th></tr></thead>`}<tbody>${rows}</tbody></table></div></div>`}).join('');
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq??1)>(d.seq??1));
@@ -2350,22 +2351,24 @@ function swapRow(ex,i,nSets){const subs=subsFor(ex.name);
 
 /* ----- גרירת תרגיל לחיבור סופר סט: גוררים את ⠿ ומשחררים על תרגיל אחר ----- */
 let EXDRAG=null;
+function dragArr(pane){if(pane&&pane.charAt(0)==='g'){return (S.G&&S.G.edit)?S.G.edit.doc.exercises:null}const c=pane==='1'?S.Q:S.P;return (c&&c.edit)?c.edit.doc.exercises:null}
+function dragSave(pane){if(pane&&pane.charAt(0)==='g'){gSave(0);return}const c=pane==='1'?S.Q:S.P;saveEdit(c,0)}
 document.addEventListener('dragstart',e=>{const g=e.target.closest&&e.target.closest('.draggrip');if(!g)return;if(!S.canWrite){e.preventDefault();return}
-  const row=g.closest('tr[data-ex]');if(!row)return;const pn=row.closest('[data-pane]');
+  const row=g.closest('[data-ex]');if(!row)return;const pn=row.closest('[data-pane]');
   EXDRAG={i:Number(row.dataset.ex),pane:pn?String(pn.dataset.pane||'0'):'0'};
   e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','ex')}catch(_){}});
-document.addEventListener('dragover',e=>{if(!EXDRAG)return;const row=e.target.closest&&e.target.closest('tr.exrow');if(!row)return;
+document.addEventListener('dragover',e=>{if(!EXDRAG)return;const row=e.target.closest&&e.target.closest('.exrow[data-ex]');if(!row)return;
   const pn=row.closest('[data-pane]');if(!pn||String(pn.dataset.pane||'0')!==EXDRAG.pane)return;
   if(Number(row.dataset.ex)===EXDRAG.i)return;
   e.preventDefault();e.dataTransfer.dropEffect='move';row.classList.add('dropt')});
-document.addEventListener('dragleave',e=>{const row=e.target.closest&&e.target.closest('tr.exrow');if(row)row.classList.remove('dropt')});
-document.addEventListener('drop',e=>{document.querySelectorAll('tr.exrow.dropt').forEach(r=>r.classList.remove('dropt'));
-  if(!EXDRAG)return;const row=e.target.closest&&e.target.closest('tr.exrow');if(!row){EXDRAG=null;return}
+document.addEventListener('dragleave',e=>{const row=e.target.closest&&e.target.closest('.exrow[data-ex]');if(row)row.classList.remove('dropt')});
+document.addEventListener('drop',e=>{document.querySelectorAll('.exrow.dropt').forEach(r=>r.classList.remove('dropt'));
+  if(!EXDRAG)return;const row=e.target.closest&&e.target.closest('.exrow[data-ex]');if(!row){EXDRAG=null;return}
   const pn=row.closest('[data-pane]');if(!pn||String(pn.dataset.pane||'0')!==EXDRAG.pane){EXDRAG=null;return}
   e.preventDefault();
-  const ctx=ctxOf(row);const i=EXDRAG.i,j=Number(row.dataset.ex);EXDRAG=null;
-  if(!ctx||!ctx.edit||!S.canWrite)return;
-  const a=ctx.edit.doc.exercises;if(i===j||!a[i]||!a[j])return;
+  const pane=EXDRAG.pane,i=EXDRAG.i,j=Number(row.dataset.ex);EXDRAG=null;
+  if(!S.canWrite)return;
+  const a=dragArr(pane);if(!a||i===j||!a[i]||!a[j])return;
   const src=a[i],tgt=a[j],oldSS=src.ss;
   if(tgt.ss&&a.filter(x=>String(x.ss)===String(tgt.ss)).length>=2){toast('סופר סט מוגבל ל-2 תרגילים');return}
   let k=tgt.ss;
@@ -2376,8 +2379,8 @@ document.addEventListener('drop',e=>{document.querySelectorAll('tr.exrow.dropt')
   for(let m=tj+1;m<a.length&&String(a[m].ss)===String(k);m++)end=m;
   a.splice(end+1,0,src);
   if(oldSS&&String(oldSS)!==String(k)){const rest=a.filter(x=>String(x.ss)===String(oldSS));if(rest.length===1)rest[0].ss='';}
-  saveEdit(ctx,0);render();toast(`${dn(src.name)||'התרגיל'} חובר לסופר סט עם ${dn(tgt.name)||'התרגיל'} ✓`)});
-document.addEventListener('dragend',()=>{EXDRAG=null;document.querySelectorAll('tr.exrow.dropt').forEach(r=>r.classList.remove('dropt'))});
+  dragSave(pane);render();toast(`${dn(src.name)||'התרגיל'} חובר לסופר סט עם ${dn(tgt.name)||'התרגיל'} ✓`)});
+document.addEventListener('dragend',()=>{EXDRAG=null;document.querySelectorAll('.exrow.dropt').forEach(r=>r.classList.remove('dropt'))});
 
 /* ----- progress report ----- */
 function vReport(c){
