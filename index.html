@@ -1261,7 +1261,13 @@ function render(){
     if(!S.loaded.c) html+=`<div class="empty"><strong>טוען…</strong></div>`;
     else if(!S.meId) html+=vLogin();
     else {
-    html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager()+`<h2 style="margin:28px 0 10px">⚙️ הגדרות</h2>`+vSettings(): S.view==='group'?vGroup(): vCoaches(); }
+    try{
+      html+= S.view==='client'?vClient(): S.view==='settings'?vSettings(): (S.view==='manager'&&MGR.includes(S.meId))?vManager()+`<h2 style="margin:28px 0 10px">⚙️ הגדרות</h2>`+vSettings(): S.view==='group'?vGroup(): vCoaches();
+    }catch(e){
+      console.error('render: view crashed, showing fallback instead of a blank screen', e);
+      html+=`<div class="banner bad"><b>המסך הזה נתקע בטעינה.</b> אפשר לנסות לרענן או לחזור למתאמנים.<div class="row" style="margin-top:8px"><button class="btn" onclick="location.reload()">🔄 רענון</button><button class="btn ghost" onclick="S.view='coaches';S.G=null;render()">← למתאמנים</button></div><div class="muted small" style="margin-top:6px;direction:ltr;text-align:left">${esc(String((e&&e.message)||e))}</div></div>`;
+    }
+    }
   }
   main.innerHTML=html;
   fitNotes(main);muShow();
@@ -1655,7 +1661,7 @@ function vGroup(){
   const exs=d.exercises||[]; const tags=groupTags(exs);
   const nSets=Math.max(2,...exs.map(e=>Number(e.targetSets)||0));
   const usePT=PR&&!gQuick(d);
-  const blocksInner=usePT?(d.pairSplit?pairSplitBlocks(d,ms,exs):pairTable(d,ms,exs,tags)):exs.map((ex,i)=>{const tg=tags[i];
+  let blocksInner; try{ blocksInner=usePT?(d.pairSplit?pairSplitBlocks(d,ms,exs):pairTable(d,ms,exs,tags)):exs.map((ex,i)=>{const tg=tags[i];
     const sep=tg.first&&(tg.ss||exs.some(e=>e.ss))?`<div class="gsep">${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</div>`:'';
     const sec=unitOf(ex)==='sec';
     const Q=gQuick(d);
@@ -1678,6 +1684,7 @@ function vGroup(){
       <span class="gacts"><button class="btn ghost sm${S.gPain===i?' painon':''}" data-act="gPain" data-ei="${i}" title="הצעה לשינוי מנח כשיש כאב">🤕 כאב</button><span class="mvcol"><span class="btn ghost sm draggrip" draggable="true" data-drag="${i}" title="גרירה לחיבור סופר סט" data-write>⠿</span><button class="btn ghost sm" data-act="gUp" data-ei="${i}" ${i===0?'disabled':''} data-write>▲</button><button class="btn ghost sm" data-act="gDown" data-ei="${i}" ${i===exs.length-1?'disabled':''} data-write>▼</button></span><button class="btn ghost sm" data-act="gDel" data-ei="${i}" data-write>✕</button></span></div>
      ${S.gPain===i?`<div class="banner bad" style="margin:6px 0"><span><b>🤕 כאב? קודם כל לנסות לשנות מנח:</b> ${painTip(ex.name)} <span class="muted small">אפשר לרשום בעמודה "התאמה אישית" מה שונה.</span></span></div>`:''}${cueHtml(ex.name)}
      <div class="tbl-wrap"><table class="gtable">${Q?`<thead><tr><th>משתתף</th><th>משקל</th><th>${sec?'שניות':'חזרות'}</th><th>איך היה?</th><th>הערה</th></tr></thead>`:`<thead><tr><th>משתתף</th><th>משקל</th>${Array.from({length:nSets},(_,j)=>`<th>סט ${j+1}</th>`).join('')}<th>התאמה אישית</th></tr></thead>`}<tbody>${rows}</tbody></table></div></div>`}).join('');
+  }catch(e){ console.error('vGroup: blocksInner build failed, showing retry instead of crashing the whole page', e); blocksInner=`<div class="banner bad"><b>לא הצלחנו לטעון את טבלת התרגילים.</b> <button class="btn" onclick="render()">ניסיון נוסף</button></div>`; }
   const blocks=(usePT&&d.pairSplit)?blocksInner:`<div data-pane="g">${blocksInner}</div>`;
   const nextPlanned=planned.find(x=>x.id!==G.edit.id&&(x.seq??1)>(d.seq??1));
   const weeks=G.sessions.slice().sort((a,b)=>(a.seq||0)-(b.seq||0)).filter(s=>!(s.intro&&s.status!=='done'&&s.id!==G.edit.id)).filter((s,k,A)=>A.length>1).map(s=>`<button class="chip" aria-pressed="${s.id===G.edit.id}" data-act="gPick" data-id="${s.id}">${wk(s)}${s.status==='done'?' ✓':''}</button>`).join('');
