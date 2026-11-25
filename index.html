@@ -696,6 +696,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet,.ptab{min-width:0!important;width:100%;table-layout:auto}
 .sheet th,.ptab th{white-space:normal!important}
 .sheet td.name,.ptab td.pname{position:static!important;min-width:90px!important;max-width:0!important;box-shadow:none!important}
+@media (max-width:900px){.sheet td.name,.ptab td.pname{max-width:none!important}}
 .sheet td.notes,.ptab td.pnotes{min-width:76px!important}
 .sheet td.acts,.ptab td.acts{white-space:normal!important;width:1%;min-width:124px!important}.sheet td.acts .btn,.ptab td.acts .btn{margin:1px!important}
 .prevline{white-space:normal!important}
@@ -724,6 +725,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet td.kg input{font-size:17px!important;padding:4px 1px!important}
 .ptab td.gkg{width:80px!important;min-width:80px!important;max-width:92px}
 .ptab td.gkg input{font-size:16px!important;padding:4px 1px!important;min-width:0}
+@media (max-width:900px){.sheet td.kg,.ptab td.gkg{width:auto!important;max-width:none!important}}
 .sheet td.res,.ptab td.res{min-width:54px!important}
 .sheet td.res .ki,.ptab td.res .ki{font-size:14px!important}
 .kiw{display:flex;align-items:center;justify-content:center;gap:3px;border-bottom:1px dashed var(--line);margin:0 2px 2px;cursor:text}
