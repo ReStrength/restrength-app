@@ -545,6 +545,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .pairsplit-col .ptab td.acts{min-width:0!important}
 .pairsplit-col .ptab th{white-space:nowrap!important}
 .pairsplit-name{margin:0 0 8px;font-size:18px;text-align:center}
+@media (min-width:901px){.pairsplit{width:calc(100vw - 24px);max-width:none;margin-inline:calc(50% - 50vw + 12px);gap:14px}}
 /* below 900px there simply isn't room for a full multi-column table in each half-width split column without
    horizontal scrolling, however narrow the columns are made. Instead of scrolling, turn each exercise row into
    a small labeled card (name on top, then each field stacked/wrapped below it) - no column ever needs to scroll,
@@ -1832,7 +1833,7 @@ function gInput(t){
       const memberIds=Object.keys(ex.m||{});
       const curIdx=memberIds.indexOf(t.dataset.cid);
       const si=Number(t.dataset.si);
-      const tbl=t.closest('table');
+      const tbl=t.closest('.pairsplit')||t.closest('table');
       const jumpTo=(cid,s)=>{const nxtInput=tbl&&tbl.querySelector(`[data-gm="rep"][data-ei="${t.dataset.ei}"][data-cid="${cid}"][data-si="${s}"]`);
         if(nxtInput){setTimeout(()=>{nxtInput.focus();nxtInput.select();},0);return true;} return false};
       const nextCid=curIdx>=0&&curIdx<memberIds.length-1?memberIds[curIdx+1]:null;
