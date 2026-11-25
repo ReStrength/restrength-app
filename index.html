@@ -1830,7 +1830,9 @@ function gInput(t){
     try{pairNowRefresh()}catch(e){}
     if(!t._step&&t.value!==''){
       /* זוגי/קבוצתי: אחרי הזנת תוצאה – לקפוץ לאותו סט של המתאמן הבא, ואחרי האחרון לסט הבא של המתאמן הראשון, וכך הלאה עד שנגמרים הסטים */
-      const memberIds=Object.keys(ex.m||{});
+      let memberIds=Object.keys(ex.m||{});
+      const spl=t.closest('.pairsplit');
+      if(spl){const ord=[...spl.querySelectorAll('.pairsplit-col')].map(c=>String(c.dataset.pane||'').replace(/^g_/,'')).filter(Boolean);if(ord.length)memberIds=ord}
       const curIdx=memberIds.indexOf(t.dataset.cid);
       const si=Number(t.dataset.si);
       const tbl=t.closest('.pairsplit')||t.closest('table');
