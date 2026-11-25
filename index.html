@@ -2114,7 +2114,7 @@ function progTable(ctx,doc){
   const head=`<thead><tr><th colspan="5" class="grp-plan">תוכנית</th>${nSets?`<th colspan="${nSets}" class="grp-res">תוצאות</th>`:''}<th></th></tr>
    <tr><th>תרגיל</th><th>סטים</th><th>חזרות</th><th title="משקל = פלטות בלבד, בלי המוט. מוט אולימפי 20 · סמית 7 · סייפטי בר 17.5 · טראפ בר 20 ק&quot;ג">משקל עבודה<div class="small muted" style="font-weight:500">ללא המוט</div></th><th>הערות / טמפו</th>${Array.from({length:nSets},(_,j)=>`<th class="setcol">סט ${j+1}</th>`).join('')}<th>סדר</th></tr></thead>`;
   const rows=exs.map((ex,i)=>{const tg=tags[i];const sec=unitOf(ex)==='sec';
-    const sg=showSugg&&ex.base&&ex.name?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}<button class="btn primary sm prog-done-btn" data-act="planNext" data-write>אם סיימת, לחץ עליי</button></div></td></tr>`:'';
+    const sg=showSugg&&ex.base&&ex.name&&!ex.progDone?`<tr class="progrow ${tg.ss?'ssr':''}" data-ex="${i}"><td colspan="${nSets+6}"><div class="progline"><b>התקדמות:</b>${PROGS.filter(([k])=>!['harder','top'].includes(k)).map(([k])=>k==='kg'?kgChips(ex):k==='reps'?repChips(ex):`<button class="pchip${ex.rec===k?' rec':''}" aria-pressed="${(ex.prog||[]).includes(k)}" data-act="prog" data-k="${k}" data-write>${progLabel(ex,k)}</button>`).join('')}<button class="pchip" aria-pressed="${!!ex.progNone}" data-act="prog" data-k="none" data-write>להשאיר ללא התקדמות</button>${ex.sugg?`<span class="sghint ${ex.sugg.type}">רעיון: ${esc(ex.sugg.text)}</span>`:''}<button class="btn primary sm prog-done-btn" data-act="progConfirm" data-write>אם סיימת, לחץ עליי</button></div></td></tr>`:'';
     const prev=prevShort(ctx,ex,ctx.edit&&ctx.edit.id);
     const mixed=exs.some(e=>e.ss);
     const sep=tg.first&&(tg.ss||mixed)?`<tr class="gsep"><td colspan="${nSets+6}"><span>${tg.ss?`סופר סט ${tg.n}`:`תרגיל ${tg.n}`}</span>${tags.filter(x=>x.n===tg.n).length===1?(tg.ss?`<button class="btn ghost sm" data-act="addEx" data-ss="${esc(ex.ss)}" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`:`<button class="btn ghost sm" data-act="joinEx" data-i="${i}" data-write>+ תרגיל לסופר סט</button>`):''}</td></tr>`:'';
@@ -2769,13 +2769,14 @@ async function act(name,el){
     if(rest.length===1) rest[0].ss='';
     saveEdit(ctx,0); render(); toast(`${dn(ex.name)||'התרגיל'} הופרד מהסופר סט ✓`); break;}
   case 'prog': {const ex=ctx.edit.doc.exercises[Number(el.closest('[data-ex]').dataset.ex)]; const k=el.dataset.k;
-    if(k==='none') ex.prog=[];
+    if(k==='none'){ex.prog=[]; ex.progNone=!ex.progNone;}
     else if(k==='kg'&&el.dataset.v){const v=Number(el.dataset.v); const set=new Set(ex.prog||[]); const cur=num(ex.kgStep)??kgDefault(ex);
-      if(set.has('kg')&&cur===v){set.delete('kg');} else {set.add('kg'); ex.kgStep=v;} ex.prog=[...set];}
+      if(set.has('kg')&&cur===v){set.delete('kg');} else {set.add('kg'); ex.kgStep=v;} ex.prog=[...set]; ex.progNone=false;}
     else if(k==='reps'&&el.dataset.v){const v=Number(el.dataset.v); const set=new Set(ex.prog||[]); const cur=num(ex.repStep)||1;
-      if(set.has('reps')&&cur===v){set.delete('reps');} else {set.add('reps'); ex.repStep=v;} ex.prog=[...set];}
-    else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set];}
+      if(set.has('reps')&&cur===v){set.delete('reps');} else {set.add('reps'); ex.repStep=v;} ex.prog=[...set]; ex.progNone=false;}
+    else {const set=new Set(ex.prog||[]); set.has(k)?set.delete(k):set.add(k); ex.prog=[...set]; ex.progNone=false;}
     applyProg(ex); saveEdit(ctx,0); render(); break;}
+  case 'progConfirm': {const ex=ctx.edit.doc.exercises[Number(el.closest('[data-ex]').dataset.ex)]; ex.progDone=true; saveEdit(ctx,0); render(); break;}
   case 'addSS': {const a=ctx.edit.doc.exercises; const k=String(Math.max(0,...a.map(e=>Number(e.ss)||0))+1); a.push({...newExercise(),ss:k},{...newExercise(),ss:k}); saveEdit(ctx,0); render(); break;}
   case 'delPlan': {if(!(S.user&&S.user.role==='admin')||!ctx.edit||ctx.edit.doc.status==='done')break; if(!delArmed(ctx.edit.id)){armDel(ctx.edit.id);break}
     const d0=ctx.edit.doc,id=ctx.edit.id,cid=ctx.clientId;
