@@ -597,6 +597,20 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
   .sheet td.name{font-size:16px;font-weight:800}
   .sheet td.acts{display:flex!important;gap:4px;flex-wrap:wrap;justify-content:flex-start;margin-top:4px}
 }
+/* group (quick-rows) program table: same idea - stacked labeled cards instead of a wide scrolling table below 900px */
+@media (max-width:900px){
+  .gex.card{padding:8px 4px!important}
+  .gtable{display:block!important;width:100%!important;min-width:0!important}
+  .gtable thead{display:none!important}
+  .gtable tbody{display:block!important}
+  .gtable tr{display:grid!important;grid-template-columns:1fr 1fr;gap:2px 10px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
+  .gtable tr.goff{display:block!important}
+  .gtable td{display:block!important;border:0!important;padding:2px 0!important;min-width:0!important;max-width:none!important;width:auto!important;position:static!important}
+  .gtable td.gname,.gtable td.gfeel{grid-column:1/3}
+  .gtable td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:1px}
+  .gtable td.gname::before{content:none}
+  .gtable td.gname{font-size:16px;font-weight:800}
+}
 .pcard{border-inline-start-color:#1c7ed6}
 
 .tpthread{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px}.tpb{max-width:80%;padding:8px 12px;border-radius:14px;font-size:16px;white-space:pre-wrap;word-break:break-word}.tpb.him{align-self:flex-start;background:#e7f0ff}.tpb.me{align-self:flex-end;background:#fff4d6}
@@ -621,7 +635,7 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
 .sheet td.acts{white-space:nowrap;padding:4px 2px}
 .sheet td.acts .btn.sm{font-size:17px;padding:4px 6px}
 }
-@media (max-width:900px){.sheet,.ptab{min-width:860px}.sheet td.name,.ptab td.pname{position:sticky;right:0;z-index:3;background:var(--surface);min-width:140px!important;max-width:160px;box-shadow:-2px 0 4px rgba(0,0,0,.06)}.sheet thead th:first-child,.ptab thead tr:last-child th:first-child{position:sticky;right:0;z-index:4}.sheet-wrap,.tbl-wrap{-webkit-overflow-scrolling:touch}}
+@media (max-width:900px){.sheet-wrap,.tbl-wrap{-webkit-overflow-scrolling:touch}}
 [data-tip]{position:relative}.addset[data-tip]{position:absolute}.addset{display:none!important}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:13px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:30}
 .gtable tr.goff td{opacity:.75;background:var(--surface-2)}
@@ -1808,6 +1822,7 @@ function gInput(t){
   const mm=ex.m[t.dataset.cid]; if(!mm) return true; const f=t.dataset.gm;
   if(f==='skg'){mm.kgs=mm.kgs||[];const v=String(t.value).replace(',','.').trim();mm.kgs[Number(t.dataset.si)]=v===''?'':(isNaN(Number(v))?v:Number(v));gSave(700);return true}
   if(f==='sheight'){mm.heights=mm.heights||[];mm.heights[Number(t.dataset.si)]=t.value===''?'':Number(t.value);gSave(700);return true}
+  if(f==='height'){mm.height=t.value===''?'':Number(t.value); gSave(0); render(); return true}
   if(f==='rep'){mm.sets[Number(t.dataset.si)]=t.value===''?'':Number(t.value); if(!d.date&&t.value!=='') d.date=today(); t.dataset.st=setState(ex,{reps:t.value});
     try{pairNowRefresh()}catch(e){}
     if(!t._step&&t.value!==''){
@@ -3114,7 +3129,7 @@ function bind(){
     const structural=()=>{saveEdit(ctx,0);S.deferred=true;t.blur();};
     if(f==='name'){let nv=t.value.trim();
       const l=libFind(nv);ex.name=nv;if(l){ex.unit=l[1];ex.group=l[2];if(l[1]==='sec'&&ex.repMin===6){ex.repMin=20;ex.repMax=30}structural()}else saveEdit(ctx,0);return}
-    if(f==='height'){ex.height=t.value===''?'':Number(t.value);saveEdit(ctx,0);return}
+    if(f==='height'){ex.height=t.value===''?'':Number(t.value);saveEdit(ctx,0);render();return}
     if(f==='ss'){ex.ss=t.value;structural();return}
     if(f==='unit'){ex.unit=t.value;if(t.value==='sec'&&ex.repMin===6){ex.repMin=20;ex.repMax=30}structural();return}
     if(f==='targetSets'){const n=Math.max(1,Math.min(10,Number(t.value)||1));ex.targetSets=n;while(ex.sets.length<n)ex.sets.push({kg:'',reps:''});while(ex.sets.length>n&&num(ex.sets[ex.sets.length-1].reps)==null)ex.sets.pop();structural();return}
