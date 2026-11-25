@@ -726,6 +726,32 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 <div id="fbAuth" class="fbauth" dir="rtl" hidden><div class="fbcard">
  <div class="fbtop"><img id="fbLogo" alt="כוח מחודש"><div class="nm"><span>כוח</span> מחודש</div><div class="sl">מחזירים את הכוח, בונים איכות חיים</div></div>
  <div class="fbbody" id="fbBody"></div></div></div>
+<script>
+/* watchdog: if the app never gets past the initial loading screen (e.g. a network/CDN block
+   prevents the Firebase module script from loading at all, or any other early failure), show
+   something actionable instead of leaving the user staring at the loading text forever. Written
+   in plain ES5 on purpose, with no dependency on anything else in the page, so it still works
+   even if the thing that's broken is module-script support itself. */
+(function(){
+  var mainEl=document.getElementById('main');
+  var initialHTML=mainEl?mainEl.innerHTML:null;
+  var booted=false, firstError=null;
+  function noteErr(m){ if(!firstError && m) firstError=String(m).slice(0,300); }
+  window.addEventListener('error',function(e){ noteErr(e&&e.message); });
+  window.addEventListener('unhandledrejection',function(e){ noteErr(e&&e.reason&&(e.reason.message||e.reason)); });
+  window.__rsMarkBooted=function(){ booted=true; };
+  setTimeout(function(){
+    if(booted) return;
+    var m=document.getElementById('main');
+    if(!m||m.innerHTML!==initialHTML) return; // something else already rendered real content
+    var esc=function(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})};
+    m.innerHTML='<div class="banner bad" style="margin:16px 0"><b>הטעינה נתקעה.</b> ייתכן שאין חיבור טוב לאינטרנט, או שמשהו ברשת (למשל אפליקציית חסימת פרסומות) חוסם את האפליקציה.'
+      +'<div class="row" style="margin-top:10px"><button class="btn" onclick="location.reload()">רענון</button></div>'
+      +(firstError?('<div class="muted small" style="margin-top:8px;direction:ltr;text-align:left">'+esc(firstError)+'</div>'):'')
+      +'</div>';
+  },9000);
+})();
+</script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,GoogleAuthProvider,signInWithPopup,setPersistence,browserLocalPersistence} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -1255,6 +1281,7 @@ function render(){
   let html='';
   if(!S.db) html=S.offline?`<div class="banner bad"><b>החיבור לנתוני הסטודיו לא זמין בתצוגה הזו.</b> פתחו את הדף מתוך claude.ai כשאתם מחוברים לחשבון.</div>`:`<div class="empty"><strong>מתחבר לנתוני הסטודיו…</strong></div>`;
   else {
+    if(window.__rsMarkBooted) window.__rsMarkBooted();
     if(!S.canWrite) html+=`<div class="banner warn"><b>מצב צפייה בלבד.</b> כדי להזין תוצאות צריך הרשאת עריכה מבעל הדף.</div>`;
     if(S.user&&S.user.coachId) S.meId=S.user.coachId;
     else if(S.loaded.c&&S.meId&&!S.coaches.some(k=>k.id===S.meId&&k.active!==false)){S.meId=null;lsSet('rs_me','')}
