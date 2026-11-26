@@ -292,7 +292,7 @@ function rpFromSeed(sd){return {seedV:sd.v,n:0,w:(sd.w||[]).map(function(w){if(w
 function rpMerge(old,nw){['wk','planAt','goals','deload','n'].forEach(function(k){if(old[k]!=null)nw[k]=old[k]});
   nw.w.forEach(function(W){var O=(old.w||[]).filter(function(x){return String(x.label)===String(W.label)})[0];if(!O)return;W.doneAt=O.doneAt;
     if(W.run&&O.run&&O.run.kind===W.run.kind){var so=O.run.o||{};if(so.km==W.run.km&&so.p1==W.run.p1&&so.p2==W.run.p2){['km','p1','p2','msg'].forEach(function(k){W.run[k]=O.run[k]})}}
-    if(W.ex&&O.ex)W.ex.forEach(function(x){var y=O.ex.filter(function(e){return e.n===x.n})[0];if(!y)return;['kg','tp','rom','cyc','st','msg'].forEach(function(k){if(y[k]!=null)x[k]=y[k]});var yo=y.o||{};if(yo.sets==x.sets&&yo.min==x.min&&yo.max==x.max){x.sets=y.sets;x.min=y.min;x.max=y.max}})});
+    if(W.ex&&O.ex)W.ex.forEach(function(x){var y=O.ex.filter(function(e){return e.n===x.n})[0];if(!y)return;['kg','tp','rom','cyc','st','msg','goal'].forEach(function(k){if(y[k]!=null)x[k]=y[k]});var yo=y.o||{};if(yo.sets==x.sets&&yo.min==x.min&&yo.max==x.max){x.sets=y.sets;x.min=y.min;x.max=y.max}})});
   return nw}
 function rpLoad(){if(RP)return;try{RP=JSON.parse(lsg(rpKey())||'null')}catch(e){RP=null}
   if(PLAN.seed&&(!RP||RP.seedV!==PLAN.seed.v)){RP=RP&&RP.seedV?rpMerge(RP,rpFromSeed(PLAN.seed)):rpFromSeed(PLAN.seed);rpSave()}
