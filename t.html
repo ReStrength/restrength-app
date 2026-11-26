@@ -314,12 +314,20 @@ function runHtml(W){var r=dlRun(W.run),x=W.run.res||{},k=RT,pc=x.km&&secOf(x.tim
    '<div class="sub" id="rpace" style="margin:6px 4px">'+(pc?'קצב ממוצע: <b>'+ltr(pc)+'</b> לק"מ':'')+'</div></div></div>';
   return h}
 function runStep(W){var r=W.run,x=r.res||{},km=+x.km,t=secOf(x.time);if(!km||!t)return null;var pace=t/km,p1=secOf(r.p1),p2=secOf(r.p2)||p1,m='',done=km>=r.km-0.05;
-  var GL=(RP&&RP.goals)||{},gp=secOf(GL.pace),gk=+GL.km||0;
-  if(r.kind==='tempo'){if(done&&p2&&pace<=p2+2&&gp&&p1-5<gp){if(r.km<5){r.km=Math.round((r.km+0.5)*10)/10;m='הגעת לקצב היעד שלך! עכשיו מאריכים: '+runTarget(r,1)}else m='הגעת לקצב היעד שלך ולמרחק של 5 ק"מ. שומרים על זה 💪'}
-    else if(done&&p2&&pace<=p2+2){r.p1=mmss(Math.max(240,p1-5));r.p2=mmss(Math.max(245,p2-5));m='עמדת ביעד! בשבוע הבא קצת יותר מהר: '+r.km+' ק"מ בקצב '+r.p1+'–'+r.p2}
-    else if(done&&pace<=p2+15){m='כמעט! נשארים על אותו יעד: '+runTarget(r,1)}else{m='נשארים על אותו יעד: '+runTarget(r,1)+'. העיקר לשמור על קצב אחיד'}}
-  else{if(done&&gk&&r.km>=gk&&p1&&pace<=p1+15){r.p1=r.p2=mmss(Math.max(240,p1-5));m='הגעת למרחק היעד שלך! עכשיו משפרים קצב: '+runTarget(r,1)}
-    else if(done&&(!p1||pace<=p1+15)){r.km=Math.round((Math.min(gk||99,r.km+0.5))*10)/10;m='כל הכבוד! בשבוע הבא מוסיפים חצי ק"מ: '+runTarget(r,1)}else{m='נשארים על אותו יעד: '+runTarget(r,1)}}
+  var GL=(RP&&RP.goals)||{},gp=secOf(GL.pace),gk=+GL.km||0,KMAX=+((PLAN&&PLAN.seed&&PLAN.seed.kmMax))||10;
+  function rnd(v){return Math.round(v*10)/10}
+  if(r.kind==='tempo'){
+    if(!done){m='הפעם יצאו '+km+' ק"מ. נשארים על אותו יעד: '+runTarget(r,1)+', והעיקר להשלים את המרחק'}
+    else if(p2&&pace<=p2+10){
+      if(gp&&p1-5<gp&&r.km<5){r.km=rnd(r.km+0.5);m='הגעת לקצב היעד שלך! עכשיו מאריכים: '+runTarget(r,1)}
+      else if(gp&&p1-5<gp){m='הגעת לקצב היעד שלך ולמרחק של 5 ק"מ. שומרים על זה 💪'}
+      else{r.p1=mmss(Math.max(240,p1-5));r.p2=mmss(Math.max(245,p2-5));m='עמדת ביעד! בריצה הבאה 5 שניות לק"מ יותר מהר: '+runTarget(r,1)}}
+    else{var b=Math.round(pace);r.p1=mmss(Math.max(240,b-5));r.p2=mmss(Math.max(245,b));m='רצת בקצב '+ltr(mmss(b))+' לק"מ. היעד הבא נקבע לפי מה שעשית, 5 שניות יותר מהר: '+runTarget(r,1)}}
+  else{
+    if(!done){m='הפעם יצאו '+km+' ק"מ. נשארים על אותו יעד: '+runTarget(r,1)}
+    else if(gk&&r.km>=gk&&p1){r.p1=r.p2=mmss(Math.max(240,p1-5));m='הגעת למרחק היעד שלך! עכשיו משפרים קצב: '+runTarget(r,1)}
+    else if(r.km>=KMAX){var b3=Math.round(pace);r.p1=r.p2=mmss(Math.max(240,b3-5));m='הגעת ל-'+r.km+' ק"מ. מכאן משפרים קצב: '+runTarget(r,1)}
+    else{r.km=rnd(Math.min(gk||KMAX,r.km+0.5));if(p1&&pace>p1+20){var b2=Math.round(pace);r.p1=r.p2=mmss(Math.max(240,b2))}m='כל הכבוד! מוסיפים חצי ק"מ: '+runTarget(r,1)}}
   return {log:{n:(r.kind==='tempo'?'ריצת קצב':'ריצה ארוכה'),unit:'run',sets:[{km:String(km),time:x.time,pace:mmss(pace)}]},m:m}}
 function WK(){return !!(PLAN&&PLAN.seed)}
 function PW(){return !!(PLAN&&PLAN.seed&&PLAN.seed.pw)}
@@ -362,7 +370,7 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
     if(WK()){var NOSS=!W.ex.some(function(e){return e.ss});if(x.ss!==lastSS||NOSS){if(lastSS!==null)h+='</div>';h+='<div class="card ssg">'+(x.ss?'<div class="ssh">סופר סט '+esc(x.ss)+'</div>':'')+''}}
     else if(x.ss&&x.ss!==lastSS)h+='<div class="sub" style="margin:14px 4px 4px;font-weight:700">סופר סט '+esc(x.ss)+'</div>';lastSS=x.ss;
     h+='<div class="'+(WK()?'ssx ex rex':'card ex rex')+'"><div class="t"><span class="num">'+(i+1)+'</span>'+(WK()?'<b style="font-size:20px">'+esc(x.n)+'</b>':'<input class="rin" data-rp="'+k+'.n" value="'+esc(x.n)+'" placeholder="שם התרגיל">')+'</div>'+
-     (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+(+dlSets(x)===1?'סט אחד':dlSets(x)+' סטים')+' של '+(RNG()&&+x.min<+x.max?'<span dir="ltr">'+x.min+'–'+x.max+'</span>':x.max)+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג'+(sx(x.n).kgs?' '+esc(sx(x.n).kgs):''):'')+'</div>'+(sx(x.n).kgLock&&!(+x.kg>0)?'<div class="kgl" style="font-size:18px;font-weight:700">'+esc(sx(x.n).kg0||'ללא משקל')+'</div>':'<label class="kgl"><input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(+x.kg>0?x.kg:'')+'" placeholder="'+(sx(x.n).kg0?'0':'')+'"><span>'+(!(+x.kg>0)&&sx(x.n).kg0?esc(sx(x.n).kg0):'ק"ג'+(sx(x.n).kgs?' '+esc(sx(x.n).kgs):''))+'</span></label>')+'</div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
+     (WK()?'<div class="rrow"><div class="dose" style="font-size:19px;margin:4px 0;flex-basis:100%">'+(+dlSets(x)===1?'סט אחד':dlSets(x)+' סטים')+' של '+(RNG()&&+x.min<+x.max?'<span dir="ltr">'+x.min+'–'+x.max+'</span>':rpTgt(x))+(x.sec?' שניות':' חזרות')+(+x.kg>0?' · '+x.kg+' ק"ג'+(sx(x.n).kgs?' '+esc(sx(x.n).kgs):''):'')+'</div>'+(sx(x.n).kgLock&&!(+x.kg>0)?'<div class="kgl" style="font-size:18px;font-weight:700">'+esc(sx(x.n).kg0||'ללא משקל')+'</div>':'<label class="kgl"><input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(+x.kg>0?x.kg:'')+'" placeholder="'+(sx(x.n).kg0?'0':'')+'"><span>'+(!(+x.kg>0)&&sx(x.n).kg0?esc(sx(x.n).kg0):'ק"ג'+(sx(x.n).kgs?' '+esc(sx(x.n).kgs):''))+'</span></label>')+'</div>':'')+(WK()?'':'<div class="rrow"><label>סופר סט<select data-rp="'+k+'.ss">'+['','1','2','3','4','5','6'].map(function(v){return '<option'+(v===x.ss?' selected':'')+' value="'+v+'">'+(v||'בלי')+'</option>'}).join('')+'</select></label>'+
      '<label>סטים<select data-rp="'+k+'.sets">'+[1,2,3,4,5].map(function(v){return '<option'+(v===+x.sets?' selected':'')+'>'+v+'</option>'}).join('')+'</select></label>'+
      '<label>'+(x.sec?'שניות':'חזרות')+'<span class="rng"><input inputmode="numeric" data-rp="'+k+'.min" value="'+esc(x.min)+'">–<input inputmode="numeric" data-rp="'+k+'.max" value="'+esc(x.max)+'"></span></label>'+
      '<label>ק"ג<input inputmode="decimal" data-rp="'+k+'.kg" value="'+esc(x.kg)+'" placeholder="גוף"></label></div>');
@@ -399,27 +407,37 @@ function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''
 /* התקדמות בליווי מרחוק (שבועי), לפי הסדר: טמפו ← טווח תנועה ← משקל (קילו אחד) ← חזרות ← לעיתים רחוקות סט נוסף */
 var TP1='2 שניות בירידה ועצירה של שנייה בתחתית',TP2='3 שניות בירידה ועצירה של שנייה בתחתית',ROM='טווח תנועה גדול יותר: לרדת עמוק יותר ככל שנוח';
 function FOC(){return (RP&&RP.goals&&RP.goals.focus)||'mix'}
+function NOTP(){return !!(PLAN&&PLAN.seed&&PLAN.seed.noTempo)}
+function VEST(x){var v=parseFloat(String((PLAN&&PLAN.seed&&PLAN.seed.vest)||'').replace(',','.'));return v>0?v:2.5}
 function INC(x){var v=parseFloat(String(sx(x.n).inc||'').replace(',','.'));return v>0?v:1}
+function rpTgt(x){var mx=+x.max||12,g=+x.goal>0?+x.goal:mx;return Math.max(+x.min||1,Math.min(g,mx))}
 function rpStepWk(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''&&r.reps!=null&&!isNaN(+r.reps)});if(!done.length)return null;
-  var reps=done.map(function(r){return +r.reps}),top=reps.every(function(r){return r>=x.max})&&done.length>=dlSets(x),miss=reps.some(function(r){return r<=x.min-3});
+  var reps=done.map(function(r){return +r.reps}),lo=Math.min.apply(0,reps),tgt=rpTgt(x);
+  var top=reps.every(function(r){return r>=tgt})&&done.length>=dlSets(x),miss=reps.some(function(r){return r<=x.min-3});
   var kgs=done.map(function(r){return r.kg===''||r.kg==null?NaN:+r.kg}).filter(function(v){return !isNaN(v)&&v>0}),work=kgs.length?Math.min.apply(0,kgs):(+x.kg||0),m;
   if(work>0)x.kg=String(work);
-  if(top){
-    if(!x.tp){x.tp=1;m='מוסיפים טמפו: '+TP1+'. אותו משקל ואותן חזרות'}
-    else if(!x.rom){x.rom=1;m='מגדילים טווח תנועה: '+ROM+'. אותו משקל ואותן חזרות'}
-    else{x.cyc=(x.cyc||0)+1;
-      if(work<=0){if(+x.max<15){x.min=Math.min(+x.min+1,14);x.max=+x.max+1;m='מוסיפים חזרה: '+x.min+'–'+x.max+' חזרות'}
+  if(top&&tgt<+x.max){x.goal=Math.min(tgt+1,+x.max);m='כל הסטים ביעד 💪 היעד לאימון הבא: '+x.goal+' חזרות בכל סט, אותו משקל';x.st=0}
+  else if(top){
+    if(!x.tp&&!NOTP()){x.tp=1;m='מוסיפים טמפו: '+TP1+'. אותו משקל ואותן חזרות'}
+    else if(!x.rom&&!NOTP()){x.rom=1;m='מגדילים טווח תנועה: '+ROM+'. אותו משקל ואותן חזרות'}
+    else{x.cyc=(x.cyc||0)+1;var keep=0;
+      if(work<=0){if(+x.max<15){x.min=Math.min(+x.min+1,14);x.max=+x.max+1;keep=1;m='עוד חזרה: '+Math.min(tgt+1,+x.max)+' חזרות בכל סט'}
         else if((+x.sets||3)<4){x.sets=(+x.sets||3)+1;m='הגעת ל-15 חזרות! מוסיפים סט: '+x.sets+' סטים'}
         else if((x.tp||1)<2){x.tp=2;m='טמפו איטי יותר: '+TP2}
-        else{m='הגעת לשיא בתרגיל הזה 💪 שומרים, ואפשר לעבור לגרסה קשה יותר שלו'}}
+        else{var vb=VEST(x);x.kg=String(vb);x.min=8;x.max=12;m='הגעת לתקרה במשקל גוף 💪 עכשיו עם ווסט משקל '+vb+' ק"ג: 8–12 חזרות'}}
       else if(x.cyc%10===0&&(+x.sets||3)<4){x.sets=(+x.sets||3)+1;m='מוסיפים סט אחד: '+x.sets+' סטים'}
       else if(work>0&&INC(x)>=2.5&&+x.max<12){if(!RNG())x.min=Math.min(+x.min+1,14);x.max=+x.max+1;m='מוסיפים חזרה: '+x.max+' חזרות (במשקל הזה עד 12, ואז עולים ב-'+INC(x)+' ק"ג)'}
       else if(work>0&&INC(x)>=2.5){x.kg=String(Math.round((work+INC(x))*2)/2);var S1=sx(x.n);if(RNG()&&S1.min){x.min=+S1.min;x.max=+S1.max}else x.min=x.max=8;m='עולים ב-'+INC(x)+' ק"ג: '+x.kg+' ק"ג, וחוזרים ל-'+(+x.min===+x.max?x.max:x.min+'-'+x.max)+' חזרות'}
       else if(work>0&&(FOC()==='str'?true:FOC()==='end'?(x.cyc%3===0||+x.max>=15):(x.cyc%2===1||+x.max>=15))){x.kg=String(Math.round((work+INC(x))*2)/2);m='מוסיפים '+(INC(x)===1?'קילו אחד':INC(x)+' ק"ג')+': '+x.kg+' ק"ג, אותן חזרות'}
-      else{x.min=Math.min(+x.min+1,14);x.max=Math.min(+x.max+1,15);m='מוסיפים חזרה: '+x.min+'–'+x.max+' חזרות'}}
+      else{x.min=Math.min(+x.min+1,14);x.max=Math.min(+x.max+1,15);m='מוסיפים חזרה: '+x.min+'–'+x.max+' חזרות'}
+      x.goal=keep?Math.min(tgt+1,+x.max):+x.min}
     x.st=0}
-  else if(miss&&work>INC(x)){x.kg=String(Math.round((work-INC(x))*2)/2);m='היה קשה מדי: מורידים ל-'+x.kg+' ק"ג';x.st=0}
-  else{m='אותו יעד, לשאוף לחזרה אחת יותר בכל סט';x.st=(x.st||0)+1}
+  else if(miss&&work>INC(x)){x.kg=String(Math.round((work-INC(x))*2)/2);x.goal=+x.min;m='היה קשה מדי: מורידים ל-'+x.kg+' ק"ג · היעד '+x.goal+' חזרות בכל סט';x.st=0}
+  else{var g=Math.max(+x.min||1,Math.min(lo+1,+x.max||15));
+    if(g!==tgt){x.goal=g;m='היעד לאימון הבא: '+g+' חזרות בכל סט, חזרה אחת יותר ממה שעשית'+(work>0?' ('+work+' ק"ג)':'');x.st=0}
+    else{x.goal=tgt;m='אותו יעד: '+tgt+' חזרות בכל סט';x.st=(x.st||0)+1}}
+  if(x.st>=2){if(work>INC(x)){x.kg=String(Math.max(0,Math.round((work-INC(x))*2)/2));x.goal=Math.max(+x.min||6,lo);m='שני אימונים באותו מקום: מורידים ל-'+x.kg+' ק"ג ובונים מחדש מ-'+x.goal+' חזרות'}
+    else{x.goal=Math.max(+x.min||6,lo);m='שני אימונים באותו מקום: מתחילים מ-'+x.goal+' חזרות בכל סט ועולים משם'}x.st=0}
   return {sets:done.map(function(r){return {kg:r.kg===''||r.kg==null?'':String(r.kg),reps:String(r.reps)}}),m:m}}
 /* בכל תרגיל: איך מתקדמים, כאב בתרגיל בלחיצה אחת, וצילום הביצוע למאמן */
 function sx(n){var o=null;((PLAN&&PLAN.seed&&PLAN.seed.w)||[]).forEach(function(w){(w.ex||[]).forEach(function(e){if(!o&&e.n===n)o=e})});return o||{}}
@@ -450,7 +468,7 @@ function syBack(){if(PICKY==null)return;var y=PICKY;[0,250,700].forEach(function
 window.addEventListener('focus',syBack);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')syBack()});$('pick').addEventListener('change',syBack);
 function syRestore(){try{var o=JSON.parse(localStorage.getItem(syKey())||'null');if(!o||Date.now()-o.t>(o.p?15:5)*60000||o.y<200)return;[60,500,1500,3000].forEach(function(d){setTimeout(function(){if(window.scrollY<o.y-150)window.scrollTo(0,o.y)},d)})}catch(e){}}
 function rpFinish(){var W=RP.w[RT];
-  if(WK()&&W.ex)W.ex.forEach(function(x){if(x.ok)x.res=Array.from({length:dlSets(x)},function(){return {reps:String(x.max),kg:x.kg||''}});else if(x.fail&&RNG()&&(x.fs||[]).some(function(v){return v!==''&&v!=null}))x.res=Array.from({length:dlSets(x)},function(_,j){var v=(x.fs||[])[j];return {reps:v==null?'':String(v),kg:x.kg||''}});else if(x.fail&&RNG())x.res=(x.fr!==''&&x.fr!=null&&!isNaN(+x.fr))?Array.from({length:dlSets(x)},function(){return {reps:String(+x.fr),kg:x.kg||''}}):[];else if(!x.fail)x.res=[]});
+  if(WK()&&W.ex)W.ex.forEach(function(x){if(x.ok)x.res=Array.from({length:dlSets(x)},function(){return {reps:String(rpTgt(x)),kg:x.kg||''}});else if(x.fail&&RNG()&&(x.fs||[]).some(function(v){return v!==''&&v!=null}))x.res=Array.from({length:dlSets(x)},function(_,j){var v=(x.fs||[])[j];return {reps:v==null?'':String(v),kg:x.kg||''}});else if(x.fail&&RNG())x.res=(x.fr!==''&&x.fr!=null&&!isNaN(+x.fr))?Array.from({length:dlSets(x)},function(){return {reps:String(+x.fr),kg:x.kg||''}}):[];else if(!x.fail)x.res=[]});
   var has=W.run?(W.run.res&&+W.run.res.km&&W.run.res.time):W.ex.some(function(x){return (x.res||[]).some(function(r){return r&&r.reps!==''&&r.reps!=null})});
   if(!has){toast(W.run?'כותבים כמה ק"מ רצת ואת הזמן הכולל.':(WK()?'מסמנים ✓ בכל תרגיל שהצלחת, או "לא הכל" וכותבים כמה עשית.':'עוד לא מילאת תוצאות. כותבים כמה חזרות עשית בכל סט.'));return}
   if(PW()){sheet('<h3>איך היה האימון?</h3><div style="display:flex;gap:10px;margin:10px 0"><button class="btn alt" style="flex:1;min-height:64px;font-size:22px" data-fe="easy">😊 קל</button><button class="btn alt" style="flex:1;min-height:64px;font-size:22px" data-fe="hard">😮‍💨 קשה</button></div><div id="fem"></div>');
