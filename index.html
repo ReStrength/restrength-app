@@ -566,52 +566,6 @@ button.abr{cursor:pointer}.abt{font-weight:800;font-size:20px;direction:ltr}.abt
   .pairsplit-col .ptab td.pname{font-size:16px;font-weight:800}
   .pairsplit-col .ptab td.acts{display:flex!important;gap:4px;flex-wrap:wrap;justify-content:flex-start;margin-top:4px}
 }
-/* same no-horizontal-scroll card layout for a standalone pair table (a shared, non-split pair program) -
-   not just inside a split column. Below 900px there isn't room for the full table either way. */
-@media (max-width:900px){
-  .ptab{display:block!important;width:100%!important;min-width:0!important}
-  .ptab thead{display:none!important}
-  .ptab tbody{display:block!important}
-  .ptab tr.gsep{display:block!important;margin:10px 0 2px}
-  .ptab tr.adaptrow,.ptab tr.painrow,.ptab tr.swaprow{display:block!important}
-  .ptab tr.prow{display:grid!important;grid-template-columns:1fr 1fr;gap:2px 10px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
-  .ptab td{display:block!important;border:0!important;padding:2px 0!important;min-width:0!important;max-width:none!important;width:auto!important;position:static!important}
-  .ptab td.pname,.ptab td.pnotes,.ptab td.acts,.ptab td.poff,.ptab td.pwho{grid-column:1/3}
-  .ptab td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:1px}
-  .ptab td.pname::before{content:none}
-  .ptab td.pname{font-size:16px;font-weight:800}
-  .ptab td.acts{display:flex!important;gap:4px;flex-wrap:wrap;justify-content:flex-start;margin-top:4px}
-}
-/* single-client program table: same idea - stacked labeled cards instead of a wide scrolling table below 900px */
-@media (max-width:900px){
-  .sheet{display:block!important;width:100%!important;min-width:0!important}
-  .sheet thead{display:none!important}
-  .sheet tbody{display:block!important}
-  .sheet tr.gsep,.sheet tr.progrow{display:block!important;margin:10px 0 2px}
-  .sheet tr:not(.exrow){display:block!important}
-  .sheet tr:not(.exrow) td{display:block!important}
-  .sheet tr.exrow{display:grid!important;grid-template-columns:1fr 1fr;gap:2px 10px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
-  .sheet td{display:block!important;border:0!important;padding:2px 0!important;min-width:0!important;max-width:none!important;width:auto!important;position:static!important}
-  .sheet td.name,.sheet td.notes,.sheet td.acts{grid-column:1/3}
-  .sheet td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:1px}
-  .sheet td.name::before{content:none}
-  .sheet td.name{font-size:16px;font-weight:800}
-  .sheet td.acts{display:flex!important;gap:4px;flex-wrap:wrap;justify-content:flex-start;margin-top:4px}
-}
-/* group (quick-rows) program table: same idea - stacked labeled cards instead of a wide scrolling table below 900px */
-@media (max-width:900px){
-  .gex.card{padding:8px 4px!important}
-  .gtable{display:block!important;width:100%!important;min-width:0!important}
-  .gtable thead{display:none!important}
-  .gtable tbody{display:block!important}
-  .gtable tr{display:grid!important;grid-template-columns:1fr 1fr;gap:2px 10px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
-  .gtable tr.goff{display:block!important}
-  .gtable td{display:block!important;border:0!important;padding:2px 0!important;min-width:0!important;max-width:none!important;width:auto!important;position:static!important}
-  .gtable td.gname,.gtable td.gfeel{grid-column:1/3}
-  .gtable td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:1px}
-  .gtable td.gname::before{content:none}
-  .gtable td.gname{font-size:16px;font-weight:800}
-}
 .pcard{border-inline-start-color:#1c7ed6}
 
 .tpthread{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px}.tpb{max-width:80%;padding:8px 12px;border-radius:14px;font-size:16px;white-space:pre-wrap;word-break:break-word}.tpb.him{align-self:flex-start;background:#e7f0ff}.tpb.me{align-self:flex-end;background:#fff4d6}
@@ -697,7 +651,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet,.ptab{min-width:0!important;width:100%;table-layout:auto}
 .sheet th,.ptab th{white-space:normal!important}
 .sheet td.name,.ptab td.pname{position:static!important;min-width:90px!important;max-width:0!important;box-shadow:none!important}
-@media (max-width:900px){.sheet td.name,.ptab td.pname{max-width:none!important}}
 .sheet td.notes,.ptab td.pnotes{min-width:76px!important}
 .sheet td.acts,.ptab td.acts{white-space:normal!important;width:1%;min-width:124px!important}.sheet td.acts .btn,.ptab td.acts .btn{margin:1px!important}
 .prevline{white-space:normal!important}
@@ -726,7 +679,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=num
 .sheet td.kg input{font-size:17px!important;padding:4px 1px!important}
 .ptab td.gkg{width:80px!important;min-width:80px!important;max-width:92px}
 .ptab td.gkg input{font-size:16px!important;padding:4px 1px!important;min-width:0}
-@media (max-width:900px){.sheet td.kg,.ptab td.gkg{width:auto!important;max-width:none!important}}
 .sheet td.res,.ptab td.res{min-width:54px!important}
 .sheet td.res .ki,.ptab td.res .ki{font-size:14px!important}
 .kiw{display:flex;align-items:center;justify-content:center;gap:3px;border-bottom:1px dashed var(--line);margin:0 2px 2px;cursor:text}
