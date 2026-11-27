@@ -344,7 +344,8 @@ function weekPlan(auto){var ch=[],wasDl=!!RP.deload;RP.wk=(RP.wk||1)+1;RP.deload
   sheet('<h3>📅 שבוע '+RP.wk+(RP.deload?' · שבוע קל':'')+'</h3>'+(RP.deload?'<p style="font-size:17px">השבוע מורידים קצת עומס כדי שהגוף יתאושש ויתחזק: סט אחד פחות בכל תרגיל, וריצות קלות יותר. בשבוע הבא ממשיכים להתקדם.</p>':'<p style="font-size:17px">ההתקדמות לשבוע הזה, לפי מה שעשית בשבוע שעבר:</p>')+
    '<ul style="margin:6px 0;padding-inline-start:20px;font-size:18px">'+ch.map(function(c){return '<li style="margin:6px 0"><b>'+esc(c[0])+':</b> '+esc(c[1])+'</li>'}).join('')+'</ul><button class="btn done" id="wok">יאללה, מתחילים</button>');
   $('wok').onclick=function(){unsheet();RT=0;lss('rs_rpt_'+SID,0);render();window.scrollTo(0,0)}}
-function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}catch(e){}if(WK()&&RP.planAt&&Date.now()-RP.planAt>9*864e5&&RP.w.some(function(W){return W.pend}))weekPlan(true);var W=RP.w[RT],FL=(PLAN.seed&&PLAN.seed.finLbl)||'✓ סיימתי',h=WK()?'<h2>שבוע '+(RP.wk||1)+'</h2><p class="sub" style="font-size:18px;margin:0 0 10px">בסוף האימון לוחצים "'+esc(FL)+'". זה פותח את האימון הבא, וכך ההתקדמות מתעדכנת אחרי כל אימון.</p>':'<h2>האימון שלי</h2>';
+function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}catch(e){}if(WK()&&!PW()&&RP.w.length&&RP.w.every(function(W){return W.doneAt>(RP.planAt||0)}))weekPlan(true);
+  if(WK()&&RP.planAt&&Date.now()-RP.planAt>9*864e5&&RP.w.some(function(W){return W.pend}))weekPlan(true);var W=RP.w[RT],FL=(PLAN.seed&&PLAN.seed.finLbl)||'✓ סיימתי',h=WK()?'<h2>שבוע '+(RP.wk||1)+'</h2><p class="sub" style="font-size:18px;margin:0 0 10px">בסוף האימון לוחצים "'+esc(FL)+'". זה פותח את האימון הבא, וכך ההתקדמות מתעדכנת אחרי כל אימון.</p>':'<h2>האימון שלי</h2>';
   var HR=RP.w.some(function(w){return w.run});if(WK()&&!HR&&!RP.goals){RP.goals={focus:'mix',at:Date.now(),auto:1};rpSave()}
   if(WK()){var G=RP.goals;
     if(!HR){}
@@ -391,6 +392,8 @@ function remoteHtml(){rpLoad();try{document.body.classList.toggle('wkc',WK())}ca
   if(WK()&&!(PLAN.seed&&PLAN.seed.noAll))h+='<button class="btn alt" data-rall="1" style="margin-top:8px">✓ הצלחתי את כל האימון</button>';
   h+='<div class="sticky"><button class="btn done big" data-rfin="1">'+(PW()?'📅 תכנון אימון הבא':(PLAN.seed&&PLAN.seed.finLbl)||'✓ סיימתי. לבנות את האימון הבא')+'</button></div>';
   return h}
+function nxOut(W){if(!W)return null;if(W.run)return {run:{km:W.run.km,p1:W.run.p1,p2:W.run.p2}};
+  return {ex:(W.ex||[]).map(function(x){return {n:x.n,sets:+dlSets(x)||0,reps:rpTgt(x),kg:x.kg||'',m:x.msg||''}})}}
 function rpUni(n){return /רגל אחת|יד אחת|מכרע|לאנג|לאנצ|בולגרי|סטפ|עלייה על מדרגה|סינגל/.test(n)}
 function rpStep(x){var done=(x.res||[]).filter(function(r){return r&&r.reps!==''&&r.reps!=null&&!isNaN(+r.reps)});if(!done.length)return null;
   var reps=done.map(function(r){return +r.reps}),mx=Math.max.apply(0,reps),top=reps.every(function(r){return r>=x.max})&&done.length>=(+x.sets||1),miss=reps.some(function(r){return r<=x.min-2});
@@ -492,7 +495,7 @@ function rpFinish2(pain,ptx,feel){var W0=RP.w[RT],pw=PW(),wk=WK()&&!pw,W=(wk||pw
   if(pw){if(feel==='hard'){(W.ex||[]).forEach(function(x){x.msg='אותה עצימות כמו באימון הקודם'});if(W.run)W.run.msg='אותו יעד כמו בריצה הקודמת'}
     (W.ex||[]).forEach(function(x){x.res=[];x.ok=false;x.fail=false;x.kp='';x.fr='';x.fs=[];x.why='';x.fnote=''});if(W.run)W.run.res={};W.doneAt=Date.now();W.pend=null;RP.w[RT]=W}
   RP.n=(RP.n||0)+1;rpSave();
-  var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log,pain:pain,note:ptx,feel:feel||''}).catch(function(){});
+  var d=new Date();sendRep({kind:'log',r:PC.rid?PC.rid():String(Date.now()),label:W.label||'',date:d.toISOString().slice(0,10),ex:log,pain:pain,note:ptx,feel:feel||'',nx:nxOut(wk?(W0.pend?{label:W.label,ex:W0.pend.ex,run:W0.pend.run}:W):W)}).catch(function(){});
   if(pain>0)sendRep({kind:'pain',r:PC.rid?PC.rid():String(Date.now()+1),pain:pain,text:'אחרי אימון '+(W.label||'')+(ptx?': '+ptx:'')}).catch(function(){});
   sheet('<h3>💪 כל הכבוד! '+(wk?'ככה ייראה האימון הזה בשבוע הבא':'ככה נראה האימון הבא')+'</h3><ul style="margin:6px 0;padding-inline-start:20px;font-size:18px">'+ch.map(function(c){return '<li style="margin:6px 0"><b>'+esc(c[0])+':</b> '+esc(c[1])+'</li>'}).join('')+'</ul>'+(pain>=7?'<p style="font-size:17px">😣 קיבלתי את הדיווח על הכאב. לא מעלים עומס עד שירגע. אם זה לא עובר, כדאי לדבר איתי.</p>':pain>0?'<p style="font-size:17px">תודה על הדיווח. אם הכאב חוזר או מתגבר, מורידים משקל או טווח באותו תרגיל.</p>':'')+'<button class="btn done" id="rok">מעולה</button>');
   $('rok').onclick=function(){unsheet();if(RP.w.length>1){RT=(RT+1)%RP.w.length;lss('rs_rpt_'+SID,RT)}render();window.scrollTo(0,0)}}
