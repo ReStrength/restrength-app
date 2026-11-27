@@ -3262,6 +3262,7 @@ async function homeFromPlan(c,mode){let ps=[];if(S.P&&S.P.clientId===c.id)ps=pla
     else{if(seen.has(e.name))return;seen.add(e.name);out.push({n:dn(e.name),sets,reps,kg:e.targetKg!=null?String(e.targetKg):'',note:[e.tempo,e.notes].filter(Boolean).join(' · ')})}}));
   out.forEach(x=>{const l=libFind(x.n);x.unit=l?l[1]:(x.kg?'kg':'bw')});return out}
 function homeAskCard(c){const f=String(c.name).split(' ')[0];const has=(c.homeEx||[]).some(x=>x&&x.n);
+  if(c.remote)return '';
   return `<div class="card" id="homeAsk" style="border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))"><h2 style="margin-top:0">🏠 מה לשלוח ל${esc(f)} לבית?</h2>
   <div class="row" style="gap:10px;align-items:stretch;flex-wrap:wrap">
    <button class="btn primary" style="flex:1;min-width:220px;text-align:right;padding:14px" data-act="homeFill" data-mode="studio" data-write><b>🏋️ התוכנית כמו בסטודיו</b><br><span class="small" style="font-weight:400">אותם תרגילים, סטים, חזרות ומשקלים כמו עם המאמן</span></button>
@@ -3292,7 +3293,7 @@ function tPortalBody(c){
     <div class="row" style="margin-top:10px"><a class="btn primary" data-own="1" href="${esc(wa)}" target="_blank" rel="noopener">שליחה בווטסאפ</a><button class="btn" data-act="tpCopy">העתקת הקישור</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">פתיחת הדף</a>
     <button class="btn" data-act="tpPub" data-write ${S.tpBusy[c.id]==='pub'?'disabled':''}>${S.tpBusy[c.id]==='pub'?'מעדכן…':'↻ עדכון הדף'}</button></div>
     <p class="muted small" style="margin:8px 0 0">כל שינוי באימון המתוכנן מתעדכן בדף לבד אחרי כמה שניות.</p>
-    <label class="row small" style="margin-top:8px;gap:8px;cursor:pointer"><input type="checkbox" data-act="tpRemote" data-write ${c.remote?'checked':''}> <b>🌍 ליווי מרחוק:</b> המתאמן כותב בעצמו את התרגילים והתוצאות (2 אימונים, סופר סטים), והדף בונה לו לבד את האימון הבא. התוצאות מגיעות לכאן.</label>
+    <label class="row small" style="margin-top:8px;gap:8px;cursor:pointer"><input type="checkbox" data-act="tpRemote" data-write ${c.remote?'checked':''}> <b>🌍 ליווי מרחוק:</b> התוכנית נבנית כאן ונשלחת לדף האישי. מי שמתאמן (או המאמן שאיתו) רושם שם את התוצאות, והיעד לאימון הבא מתעדכן לבד. הכל חוזר לכאן.</label>
     <p class="small" style="margin:6px 0 0">📩 מה שהמתאמן שולח מגיע לתיבה של <b>${esc(coachName(tpOwner(c)))}</b>${tpMine(c)?'':` <button class="btn ghost sm" data-act="tpOwn" data-write>להעביר אליי</button>`}</p></div>
   ${tpChat(c,L)}
   <div class="card"><div class="spread"><h2 style="margin:0">📩 מה ${esc(String(c.name).split(' ')[0])} שלח/ה</h2><span class="row"><button class="btn ghost sm" data-act="tpRefresh">רענון</button>${L.some(o=>o.t>seen)?`<button class="btn ghost sm" data-act="tpSeen" data-write>סימון הכל כנקרא</button>`:''}</span></div>${repsHtml}</div>
